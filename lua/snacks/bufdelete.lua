@@ -70,7 +70,7 @@ function M.delete(opts)
       end)
     end
     if vim.api.nvim_buf_is_valid(buf) then
-      pcall(vim.cmd, opts.wipe and "bwipeout! " or "bdelete! " .. buf)
+      pcall(vim.cmd, (opts.wipe and "bwipeout! " or "bdelete! ") .. buf)
     end
   end)
 end
