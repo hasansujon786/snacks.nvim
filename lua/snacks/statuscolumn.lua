@@ -137,7 +137,7 @@ end
 ---@param len? number
 function M.icon(sign, len)
   sign = sign or {}
-  len = len or 2
+  len = len or 1
   local text = vim.fn.strcharpart(sign.text or "", 0, len) ---@type string
   text = text .. string.rep(" ", len - vim.fn.strchars(text))
   return sign.texthl and ("%#" .. sign.texthl .. "#" .. text .. "%*") or text
@@ -179,7 +179,7 @@ function M.get()
       end
     end
 
-    components[1] = M.icon(left, 1) -- left
+    components[1] = M.icon(left) -- left
     components[3] = is_file and M.icon(right) or "" -- right
   end
 
@@ -197,7 +197,7 @@ function M.get()
         components[2] = is_relnum and "%r" or "%l" -- other lines
       end
     end
-    components[2] = "%=" .. components[2] -- right align
+    components[2] = "%=" .. components[2] .. "%#NonText#" -- right align
   end
 
   if vim.v.virtnum ~= 0 then
