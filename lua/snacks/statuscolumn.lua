@@ -179,7 +179,7 @@ function M.get()
       end
     end
 
-    components[1] = M.icon(left) -- left
+    components[1] = M.icon(left, 1) -- left
     components[3] = is_file and M.icon(right) or "" -- right
   end
 
@@ -197,7 +197,7 @@ function M.get()
         components[2] = is_relnum and "%r" or "%l" -- other lines
       end
     end
-    components[2] = "%=" .. components[2] .. " " -- right align
+    components[2] = "%=" .. components[2] -- right align
   end
 
   if vim.v.virtnum ~= 0 then
