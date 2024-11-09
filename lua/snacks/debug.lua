@@ -1,11 +1,12 @@
 ---@class snacks.debug
----@hide
 ---@overload fun(...)
 local M = setmetatable({}, {
   __call = function(t, ...)
     return t.inspect(...)
   end,
 })
+
+local uv = vim.uv or vim.loop
 
 -- Show a notification with a pretty printed dump of the object(s)
 -- with lua treesitter highlighting and the location of the caller
@@ -53,14 +54,14 @@ end
 ---@param opts? {count?: number, flush?: boolean}
 function M.profile(fn, opts)
   opts = vim.tbl_extend("force", { count = 100, flush = true }, opts or {})
-  local start = vim.uv.hrtime()
+  local start = uv.hrtime()
   for _ = 1, opts.count, 1 do
     if opts.flush then
       jit.flush(fn, true)
     end
     fn()
   end
-  Snacks.notify(((vim.uv.hrtime() - start) / 1e6 / opts.count) .. "ms")
+  Snacks.notify(((uv.hrtime() - start) / 1e6 / opts.count) .. "ms")
 end
 
 -- Log a message to the file `./debug.log`.

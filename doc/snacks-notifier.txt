@@ -1,4 +1,4 @@
-*snacks-notifier.txt*         For Neovim         Last change: 2024 November 08
+*snacks-notifier.txt*                                              snacks.nvim
 
 ==============================================================================
 Table of Contents                          *snacks-notifier-table-of-contents*

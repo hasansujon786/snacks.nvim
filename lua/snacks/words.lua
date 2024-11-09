@@ -1,4 +1,3 @@
----@hide
 ---@class snacks.words
 local M = {}
 
@@ -62,17 +61,16 @@ end
 
 ---@param buf number?
 function M.is_enabled(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
   local mode = vim.api.nvim_get_mode().mode:lower()
   mode = mode:gsub("\22", "v"):gsub("\19", "s")
   mode = mode:sub(1, 2) == "no" and "o" or mode
   mode = mode:sub(1, 1):match("[ncitsvo]") or "n"
-  return config.enabled
-    and vim.tbl_contains(config.modes, mode)
-    and #vim.lsp.get_clients({
-        method = vim.lsp.protocol.Methods.textDocument_documentHighlight,
-        bufnr = buf or 0,
-      })
-      > 0
+  local clients = (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = buf })
+  clients = vim.tbl_filter(function(client)
+    return client.supports_method("textDocument/documentHighlight", { bufnr = buf })
+  end, clients)
+  return config.enabled and vim.tbl_contains(config.modes, mode) and #clients > 0
 end
 
 ---@private

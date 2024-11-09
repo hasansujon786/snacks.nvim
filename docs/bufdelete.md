@@ -7,12 +7,22 @@ a prompt will be shown to save or discard.
 
 <!-- docgen -->
 
+## 📚 Types
+
+```lua
+---@class snacks.bufdelete.Opts
+---@field buf? number Buffer to delete. Defaults to the current buffer
+---@field force? boolean Delete the buffer even if it is modified
+---@field filter? fun(buf: number): boolean Filter buffers to delete
+---@field wipe? boolean Wipe the buffer instead of deleting it (see `:h :bwipeout`)
+```
+
 ## 📦 Module
 
 ### `Snacks.bufdelete()`
 
 ```lua
----@type fun(buf?: number)
+---@type fun(buf?: number|snacks.bufdelete.Opts)
 Snacks.bufdelete()
 ```
 
@@ -21,7 +31,8 @@ Snacks.bufdelete()
 Delete all buffers
 
 ```lua
-Snacks.bufdelete.all()
+---@param opts? snacks.bufdelete.Opts
+Snacks.bufdelete.all(opts)
 ```
 
 ### `Snacks.bufdelete.delete()`
@@ -32,8 +43,8 @@ Delete a buffer:
 - or every buffer for which `buf` returns true if it is a function
 
 ```lua
----@param buf? number | fun(buf: number): boolean
-Snacks.bufdelete.delete(buf)
+---@param opts? number|snacks.bufdelete.Opts
+Snacks.bufdelete.delete(opts)
 ```
 
 ### `Snacks.bufdelete.other()`
@@ -41,5 +52,6 @@ Snacks.bufdelete.delete(buf)
 Delete all buffers except the current one
 
 ```lua
-Snacks.bufdelete.other()
+---@param opts? snacks.bufdelete.Opts
+Snacks.bufdelete.other(opts)
 ```

@@ -1,11 +1,12 @@
 ---@class snacks.gitbrowse
----@hide
 ---@overload fun(opts?: snacks.gitbrowse.Config)
 local M = setmetatable({}, {
   __call = function(t, ...)
     return t.open(...)
   end,
 })
+
+local uv = vim.uv or vim.loop
 
 ---@class snacks.gitbrowse.Config
 local defaults = {
@@ -75,12 +76,12 @@ end
 ---@param cmd string[]
 ---@param err string
 local function system(cmd, err)
-  local proc = vim.system(cmd, { text = true }):wait()
-  if proc.code ~= 0 then
-    Snacks.notify.error({ err, proc.stderr, proc.stdout }, { title = "Git Browse" })
+  local proc = vim.fn.system(cmd)
+  if vim.v.shell_error ~= 0 then
+    Snacks.notify.error({ err, proc }, { title = "Git Browse" })
     error(err)
   end
-  return vim.split(vim.trim(proc.stdout), "\n")
+  return vim.split(vim.trim(proc), "\n")
 end
 
 ---@param opts? snacks.gitbrowse.Config
@@ -92,7 +93,7 @@ end
 function M._open(opts)
   opts = Snacks.config.get("gitbrowse", defaults, opts)
   local file = vim.api.nvim_buf_get_name(0) ---@type string?
-  file = file and (vim.uv.fs_stat(file) or {}).type == "file" and vim.fs.normalize(file) or nil
+  file = file and (uv.fs_stat(file) or {}).type == "file" and vim.fs.normalize(file) or nil
   local cwd = file and vim.fn.fnamemodify(file, ":h") or vim.fn.getcwd()
   local fields = {
     branch = system({ "git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD" }, "Failed to get current branch")[1],

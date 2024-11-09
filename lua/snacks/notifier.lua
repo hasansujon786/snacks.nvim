@@ -1,4 +1,3 @@
----@hide
 ---@class snacks.notifier
 ---@overload fun(msg: string, level?: snacks.notifier.level|number, opts?: snacks.notifier.Notif.opts): number|string
 local M = setmetatable({}, {
@@ -6,6 +5,8 @@ local M = setmetatable({}, {
     return t.notify(...)
   end,
 })
+
+local uv = vim.uv or vim.loop
 
 --- Render styles:
 --- * compact: use border for icon and title
@@ -227,8 +228,12 @@ local function normlevel(level)
 end
 
 local function ts()
-  local ret = assert(vim.uv.clock_gettime("realtime"))
-  return ret.sec + ret.nsec / 1e9
+  if uv.clock_gettime then
+    local ret = assert(uv.clock_gettime("realtime"))
+    return ret.sec + ret.nsec / 1e9
+  end
+  local sec, usec = uv.gettimeofday()
+  return sec + usec / 1e6
 end
 
 local _id = 0
@@ -282,7 +287,7 @@ function N:init()
 end
 
 function N:start()
-  vim.uv.new_timer():start(
+  uv.new_timer():start(
     100,
     100,
     vim.schedule_wrap(function()
@@ -294,6 +299,7 @@ function N:start()
         self:layout()
       end, function(err)
         local trace = debug.traceback(err, 2)
+        print(err)
         vim.api.nvim_err_writeln(
           ("Snacks notifier failed. Dropping queue. Error:\n%s\n\nTrace:\n%s"):format(error, trace)
         )
@@ -308,8 +314,15 @@ function N:add(opts)
   local now = ts()
   local notif = vim.deepcopy(opts) --[[@as snacks.notifier.Notif]]
   notif.msg = notif.msg or ""
-  -- FIXME: normalize title, icon, etc to remove newlines
-  notif.title = notif.title or ""
+
+  -- NOTE: support nvim-notify style replace
+  ---@diagnostic disable-next-line: undefined-field
+  if not notif.id and notif.replace then
+    ---@diagnostic disable-next-line: undefined-field
+    notif.id = type(notif.replace) == "table" and notif.replace.id or notif.replace
+  end
+
+  notif.title = (notif.title or ""):gsub("\n", " ")
   notif.id = notif.id or next_id()
   notif.level = normlevel(notif.level)
   notif.icon = notif.icon or self.opts.icons[notif.level]
