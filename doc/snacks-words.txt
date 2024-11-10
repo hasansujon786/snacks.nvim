@@ -32,14 +32,14 @@ Auto-show LSP references and quickly navigate between them
 2. Module                                                *snacks-words-module*
 
 
-SNACKS.WORDS.CLEAR()                *snacks-words-module-snacks.words.clear()*
+`Snacks.words.clear()`                                  *Snacks.words.clear()*
 
 >lua
     Snacks.words.clear()
 <
 
 
-SNACKS.WORDS.IS_ENABLED()      *snacks-words-module-snacks.words.is_enabled()*
+`Snacks.words.is_enabled()`                        *Snacks.words.is_enabled()*
 
 >lua
     ---@param buf number?
@@ -47,7 +47,7 @@ SNACKS.WORDS.IS_ENABLED()      *snacks-words-module-snacks.words.is_enabled()*
 <
 
 
-SNACKS.WORDS.JUMP()                  *snacks-words-module-snacks.words.jump()*
+`Snacks.words.jump()`                                    *Snacks.words.jump()*
 
 >lua
     ---@param count number

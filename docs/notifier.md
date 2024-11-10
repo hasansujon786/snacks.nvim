@@ -121,6 +121,7 @@ vim.api.nvim_create_autocmd("LspProgress", {
   style = "compact",
   top_down = true, -- place notifications from top to bottom
   date_format = "%R", -- time format for notifications
+  refresh = 50, -- refresh at most every 50ms
 }
 ```
 

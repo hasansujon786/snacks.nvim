@@ -6,8 +6,6 @@ local M = setmetatable({}, {
   end,
 })
 
-local uv = vim.uv or vim.loop
-
 ---@alias snacks.lazygit.Color {fg?:string, bg?:string, bold?:boolean}
 
 ---@class snacks.lazygit.Theme: table<number, snacks.lazygit.Color>

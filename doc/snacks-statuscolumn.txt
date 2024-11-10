@@ -33,7 +33,7 @@ Table of Contents                      *snacks-statuscolumn-table-of-contents*
 2. Module                                         *snacks-statuscolumn-module*
 
 
-SNACKS.STATUSCOLUMN()       *snacks-statuscolumn-module-snacks.statuscolumn()*
+`Snacks.statuscolumn()`                                *Snacks.statuscolumn()*
 
 >lua
     ---@type fun(): string
@@ -41,7 +41,7 @@ SNACKS.STATUSCOLUMN()       *snacks-statuscolumn-module-snacks.statuscolumn()*
 <
 
 
-SNACKS.STATUSCOLUMN.GET()*snacks-statuscolumn-module-snacks.statuscolumn.get()*
+`Snacks.statuscolumn.get()`                         *Snacks.statuscolumn.get()*
 
 >lua
     ---@return string

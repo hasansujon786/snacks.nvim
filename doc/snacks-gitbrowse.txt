@@ -61,7 +61,7 @@ Open the repo of the active file in the browser (e.g., GitHub)
 2. Module                                            *snacks-gitbrowse-module*
 
 
-SNACKS.GITBROWSE()                *snacks-gitbrowse-module-snacks.gitbrowse()*
+`Snacks.gitbrowse()`                                      *Snacks.gitbrowse()*
 
 >lua
     ---@type fun(opts?: snacks.gitbrowse.Config)
@@ -69,7 +69,7 @@ SNACKS.GITBROWSE()                *snacks-gitbrowse-module-snacks.gitbrowse()*
 <
 
 
-SNACKS.GITBROWSE.GET_URL()*snacks-gitbrowse-module-snacks.gitbrowse.get_url()*
+`Snacks.gitbrowse.get_url()`                      *Snacks.gitbrowse.get_url()*
 
 >lua
     ---@param repo string
@@ -78,7 +78,7 @@ SNACKS.GITBROWSE.GET_URL()*snacks-gitbrowse-module-snacks.gitbrowse.get_url()*
 <
 
 
-SNACKS.GITBROWSE.OPEN()      *snacks-gitbrowse-module-snacks.gitbrowse.open()*
+`Snacks.gitbrowse.open()`                            *Snacks.gitbrowse.open()*
 
 >lua
     ---@param opts? snacks.gitbrowse.Config

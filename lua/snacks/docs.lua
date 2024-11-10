@@ -331,6 +331,26 @@ function M._build()
   vim.cmd.checktime()
 end
 
+function M.fix_titles()
+  for file, t in vim.fs.dir("doc", { depth = 1 }) do
+    if t == "file" and file:find("%.txt$") then
+      local lines = vim.fn.readfile("doc/" .. file) --[[@as string[] ]]
+      for i, line in ipairs(lines) do
+        -- Example: SNACKS.GIT.BLAME_LINE()            *snacks-git-module-snacks.git.blame_line()*
+        local func = line:gsub("^SNACKS.*module%-snacks(.+%(%))%*$", "Snacks%1")
+        if func ~= line then
+          local left = ("`%s`"):format(func)
+          local right = ("*%s*"):format(func)
+          line = left .. string.rep(" ", #line - #left - #right) .. right
+          lines[i] = line
+        end
+      end
+      vim.fn.writefile(lines, "doc/" .. file)
+    end
+  end
+  vim.cmd.helptags("doc")
+end
+
 function M.build()
   local ok, err = pcall(M._build)
   if not ok then

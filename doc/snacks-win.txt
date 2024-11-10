@@ -166,7 +166,7 @@ SPLIT                                                *snacks-win-styles-split*
 <
 
 
-SNACKS.WIN()                                  *snacks-win-module-snacks.win()*
+`Snacks.win()`                                                  *Snacks.win()*
 
 >lua
     ---@type fun(opts? :snacks.win.Config): snacks.win
@@ -174,7 +174,7 @@ SNACKS.WIN()                                  *snacks-win-module-snacks.win()*
 <
 
 
-SNACKS.WIN.NEW()                          *snacks-win-module-snacks.win.new()*
+`Snacks.win.new()`                                          *Snacks.win.new()*
 
 >lua
     ---@param opts? snacks.win.Config

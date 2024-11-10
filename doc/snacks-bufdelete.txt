@@ -31,7 +31,7 @@ discard.
 2. Module                                            *snacks-bufdelete-module*
 
 
-SNACKS.BUFDELETE()                *snacks-bufdelete-module-snacks.bufdelete()*
+`Snacks.bufdelete()`                                      *Snacks.bufdelete()*
 
 >lua
     ---@type fun(buf?: number|snacks.bufdelete.Opts)
@@ -39,7 +39,7 @@ SNACKS.BUFDELETE()                *snacks-bufdelete-module-snacks.bufdelete()*
 <
 
 
-SNACKS.BUFDELETE.ALL()        *snacks-bufdelete-module-snacks.bufdelete.all()*
+`Snacks.bufdelete.all()`                              *Snacks.bufdelete.all()*
 
 Delete all buffers
 
@@ -49,7 +49,7 @@ Delete all buffers
 <
 
 
-SNACKS.BUFDELETE.DELETE()  *snacks-bufdelete-module-snacks.bufdelete.delete()*
+`Snacks.bufdelete.delete()`                        *Snacks.bufdelete.delete()*
 
 Delete a buffer: - either the current buffer if `buf` is not provided - or the
 buffer `buf` if it is a number - or every buffer for which `buf` returns true
@@ -61,7 +61,7 @@ if it is a function
 <
 
 
-SNACKS.BUFDELETE.OTHER()    *snacks-bufdelete-module-snacks.bufdelete.other()*
+`Snacks.bufdelete.other()`                          *Snacks.bufdelete.other()*
 
 Delete all buffers except the current one
 

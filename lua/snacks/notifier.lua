@@ -116,6 +116,7 @@ local defaults = {
   style = "compact",
   top_down = true, -- place notifications from top to bottom
   date_format = "%R", -- time format for notifications
+  refresh = 50, -- refresh at most every 50ms
 }
 
 ---@class snacks.notifier.Class
@@ -288,8 +289,8 @@ end
 
 function N:start()
   uv.new_timer():start(
-    100,
-    100,
+    self.opts.refresh,
+    self.opts.refresh,
     vim.schedule_wrap(function()
       if not next(self.queue) then
         return
@@ -573,7 +574,8 @@ end
 
 function N:layout()
   local layout = self:new_layout()
-  local changes = 0
+  local wins_updated = 0
+  local wins_created = 0
   for _, notif in ipairs(assert(self.sorted)) do
     if layout.free < (self.opts.height.min + 2) then -- not enough space
       if notif.win then
@@ -594,7 +596,11 @@ function N:layout()
       if notif.layout.top then
         layout.mark(notif.layout.top, notif.layout.height, false)
         if not vim.deep_equal(prev_layout, notif.layout) then
-          changes = changes + 1
+          if notif.win:win_valid() then
+            wins_updated = wins_updated + 1
+          else
+            wins_created = wins_created + 1
+          end
           notif.win.opts.row = notif.layout.top - 1
           notif.win.opts.col = vim.o.columns - notif.layout.width - self.opts.margin.right
           notif.shown = notif.shown or ts()
@@ -603,7 +609,17 @@ function N:layout()
       end
     end
   end
-  return changes > 0 and (vim.cmd.redraw() or true)
+
+  local redraw = false
+    or wins_created > 0 -- always redraw when new windows are created
+    or (
+      wins_updated > 0 -- only redraw updated windows when not searching
+      and not (vim.tbl_contains({ "/", "?" }, vim.fn.getcmdtype()))
+    )
+
+  if redraw then
+    vim.cmd.redraw()
+  end
 end
 
 ---@param msg string
