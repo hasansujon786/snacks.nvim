@@ -492,9 +492,12 @@ function N:render(notif)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
   local pad = self.opts.padding and (win:add_padding() or 2) or 0
-  local width = 0
+  local width = win:border_text_width()
   for _, line in ipairs(lines) do
     width = math.max(width, vim.fn.strdisplaywidth(line) + pad)
+  end
+  if win.opts.border and win.opts.border ~= "none" and win.opts.border ~= "" then
+    width = width + 2
   end
   width = dim(width, self.opts.width.min, self.opts.width.max, vim.o.columns)
 

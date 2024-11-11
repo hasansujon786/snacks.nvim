@@ -147,6 +147,12 @@ Snacks.win.new(opts)
 win:add_padding()
 ```
 
+### `win:border_text_width()`
+
+```lua
+win:border_text_width()
+```
+
 ### `win:buf_valid()`
 
 ```lua
@@ -164,6 +170,12 @@ win:close(opts)
 
 ```lua
 win:focus()
+```
+
+### `win:has_border()`
+
+```lua
+win:has_border()
 ```
 
 ### `win:hide()`

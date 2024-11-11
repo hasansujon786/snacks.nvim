@@ -14,9 +14,11 @@ Table of Contents                               *snacks-win-table-of-contents*
   - Snacks.win()                              |snacks-win-module-snacks.win()|
   - Snacks.win.new()                      |snacks-win-module-snacks.win.new()|
   - win:add_padding()                    |snacks-win-module-win:add_padding()|
+  - win:border_text_width()        |snacks-win-module-win:border_text_width()|
   - win:buf_valid()                        |snacks-win-module-win:buf_valid()|
   - win:close()                                |snacks-win-module-win:close()|
   - win:focus()                                |snacks-win-module-win:focus()|
+  - win:has_border()                      |snacks-win-module-win:has_border()|
   - win:hide()                                  |snacks-win-module-win:hide()|
   - win:is_floating()                    |snacks-win-module-win:is_floating()|
   - win:lines()                                |snacks-win-module-win:lines()|
@@ -190,6 +192,13 @@ WIN:ADD_PADDING()                        *snacks-win-module-win:add_padding()*
 <
 
 
+WIN:BORDER_TEXT_WIDTH()            *snacks-win-module-win:border_text_width()*
+
+>lua
+    win:border_text_width()
+<
+
+
 WIN:BUF_VALID()                            *snacks-win-module-win:buf_valid()*
 
 >lua
@@ -209,6 +218,13 @@ WIN:FOCUS()                                    *snacks-win-module-win:focus()*
 
 >lua
     win:focus()
+<
+
+
+WIN:HAS_BORDER()                          *snacks-win-module-win:has_border()*
+
+>lua
+    win:has_border()
 <
 
 
