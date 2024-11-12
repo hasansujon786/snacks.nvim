@@ -138,6 +138,7 @@ vim.api.nvim_create_autocmd("LspProgress", {
     winblend = 5,
     wrap = false,
     conceallevel = 2,
+    colorcolumn = "",
   },
   bo = { filetype = "snacks_notif" },
 }

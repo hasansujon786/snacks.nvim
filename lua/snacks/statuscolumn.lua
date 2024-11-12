@@ -1,3 +1,5 @@
+local Snacks = require("snacks")
+
 ---@class snacks.statuscolumn
 ---@overload fun(): string
 local M = setmetatable({}, {
