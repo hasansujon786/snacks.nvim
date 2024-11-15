@@ -1,4 +1,4 @@
-*snacks.nvim.txt*           For Neovim           Last change: 2024 November 12
+*snacks.nvim.txt*           For Neovim           Last change: 2024 November 14
 
 ==============================================================================
 Table of Contents                              *snacks.nvim-table-of-contents*
@@ -84,8 +84,11 @@ LAZY.NVIM ~
   <https://github.com/folke/snacks.nvim/blob/main/lua/snacks/init.lua> to see
   what it does.
 
-  [!tip] If you don’t need these plugins, you can disable them, or skip `setup`
-  altogether.
+  [!caution] You need to explicitely pass options for a plugin or set `enabled =
+  true` to enable it.
+
+  ![tip] It’ a good idea to run `:checkhealth snacks` to see if everything is
+  set up correctly.
 >lua
     {
       "folke/snacks.nvim",
@@ -95,6 +98,11 @@ LAZY.NVIM ~
         -- your configuration comes here
         -- or leave it empty to use the default settings
         -- refer to the configuration section below
+        bigfile = { enabled = true },
+        notifier = { enabled = true },
+        quickfile = { enabled = true },
+        statuscolumn = { enabled = true },
+        words = { enabled = true },
       },
     }
 <
@@ -117,18 +125,18 @@ Default Options ~
     ---@field notifier? snacks.notifier.Config | { enabled: boolean }
     ---@field quickfile? { enabled: boolean }
     ---@field statuscolumn? snacks.statuscolumn.Config  | { enabled: boolean }
+    ---@field styles? table<string, snacks.win.Config>
     ---@field terminal? snacks.terminal.Config
     ---@field toggle? snacks.toggle.Config
-    ---@field styles? table<string, snacks.win.Config>
     ---@field win? snacks.win.Config
     ---@field words? snacks.words.Config
     {
       styles = {},
-      bigfile = { enabled = true },
-      notifier = { enabled = true },
-      quickfile = { enabled = true },
-      statuscolumn = { enabled = true },
-      words = { enabled = true },
+      bigfile = { enabled = false },
+      notifier = { enabled = false },
+      quickfile = { enabled = false },
+      statuscolumn = { enabled = false },
+      words = { enabled = false },
     }
 <
 
@@ -224,70 +232,80 @@ HIGHLIGHT GROUPS                    *snacks.nvim-snacks.nvim-highlight-groups*
 
 Click to see all highlight groups ~
 
-  ----------------------------------------------------------------------------
-  Highlight Group             Default Group      Description
-  --------------------------- ------------------ -----------------------------
-  SnacksNormal                NormalFloat        Normal for the float window
+  --------------------------------------------------------------------------
+  Highlight Group             Default Group     Description
+  --------------------------- ----------------- ----------------------------
+  SnacksNormal                NormalFloat       Normal for the float window
 
-  SnacksWinBar                Title              Title of the window
+  SnacksWinBar                Title             Title of the window
 
-  SnacksBackdrop              none               Backdrop
+  SnacksBackdrop              none              Backdrop
 
-  SnacksNormalNC              NormalFloat        Normal for non-current
-                                                 windows
+  SnacksNormalNC              NormalFloat       Normal for non-current
+                                                windows
 
-  SnacksWinBarNC              SnacksWinBar       Title for non-current windows
+  SnacksWinBarNC              SnacksWinBar      Title for non-current
+                                                windows
 
-  SnacksNotifierInfo          none               Notification window for Info
+  SnacksNotifierInfo          none              Notification window for Info
 
-  SnacksNotifierWarn          none               Notification window for Warn
+  SnacksNotifierWarn          none              Notification window for Warn
 
-  SnacksNotifierDebug         none               Notification window for Debug
+  SnacksNotifierDebug         none              Notification window for
+                                                Debug
 
-  SnacksNotifierError         none               Notification window for Error
+  SnacksNotifierError         none              Notification window for
+                                                Error
 
-  SnacksNotifierTrace         none               Notification window for Trace
+  SnacksNotifierTrace         none              Notification window for
+                                                Trace
 
-  SnacksNotifierIconInfo      none               Icon for Info notification
+  SnacksNotifierIconInfo      none              Icon for Info notification
 
-  SnacksNotifierIconWarn      none               Icon for Warn notification
+  SnacksNotifierIconWarn      none              Icon for Warn notification
 
-  SnacksNotifierIconDebug     none               Icon for Debug notification
+  SnacksNotifierIconDebug     none              Icon for Debug notification
 
-  SnacksNotifierIconError     none               Icon for Error notification
+  SnacksNotifierIconError     none              Icon for Error notification
 
-  SnacksNotifierIconTrace     none               Icon for Trace notification
+  SnacksNotifierIconTrace     none              Icon for Trace notification
 
-  SnacksNotifierTitleInfo     none               Title for Info notification
+  SnacksNotifierTitleInfo     none              Title for Info notification
 
-  SnacksNotifierTitleWarn     none               Title for Warn notification
+  SnacksNotifierTitleWarn     none              Title for Warn notification
 
-  SnacksNotifierTitleDebug    none               Title for Debug notification
+  SnacksNotifierTitleDebug    none              Title for Debug notification
 
-  SnacksNotifierTitleError    none               Title for Error notification
+  SnacksNotifierTitleError    none              Title for Error notification
 
-  SnacksNotifierTitleTrace    none               Title for Trace notification
+  SnacksNotifierTitleTrace    none              Title for Trace notification
 
-  SnacksNotifierBorderInfo    none               Border for Info notification
+  SnacksNotifierBorderInfo    none              Border for Info notification
 
-  SnacksNotifierBorderWarn    none               Border for Warn notification
+  SnacksNotifierBorderWarn    none              Border for Warn notification
 
-  SnacksNotifierBorderDebug   none               Border for Debug notification
+  SnacksNotifierBorderDebug   none              Border for Debug
+                                                notification
 
-  SnacksNotifierBorderError   none               Border for Error notification
+  SnacksNotifierBorderError   none              Border for Error
+                                                notification
 
-  SnacksNotifierBorderTrace   none               Border for Trace notification
+  SnacksNotifierBorderTrace   none              Border for Trace
+                                                notification
 
-  SnacksNotifierFooterInfo    DiagnosticInfo     Footer for Info notification
+  SnacksNotifierFooterInfo    DiagnosticInfo    Footer for Info notification
 
-  SnacksNotifierFooterWarn    DiagnosticWarn     Footer for Warn notification
+  SnacksNotifierFooterWarn    DiagnosticWarn    Footer for Warn notification
 
-  SnacksNotifierFooterDebug   DiagnosticHint     Footer for Debug notification
+  SnacksNotifierFooterDebug   DiagnosticHint    Footer for Debug
+                                                notification
 
-  SnacksNotifierFooterError   DiagnosticError    Footer for Error notification
+  SnacksNotifierFooterError   DiagnosticError   Footer for Error
+                                                notification
 
-  SnacksNotifierFooterTrace   DiagnosticHint     Footer for Trace notification
-  ----------------------------------------------------------------------------
+  SnacksNotifierFooterTrace   DiagnosticHint    Footer for Trace
+                                                notification
+  --------------------------------------------------------------------------
 
 Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
 

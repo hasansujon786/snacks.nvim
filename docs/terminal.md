@@ -118,6 +118,21 @@ Snacks.terminal = {}
 Snacks.terminal()
 ```
 
+### `Snacks.terminal.colorize()`
+
+Colorize the current buffer.
+Replaces ansii color codes with the actual colors.
+
+Example:
+
+```sh
+ls -la --color=always | nvim - -c "lua Snacks.terminal.colorize()"
+```
+
+```lua
+Snacks.terminal.colorize()
+```
+
 ### `Snacks.terminal.open()`
 
 Open a new terminal window.

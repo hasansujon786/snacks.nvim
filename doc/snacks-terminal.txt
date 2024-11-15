@@ -11,6 +11,7 @@ Table of Contents                          *snacks-terminal-table-of-contents*
 4. Types                                               |snacks-terminal-types|
 5. Module                                             |snacks-terminal-module|
   - Snacks.terminal()               |snacks-terminal-module-snacks.terminal()|
+  - Snacks.terminal.colorize()|snacks-terminal-module-snacks.terminal.colorize()|
   - Snacks.terminal.open()     |snacks-terminal-module-snacks.terminal.open()|
   - Snacks.terminal.toggle() |snacks-terminal-module-snacks.terminal.toggle()|
 6. Links                                               |snacks-terminal-links|
@@ -139,6 +140,21 @@ TERMINAL                                     *snacks-terminal-styles-terminal*
 >lua
     ---@type fun(cmd?: string|string[], opts?: snacks.terminal.Opts): snacks.terminal
     Snacks.terminal()
+<
+
+
+`Snacks.terminal.colorize()`                      *Snacks.terminal.colorize()*
+
+Colorize the current buffer. Replaces ansii color codes with the actual colors.
+
+Example:
+
+>sh
+    ls -la --color=always | nvim - -c "lua Snacks.terminal.colorize()"
+<
+
+>lua
+    Snacks.terminal.colorize()
 <
 
 

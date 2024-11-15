@@ -92,7 +92,7 @@ function M.open(cmd, opts)
       cwd = opts.cwd,
       env = opts.env,
     }
-    vim.fn.termopen(cmd or { vim.o.shell }, vim.tbl_isempty(term_opts) and vim.empty_dict() or term_opts)
+    vim.fn.termopen(cmd or M.parse(vim.o.shell), vim.tbl_isempty(term_opts) and vim.empty_dict() or term_opts)
   end)
 
   if opts.interactive ~= false then
@@ -131,6 +131,86 @@ function M.toggle(cmd, opts)
     terminals[id] = M.open(cmd, opts)
   end
   return terminals[id]
+end
+
+--- Parses a shell command into a table of arguments.
+--- - spaces inside quotes (only double quotes are supported) are preserved
+--- - backslash
+---@private
+---@param cmd string
+function M.parse(cmd)
+  local args = {}
+  local in_quotes, escape_next, current = false, false, ""
+  local function add()
+    if #current > 0 then
+      table.insert(args, current)
+      current = ""
+    end
+  end
+
+  for i = 1, #cmd do
+    local char = cmd:sub(i, i)
+    if escape_next then
+      current = current .. ((char == '"' or char == "\\") and "" or "\\") .. char
+      escape_next = false
+    elseif char == "\\" and in_quotes then
+      escape_next = true
+    elseif char == '"' then
+      in_quotes = not in_quotes
+    elseif char:find("[ \t]") and not in_quotes then
+      add()
+    else
+      current = current .. char
+    end
+  end
+  add()
+  return args
+end
+
+--- Colorize the current buffer.
+--- Replaces ansii color codes with the actual colors.
+---
+--- Example:
+---
+--- ```sh
+--- ls -la --color=always | nvim - -c "lua Snacks.terminal.colorize()"
+--- ```
+function M.colorize()
+  vim.wo.number = false
+  vim.wo.relativenumber = false
+  vim.wo.statuscolumn = ""
+  vim.wo.signcolumn = "no"
+  vim.opt.listchars = { space = " " }
+
+  local buf = vim.api.nvim_get_current_buf()
+
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  while #lines > 0 and vim.trim(lines[#lines]) == "" do
+    lines[#lines] = nil
+  end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+
+  vim.api.nvim_chan_send(vim.api.nvim_open_term(buf, {}), table.concat(lines, "\r\n"))
+  vim.keymap.set("n", "q", "<cmd>q<cr>", { silent = true, buffer = buf })
+  vim.api.nvim_create_autocmd("TextChanged", {
+    buffer = buf,
+    callback = function()
+      pcall(vim.api.nvim_win_set_cursor, 0, { #lines, 0 })
+    end,
+  })
+  vim.api.nvim_create_autocmd("TermEnter", { buffer = buf, command = "stopinsert" })
+end
+
+---@private
+function M.health()
+  local cmd = M.parse(vim.o.shell)
+  local ok = cmd[1] and (vim.fn.executable(cmd[1]) == 1)
+  local msg = ("shell %s\n- `vim.o.shell`: %s\n- `parsed`: %s"):format(
+    ok and "configured" or "not found",
+    vim.o.shell,
+    vim.inspect(cmd)
+  )
+  Snacks.health[ok and "ok" or "error"](msg)
 end
 
 return M

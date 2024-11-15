@@ -96,9 +96,7 @@ local function get_color(v)
   for _, c in ipairs({ "fg", "bg" }) do
     if v[c] then
       local name = v[c]
-      local hl = vim.api.nvim_get_hl and vim.api.nvim_get_hl(0, { name = name, link = false })
-        or vim.api.nvim_get_hl_by_name(name, true)
-
+      local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
       local hl_color ---@type number?
       if c == "fg" then
         hl_color = hl and hl.fg or hl.foreground
@@ -195,6 +193,12 @@ function M.log_file(opts)
   opts.args = { "-f", file }
   opts.cwd = vim.fn.fnamemodify(file, ":h")
   return M.open(opts)
+end
+
+---@private
+function M.health()
+  local ok = vim.fn.executable("lazygit") == 1
+  Snacks.health[ok and "ok" or "error"](("{lazygit} %sinstalled"):format(ok and "" or "not "))
 end
 
 return M
