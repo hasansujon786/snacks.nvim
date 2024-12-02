@@ -147,14 +147,14 @@ end
 ---@param sign? snacks.statuscolumn.Sign
 function M.icon(sign)
   if not sign then
-    return "  "
+    return " "
   end
   local key = (sign.text or "") .. (sign.texthl or "")
   if icon_cache[key] then
     return icon_cache[key]
   end
-  local text = vim.fn.strcharpart(sign.text or "", 0, 2) ---@type string
-  text = text .. string.rep(" ", 2 - vim.fn.strchars(text))
+  local text = vim.fn.strcharpart(sign.text or "", 0, 1) ---@type string
+  text = text .. string.rep(" ", 1 - vim.fn.strchars(text))
   icon_cache[key] = sign.texthl and ("%#" .. sign.texthl .. "#" .. text .. "%*") or text
   return icon_cache[key]
 end
@@ -198,8 +198,8 @@ function M._get()
       end
     end
 
-    components[1] = left and M.icon(left) or "  " -- left
-    components[3] = is_file and (right and M.icon(right) or "  ") or "" -- right
+    components[1] = left and M.icon(left) or " " -- left
+    components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
   end
 
   -- Numbers in Neovim are weird
@@ -216,7 +216,7 @@ function M._get()
         components[2] = is_relnum and "%r" or "%l" -- other lines
       end
     end
-    components[2] = "%=" .. components[2] .. " " -- right align
+    components[2] = "%=" .. components[2] .. "%#None#" -- right align
   end
 
   if vim.v.virtnum ~= 0 then
