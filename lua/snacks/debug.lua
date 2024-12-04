@@ -58,7 +58,12 @@ function M.run(opts)
     end
     local from = vim.api.nvim_buf_get_mark(buf, "<")
     local to = vim.api.nvim_buf_get_mark(buf, ">")
-    lines = vim.api.nvim_buf_get_text(buf, from[1] - 1, from[2], to[1] - 1, to[2] + 1, {})
+
+    -- for some reason, sometimes the column is off by one
+    -- see: https://github.com/folke/snacks.nvim/issues/190
+    local col_to = math.min(to[2] + 1, #vim.api.nvim_buf_get_lines(buf, to[1] - 1, to[1], false)[1])
+
+    lines = vim.api.nvim_buf_get_text(buf, from[1] - 1, from[2], to[1] - 1, col_to, {})
     -- Insert empty lines to keep the line numbers
     for _ = 1, from[1] - 1 do
       table.insert(lines, 1, "")

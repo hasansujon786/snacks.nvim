@@ -497,18 +497,25 @@ function D:resolve(item, results, parent)
       first_child = first_child + 1
     end
 
+    -- correct first/last taking hidden items into account
+    local first, last = first_child, #results
+    for c = first_child, #results do
+      first = first or not results[c].hidden and c or nil
+      last = not results[c].hidden and c or last
+    end
+
     if item.gap then -- add padding between child items
-      for i = first_child, #results - 1 do
+      for i = first, last - 1 do
         results[i].padding = item.gap
       end
     end
     if item.padding then -- add padding to the first and last child items
       local padding = self:padding(item)
-      if padding[2] > 0 and results[first_child] then
-        results[first_child].padding = { 0, padding[2] }
+      if padding[2] > 0 and results[first] then
+        results[first].padding = { 0, padding[2] }
       end
-      if padding[1] > 0 and results[#results] then
-        results[#results].padding = { padding[1], 0 }
+      if padding[1] > 0 and results[last] then
+        results[last].padding = { padding[1], 0 }
       end
     end
   elseif type(item) ~= "table" then
