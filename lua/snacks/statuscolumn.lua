@@ -17,7 +17,7 @@ M.meta = {
 -- They show when either number or relativenumber is true
 local LINE_NR = "%=%{%(&number || &relativenumber) && v:virtnum == 0 ? ("
   .. (vim.fn.has("nvim-0.11") == 1 and '"%l"' or 'v:relnum == 0 ? (&number ? "%l" : "%r") : (&relativenumber ? "%r" : "%l")')
-  .. ') : ""%} '
+  .. ') : ""%}%#None#'
 
 ---@class snacks.statuscolumn.Config
 ---@field enabled? boolean
@@ -158,14 +158,14 @@ end
 ---@param sign? snacks.statuscolumn.Sign
 function M.icon(sign)
   if not sign then
-    return "  "
+    return " "
   end
   local key = (sign.text or "") .. (sign.texthl or "")
   if icon_cache[key] then
     return icon_cache[key]
   end
-  local text = vim.fn.strcharpart(sign.text or "", 0, 2) ---@type string
-  text = text .. string.rep(" ", 2 - vim.fn.strchars(text))
+  local text = vim.fn.strcharpart(sign.text or "", 0, 1) ---@type string
+  text = text .. string.rep(" ", 1 - vim.fn.strchars(text))
   icon_cache[key] = sign.texthl and ("%#" .. sign.texthl .. "#" .. text .. "%*") or text
   return icon_cache[key]
 end
@@ -209,11 +209,11 @@ function M._get()
           right.texthl = git.texthl
         end
       end
-      components[1] = left and M.icon(left) or "  " -- left
-      components[3] = is_file and (right and M.icon(right) or "  ") or "" -- right
+      components[1] = left and M.icon(left) or " " -- left
+      components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
     else
-      components[1] = "  "
-      components[3] = is_file and "  " or ""
+      components[1] = " "
+      components[3] = is_file and " " or ""
     end
   end
 
