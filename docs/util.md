@@ -74,6 +74,18 @@ Check if the colorscheme is transparent.
 Snacks.util.is_transparent()
 ```
 
+### `Snacks.util.on_module()`
+
+Call a function when a module is loaded.
+The callback is called immediately if the module is already loaded.
+Otherwise, it is called when the module is loaded.
+
+```lua
+---@param modname string
+---@param cb fun(modname:string)
+Snacks.util.on_module(modname, cb)
+```
+
 ### `Snacks.util.redraw()`
 
 Redraw the window.

@@ -107,8 +107,10 @@ function Toggle:map(keys, opts)
   self.opts.map(mode, keys, function()
     self:toggle()
   end, opts)
-  if self.opts.which_key and pcall(require, "which-key") then
-    self:_wk(keys, mode)
+  if self.opts.which_key then
+    Snacks.util.on_module("which-key", function()
+      self:_wk(keys, mode)
+    end)
   end
 end
 
@@ -328,6 +330,23 @@ function M.scroll()
         Snacks.scroll.enable()
       else
         Snacks.scroll.disable()
+      end
+    end,
+  })
+end
+
+function M.zen()
+  return M.new({
+    id = "zen",
+    name = "Zen Mode",
+    get = function()
+      return Snacks.zen.win and Snacks.zen.win:valid() or false
+    end,
+    set = function(state)
+      if state then
+        Snacks.zen()
+      elseif Snacks.zen.win then
+        Snacks.zen.win:close()
       end
     end,
   })

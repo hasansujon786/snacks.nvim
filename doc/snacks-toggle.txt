@@ -21,6 +21,7 @@ Table of Contents                            *snacks-toggle-table-of-contents*
   - Snacks.toggle.scroll()       |snacks-toggle-module-snacks.toggle.scroll()|
   - Snacks.toggle.treesitter()|snacks-toggle-module-snacks.toggle.treesitter()|
   - Snacks.toggle.words()         |snacks-toggle-module-snacks.toggle.words()|
+  - Snacks.toggle.zen()             |snacks-toggle-module-snacks.toggle.zen()|
 5. Links                                                 |snacks-toggle-links|
 Toggle keymaps integrated with which-key icons / colors
 
@@ -189,6 +190,13 @@ Toggle keymaps integrated with which-key icons / colors
 
 >lua
     Snacks.toggle.words()
+<
+
+
+`Snacks.toggle.zen()`                                    *Snacks.toggle.zen()*
+
+>lua
+    Snacks.toggle.zen()
 <
 
 ==============================================================================

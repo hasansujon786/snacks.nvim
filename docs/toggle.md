@@ -150,3 +150,9 @@ Snacks.toggle.treesitter(opts)
 ```lua
 Snacks.toggle.words()
 ```
+
+### `Snacks.toggle.zen()`
+
+```lua
+Snacks.toggle.zen()
+```
