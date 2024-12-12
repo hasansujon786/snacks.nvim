@@ -100,6 +100,7 @@ function M.zen(opts)
   if M.win and M.win:valid() then
     M.win:close()
     M.win = nil
+    return
   end
 
   local parent_win = vim.api.nvim_get_current_win()

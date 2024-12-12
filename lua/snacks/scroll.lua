@@ -32,8 +32,9 @@ local defaults = {
   debug = false,
 }
 
-local SCROLL_UP, SCROLL_DOWN = vim.keycode("<c-e>"), vim.keycode("<c-y>")
-local SCROLL_WHEEL_DOWN, SCROLL_WHEEL_UP = vim.keycode("<ScrollWheelDown>"), vim.keycode("<ScrollWheelUp>")
+local SCROLL_UP, SCROLL_DOWN = Snacks.util.keycode("<c-e>"), Snacks.util.keycode("<c-y>")
+local SCROLL_WHEEL_DOWN, SCROLL_WHEEL_UP =
+  Snacks.util.keycode("<ScrollWheelDown>"), Snacks.util.keycode("<ScrollWheelUp>")
 local mouse_scrolling = false
 
 M.enabled = false
@@ -207,6 +208,7 @@ function M.check(win)
   virtualedit(state, "all")
 
   local scrolls = 0
+  local from_virtcol, to_virtcol = 0, 0
   vim.api.nvim_win_call(state.win, function()
     -- reset to current state
     vim.fn.winrestview(state.current)
@@ -214,11 +216,11 @@ function M.check(win)
     -- calculate the amount of lines to scroll, taking folds into account
     scrolls = visible_lines(state.current.topline, state.target.topline)
     scrolls = scrolls * (state.target.topline > state.current.topline and -1 or 1)
+    from_virtcol = vim.fn.virtcol({ state.current.lnum, state.current.col })
+    to_virtcol = vim.fn.virtcol({ state.target.lnum, state.target.col })
   end)
 
   local from_lnum = state.current.lnum
-  local from_virtcol = vim.fn.virtcol({ state.current.lnum, state.current.col }, false, win)
-  local to_virtcol = vim.fn.virtcol({ state.target.lnum, state.target.col }, false, win)
 
   state.anim = Snacks.animate(0, scrolls, function(value, ctx)
     if not vim.api.nvim_win_is_valid(win) then
@@ -258,7 +260,7 @@ function M.check(win)
         vim.fn.winrestview(state.current)
       end
     end)
-  end, vim.tbl_extend("keep", { int = true, id = ("scroll_%d"):format(win) }, config.animate))
+  end, vim.tbl_extend("keep", { int = true, id = ("scroll_%d"):format(win), buf = state.buf }, config.animate))
 end
 
 ---@private

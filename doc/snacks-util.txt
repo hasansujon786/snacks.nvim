@@ -12,6 +12,8 @@ Table of Contents                              *snacks-util-table-of-contents*
   - Snacks.util.file_encode()   |snacks-util-module-snacks.util.file_encode()|
   - Snacks.util.icon()                 |snacks-util-module-snacks.util.icon()|
   - Snacks.util.is_transparent()|snacks-util-module-snacks.util.is_transparent()|
+  - Snacks.util.keycode()           |snacks-util-module-snacks.util.keycode()|
+  - Snacks.util.on_module()       |snacks-util-module-snacks.util.on_module()|
   - Snacks.util.redraw()             |snacks-util-module-snacks.util.redraw()|
   - Snacks.util.redraw_range() |snacks-util-module-snacks.util.redraw_range()|
   - Snacks.util.set_hl()             |snacks-util-module-snacks.util.set_hl()|
@@ -97,6 +99,27 @@ Check if the colorscheme is transparent.
 
 >lua
     Snacks.util.is_transparent()
+<
+
+
+`Snacks.util.keycode()`                                *Snacks.util.keycode()*
+
+>lua
+    ---@param str string
+    Snacks.util.keycode(str)
+<
+
+
+`Snacks.util.on_module()`                            *Snacks.util.on_module()*
+
+Call a function when a module is loaded. The callback is called immediately if
+the module is already loaded. Otherwise, it is called when the module is
+loaded.
+
+>lua
+    ---@param modname string
+    ---@param cb fun(modname:string)
+    Snacks.util.on_module(modname, cb)
 <
 
 

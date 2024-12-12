@@ -38,6 +38,7 @@ local defaults = {
 }
 
 ---@class snacks.animate.Opts: snacks.animate.Config
+---@field buf? number optional buffer to check if animations should be enabled
 ---@field int? boolean interpolate the value to an integer
 ---@field id? number|string unique identifier for the animation
 
@@ -70,12 +71,19 @@ Animation.__index = Animation
 ---@return number value, boolean done
 function Animation:next()
   self.start = self.start == 0 and uv.hrtime() or self.start
+  if not self:enabled() then
+    return self.to, true
+  end
   local elapsed = (uv.hrtime() - self.start) / 1e6 -- ms
   local b, c, d = self.from, self.to - self.from, self.duration
   local t, done = math.min(elapsed, d), elapsed >= d
   local value = done and b + c or self.easing(t, b, c, d)
   value = self.opts.int and (value + (2 ^ 52 + 2 ^ 51) - (2 ^ 52 + 2 ^ 51)) or value
   return value, done
+end
+
+function Animation:enabled()
+  return vim.g.snacks_animate ~= false and (vim.b[self.opts.buf or 0].snacks_animate ~= false)
 end
 
 ---@return boolean done

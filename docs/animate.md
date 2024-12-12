@@ -8,6 +8,13 @@ Efficient animation library including over 45 easing functions:
 There's at any given time at most one timer running, that takes
 care of all active animations, controlled by the `fps` setting.
 
+You can at any time disable all animations with:
+
+- `vim.g.snacks_animate = false` globally
+- `vim.b.snacks_animate = false` locally for the buffer
+
+Doing this, will disable `scroll`, `indent`, `dim` and all other animations.
+
 <!-- docgen -->
 
 ## 📦 Setup
@@ -67,6 +74,7 @@ When both are specified, the minimum of both is used.
 
 ```lua
 ---@class snacks.animate.Opts: snacks.animate.Config
+---@field buf? number optional buffer to check if animations should be enabled
 ---@field int? boolean interpolate the value to an integer
 ---@field id? number|string unique identifier for the animation
 ```

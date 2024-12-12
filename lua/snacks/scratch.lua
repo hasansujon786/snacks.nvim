@@ -250,7 +250,7 @@ function M.open(opts)
     return a[1] < b[1]
   end)
   for _, key in ipairs(ret.keys) do
-    local keymap = vim.fn.keytrans(vim.keycode(key[1]))
+    local keymap = vim.fn.keytrans(Snacks.util.keycode(key[1]))
     table.insert(ret.opts.footer, { " " })
     table.insert(ret.opts.footer, { " " .. keymap .. " ", "SnacksScratchKey" })
     table.insert(ret.opts.footer, { " " .. (key.desc or keymap) .. " ", "SnacksScratchDesc" })

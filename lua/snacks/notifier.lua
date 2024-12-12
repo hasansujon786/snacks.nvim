@@ -449,6 +449,10 @@ end
 
 ---@param opts? snacks.notifier.history
 function N:show_history(opts)
+  if vim.bo.filetype == "snacks_notif_history" then
+    vim.cmd("close")
+    return
+  end
   local win = Snacks.win({ style = "notification.history", enter = true, show = false })
   local buf = win:open_buf()
   opts = opts or {}

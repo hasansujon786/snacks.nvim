@@ -8,6 +8,7 @@ Table of Contents                            *snacks-toggle-table-of-contents*
 3. Types                                                 |snacks-toggle-types|
 4. Module                                               |snacks-toggle-module|
   - Snacks.toggle()                     |snacks-toggle-module-snacks.toggle()|
+  - Snacks.toggle.animate()     |snacks-toggle-module-snacks.toggle.animate()|
   - Snacks.toggle.diagnostics()|snacks-toggle-module-snacks.toggle.diagnostics()|
   - Snacks.toggle.dim()             |snacks-toggle-module-snacks.toggle.dim()|
   - Snacks.toggle.get()             |snacks-toggle-module-snacks.toggle.get()|
@@ -22,6 +23,7 @@ Table of Contents                            *snacks-toggle-table-of-contents*
   - Snacks.toggle.treesitter()|snacks-toggle-module-snacks.toggle.treesitter()|
   - Snacks.toggle.words()         |snacks-toggle-module-snacks.toggle.words()|
   - Snacks.toggle.zen()             |snacks-toggle-module-snacks.toggle.zen()|
+  - Snacks.toggle.zoom()           |snacks-toggle-module-snacks.toggle.zoom()|
 5. Links                                                 |snacks-toggle-links|
 Toggle keymaps integrated with which-key icons / colors
 
@@ -90,6 +92,13 @@ Toggle keymaps integrated with which-key icons / colors
 >lua
     ---@type fun(... :snacks.toggle.Opts): snacks.toggle.Class
     Snacks.toggle()
+<
+
+
+`Snacks.toggle.animate()`                            *Snacks.toggle.animate()*
+
+>lua
+    Snacks.toggle.animate()
 <
 
 
@@ -197,6 +206,13 @@ Toggle keymaps integrated with which-key icons / colors
 
 >lua
     Snacks.toggle.zen()
+<
+
+
+`Snacks.toggle.zoom()`                                  *Snacks.toggle.zoom()*
+
+>lua
+    Snacks.toggle.zoom()
 <
 
 ==============================================================================

@@ -24,7 +24,7 @@ A collection of small QoL plugins for Neovim.
 | [profiler](https://github.com/folke/snacks.nvim/blob/main/docs/profiler.md) | Neovim lua profiler |  |
 | [quickfile](https://github.com/folke/snacks.nvim/blob/main/docs/quickfile.md) | When doing `nvim somefile.txt`, it will render the file as quickly as possible, before loading your plugins. | ‼️ |
 | [rename](https://github.com/folke/snacks.nvim/blob/main/docs/rename.md) | LSP-integrated file renaming with support for plugins like [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim) and [mini.files](https://github.com/echasnovski/mini.files). |  |
-| [scope](https://github.com/folke/snacks.nvim/blob/main/docs/scope.md) | Scope detection based on treesitter or indent _(library)_ |  |
+| [scope](https://github.com/folke/snacks.nvim/blob/main/docs/scope.md) | Scope detection, text objects and jumping based on treesitter or indent | ‼️ |
 | [scratch](https://github.com/folke/snacks.nvim/blob/main/docs/scratch.md) | Scratch buffers with a persistent file |  |
 | [scroll](https://github.com/folke/snacks.nvim/blob/main/docs/scroll.md) | Smooth scrolling | ‼️ |
 | [statuscolumn](https://github.com/folke/snacks.nvim/blob/main/docs/statuscolumn.md) | Pretty status column | ‼️ |
@@ -124,6 +124,7 @@ Please refer to the readme of each plugin for their specific configuration.
   input = { enabled = false },
   notifier = { enabled = false },
   quickfile = { enabled = false },
+  scope = { enabled = false },
   scroll = { enabled = false },
   statuscolumn = { enabled = false },
   styles = {},

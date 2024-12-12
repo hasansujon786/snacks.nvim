@@ -97,7 +97,7 @@ function M.enable(opts)
   })
 
   scopes = scopes
-    or Snacks.scope.attach(function(win, buf, scope, prev)
+    or Snacks.scope.attach(function(win, buf, scope)
       if not M.animating then
         Snacks.util.redraw(win)
       else
@@ -111,14 +111,20 @@ function M.enable(opts)
         end
 
         Snacks.animate(scopes_anim[win].from, scope.from, function(v)
+          if not scopes_anim[win] then
+            return
+          end
           scopes_anim[win].from = v
           Snacks.util.redraw(win)
-        end, vim.tbl_extend("keep", { int = true, id = "snacks_dim_from_" .. win }, opts.animate))
+        end, vim.tbl_extend("keep", { int = true, id = "snacks_dim_from_" .. win, buf = buf }, opts.animate))
 
         Snacks.animate(scopes_anim[win].to, scope.to, function(v)
+          if not scopes_anim[win] then
+            return
+          end
           scopes_anim[win].to = v
           Snacks.util.redraw(win)
-        end, vim.tbl_extend("keep", { int = true, id = "snacks_dim_to_" .. win }, opts.animate))
+        end, vim.tbl_extend("keep", { int = true, id = "snacks_dim_to_" .. win, buf = buf }, opts.animate))
       end
     end, opts.scope)
   if not scopes.enabled then

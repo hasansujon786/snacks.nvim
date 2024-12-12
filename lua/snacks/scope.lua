@@ -2,23 +2,35 @@
 local M = {}
 
 M.meta = {
-  desc = "Scope detection based on treesitter or indent _(library)_",
+  desc = "Scope detection, text objects and jumping based on treesitter or indent",
+  needs_setup = true,
 }
 
 ---@class snacks.scope.Opts: snacks.scope.Config
----@field buf number
----@field pos {[1]:number, [2]:number} -- (1,0) indexed
+---@field buf? number
+---@field pos? {[1]:number, [2]:number} -- (1,0) indexed
+---@field end_pos? {[1]:number, [2]:number} -- (1,0) indexed
+
+---@class snacks.scope.TextObject: snacks.scope.Opts
+---@field linewise? boolean if nil, use visual mode. Defaults to `false` when not in visual mode
+---@field notify? boolean show a notification when no scope is found (defaults to true)
+
+---@class snacks.scope.Jump: snacks.scope.Opts
+---@field bottom? boolean if true, jump to the bottom of the scope, otherwise to the top
+---@field notify? boolean show a notification when no scope is found (defaults to true)
 
 ---@alias snacks.scope.Attach.cb fun(win: number, buf: number, scope:snacks.scope.Scope?, prev:snacks.scope.Scope?)
 
 ---@class snacks.scope.Config
 ---@field max_size? number
+---@field enabled? boolean
 local defaults = {
   -- absolute minimum size of the scope.
   -- can be less if the scope is a top-level single line scope
   min_size = 2,
   -- try to expand the scope to this size
   max_size = nil,
+  edge = true, -- include the edge of the scope (typically the line above and below with smaller indent)
   siblings = false, -- expand single line scopes with single line siblings
   -- what buffers to attach to
   filter = function(buf)
@@ -43,6 +55,43 @@ local defaults = {
       "repeat_statement",
       "if_statement",
       "for_statement",
+    },
+  },
+  -- These keymaps will only be set if the `scope` plugin is enabled.
+  -- Alternatively, you can set them manually in your config,
+  -- using the `Snacks.scope.textobject` and `Snacks.scope.jump` functions.
+  keys = {
+    ---@type table<string, snacks.scope.TextObject|{desc?:string}>
+    textobject = {
+      ii = {
+        min_size = 1, -- allow single line scopes
+        edge = false, -- don't include the edge
+        treesitter = { enabled = false },
+        desc = "inner scope",
+      },
+      ai = {
+        min_size = 1, -- allow single line scopes
+        edge = true, -- include the edge
+        treesitter = { enabled = false },
+        desc = "scope with edge",
+      },
+    },
+    ---@type table<string, snacks.scope.Jump|{desc?:string}>
+    jump = {
+      ["[i"] = {
+        min_size = 1, -- allow single line scopes
+        bottom = false,
+        edge = true,
+        treesitter = { enabled = false },
+        desc = "jump to top edge of scope",
+      },
+      ["]i"] = {
+        min_size = 1, -- allow single line scopes
+        bottom = true,
+        edge = true,
+        treesitter = { enabled = false },
+        desc = "jump to bottom edge of scope",
+      },
     },
   },
 }
@@ -120,6 +169,19 @@ function Scope:size_with_edge()
   return self:with_edge():size()
 end
 
+---@generic T: snacks.scope.Scope
+---@param self T
+---@return T?
+function Scope:expand(line)
+  local ret = self ---@type snacks.scope.Scope?
+  while ret do
+    if line >= ret.from and line <= ret.to then
+      return ret
+    end
+    ret = ret:parent()
+  end
+end
+
 ---@class snacks.scope.IndentScope: snacks.scope.Scope
 local IndentScope = setmetatable({}, Scope)
 IndentScope.__index = IndentScope
@@ -127,7 +189,7 @@ IndentScope.__index = IndentScope
 ---@param line number 1-indexed
 ---@param indent number
 ---@param up? boolean
-function IndentScope.expand(line, indent, up)
+function IndentScope._expand(line, indent, up)
   local next = up and vim.fn.prevnonblank or vim.fn.nextnonblank
   while line do
     local i, l = IndentScope.get_indent(next(line + (up and -1 or 1)))
@@ -170,25 +232,31 @@ function IndentScope:find(opts)
 
   -- adjust line to the nearest indent block
   if prev_i <= indent and next_i > indent then
+    -- at top edge
     line = next_l
     indent = next_i
   elseif next_i <= indent and prev_i > indent then
+    -- at bottom edge
     line = prev_l
     indent = prev_i
+  elseif next_i > indent and prev_i > indent then
+    -- at edge of two blocks. Prefer the one below.
+    line = next_l
+    indent = next_i
   end
 
   -- expand to include bigger indents
   return IndentScope:new({
     buf = opts.buf,
-    from = IndentScope.expand(line, indent, true),
-    to = IndentScope.expand(line, indent, false),
+    from = IndentScope._expand(line, indent, true),
+    to = IndentScope._expand(line, indent, false),
     indent = indent,
   }, opts)
 end
 
 function IndentScope:parent()
   for i = self.indent - 1, 1, -1 do
-    local u, d = IndentScope.expand(self.from, i, true), IndentScope.expand(self.to, i, false)
+    local u, d = IndentScope._expand(self.from, i, true), IndentScope._expand(self.to, i, false)
     if u ~= self.from or d ~= self.to then -- update only when expanded
       return self:with({ from = u, to = d, indent = i })
     end
@@ -230,7 +298,6 @@ function TSScope:fix()
 end
 
 function TSScope:with_edge()
-  -- FIXME: this is incorrect if the scope is already at the edge
   local prev = vim.fn.prevnonblank(self.from - 1)
   local next = vim.fn.nextnonblank(self.from + 1)
   if vim.fn.indent(next) > self.indent then
@@ -310,9 +377,11 @@ function M.get(opts)
 
   -- run in the context of the buffer if not current
   if vim.api.nvim_get_current_buf() ~= opts.buf then
-    return vim.api.nvim_buf_call(opts.buf, function()
-      return M.get(opts)
+    local ret ---@type snacks.scope.Scope?
+    vim.api.nvim_buf_call(opts.buf, function()
+      ret = M.get(opts)
     end)
+    return ret
   end
 
   ---@type snacks.scope.Scope
@@ -325,6 +394,16 @@ function M.get(opts)
     ret = Class:find(opts)
   end
 
+  if ret and opts.end_pos and false then
+    local end_scope = M.get(vim.tbl_extend("keep", { pos = opts.end_pos, end_pos = false }, opts))
+    if end_scope and end_scope.from < ret.from then
+      ret = ret:expand(end_scope.from) or ret
+    end
+    if end_scope and end_scope.to > ret.to then
+      ret = ret:expand(end_scope.to) or ret
+    end
+  end
+
   local min_size = opts.min_size or 2
   local max_size = opts.max_size or min_size
 
@@ -333,13 +412,17 @@ function M.get(opts)
   if ret then
     local s = ret --- @type snacks.scope.Scope?
     while s do
-      if ret:size_with_edge() >= min_size and s:size_with_edge() > max_size then
+      if opts.edge and ret:size_with_edge() >= min_size and s:size_with_edge() > max_size then
+        break
+      elseif not opts.edge and ret:size() >= min_size and s:size() > max_size then
         break
       end
       ret, s = s, s:parent()
     end
     -- expand with edge
-    ret = ret:with_edge() --[[@as snacks.scope.Scope]]
+    if opts.edge then
+      ret = ret:with_edge() --[[@as snacks.scope.Scope]]
+    end
   end
 
   -- expand single line blocks with single line siblings
@@ -494,6 +577,94 @@ function M.attach(cb, opts)
   local ret = Listener.new(cb, opts)
   ret:enable()
   return ret
+end
+
+-- Text objects for indent scopes.
+-- Best to use with Treesitter disabled.
+-- When in visual mode, it will select the scope containing the visual selection.
+-- When the scope is the same as the visual selection, it will select the parent scope instead.
+---@param opts? snacks.scope.TextObject
+function M.textobject(opts)
+  opts = Snacks.config.get("scope", defaults, opts or {}) --[[ @as snacks.scope.TextObject ]]
+
+  local mode = vim.fn.mode()
+  local selection = mode:find("[vV]") ~= nil
+
+  -- prepare for visual mode and determine linewise
+  if mode == "v" then
+    vim.cmd("normal! v")
+  elseif mode == "V" then
+    vim.cmd("normal! V")
+    opts.linewise = opts.linewise == nil and true or opts.linewise
+  end
+
+  -- use the actual range instead of the cursor position
+  -- in case of visual mode
+  if selection then
+    opts.pos = vim.api.nvim_buf_get_mark(0, "<")
+    opts.end_pos = vim.api.nvim_buf_get_mark(0, ">")
+  end
+
+  local scope = M.get(opts)
+  if not scope then
+    return opts.notify ~= false and Snacks.notify.warn("No scope in range")
+  end
+
+  while scope do
+    -- determine scope range
+    local from, to =
+      { scope.from, opts.linewise and 0 or vim.fn.indent(scope.from) },
+      { scope.to, opts.linewise and 0 or vim.fn.col({ scope.to, "$" }) - 2 }
+
+    -- if the scope is the same as the visual selection
+    -- then select the parent scope instead.
+    local same = selection and vim.deep_equal(from, opts.pos) and vim.deep_equal(to, opts.end_pos)
+
+    local parent = scope:parent()
+    if not same or not parent then
+      -- select the range
+      vim.api.nvim_win_set_cursor(0, to)
+      vim.cmd("normal! " .. (opts.linewise and "V" or "v"))
+      vim.api.nvim_win_set_cursor(0, from)
+      return
+    end
+
+    scope = opts.edge and parent:with_edge() or parent
+  end
+end
+
+--- Jump to the top or bottom of the scope
+--- If the scope is the same as the current scope, it will jump to the parent scope instead.
+---@param opts? snacks.scope.Jump
+function M.jump(opts)
+  opts = Snacks.config.get("scope", defaults, opts or {}) --[[ @as snacks.scope.Jump ]]
+  local scope = M.get(opts)
+  if not scope then
+    return opts.notify ~= false and Snacks.notify.warn("No scope in range")
+  end
+  while scope do
+    local line = opts.bottom and scope.to or scope.from
+    local pos = { line, vim.fn.indent(line) }
+    if not vim.deep_equal(vim.api.nvim_win_get_cursor(0), pos) then
+      return vim.api.nvim_win_set_cursor(0, { line, vim.fn.indent(line) })
+    end
+    scope = scope:parent()
+  end
+end
+
+---@private
+function M.setup()
+  local keys = Snacks.config.get("scope", defaults).keys
+  for key, opts in pairs(keys.textobject) do
+    vim.keymap.set({ "x", "o" }, key, function()
+      M.textobject(opts)
+    end, { silent = true, desc = opts.desc })
+  end
+  for key, opts in pairs(keys.jump) do
+    vim.keymap.set({ "n", "x", "o" }, key, function()
+      M.jump(opts)
+    end, { silent = true, desc = opts.desc })
+  end
 end
 
 return M

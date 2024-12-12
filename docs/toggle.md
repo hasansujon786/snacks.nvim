@@ -64,6 +64,12 @@ Toggle keymaps integrated with which-key icons / colors
 Snacks.toggle()
 ```
 
+### `Snacks.toggle.animate()`
+
+```lua
+Snacks.toggle.animate()
+```
+
 ### `Snacks.toggle.diagnostics()`
 
 ```lua
@@ -155,4 +161,10 @@ Snacks.toggle.words()
 
 ```lua
 Snacks.toggle.zen()
+```
+
+### `Snacks.toggle.zoom()`
+
+```lua
+Snacks.toggle.zoom()
 ```

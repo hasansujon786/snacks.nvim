@@ -1,4 +1,4 @@
-*snacks.nvim.txt*           For Neovim           Last change: 2024 December 11
+*snacks.nvim.txt*           For Neovim           Last change: 2024 December 12
 
 ==============================================================================
 Table of Contents                              *snacks.nvim-table-of-contents*
@@ -68,11 +68,10 @@ FEATURES                                    *snacks.nvim-snacks.nvim-features*
                    support for plugins like              
                    neo-tree.nvim and mini.files.         
 
-  scope            Scope detection based on treesitter   
-                   or indent (library)                   
+  scope            Scope detection, text objects and     
+                   jumping based on treesitter or indent 
 
-  scratch          Scratch buffers with a persistent     
-                   file                                  
+  scratch          Scratchbuffers with a persistent file 
 
   scroll           Smooth scrolling                      
 
@@ -185,6 +184,7 @@ Default Options ~
       input = { enabled = false },
       notifier = { enabled = false },
       quickfile = { enabled = false },
+      scope = { enabled = false },
       scroll = { enabled = false },
       statuscolumn = { enabled = false },
       styles = {},

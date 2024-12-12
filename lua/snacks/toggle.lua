@@ -112,6 +112,7 @@ function Toggle:map(keys, opts)
       self:_wk(keys, mode)
     end)
   end
+  return self
 end
 
 function Toggle:_wk(keys, mode)
@@ -348,6 +349,36 @@ function M.zen()
       elseif Snacks.zen.win then
         Snacks.zen.win:close()
       end
+    end,
+  })
+end
+
+function M.zoom()
+  return M.new({
+    id = "zoom",
+    name = "Zoom Mode",
+    get = function()
+      return Snacks.zen.win and Snacks.zen.win:valid() or false
+    end,
+    set = function(state)
+      if state then
+        Snacks.zen.zoom()
+      elseif Snacks.zen.win then
+        Snacks.zen.win:close()
+      end
+    end,
+  })
+end
+
+function M.animate()
+  return M.new({
+    id = "animate",
+    name = "Animations",
+    get = function()
+      return vim.g.snacks_animate ~= false
+    end,
+    set = function(state)
+      vim.g.snacks_animate = state
     end,
   })
 end

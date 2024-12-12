@@ -356,11 +356,11 @@ end
 
 -- Called when the scope changes
 ---@param win number
----@param _buf number
+---@param buf number
 ---@param scope snacks.indent.Scope?
 ---@param prev snacks.indent.Scope?
 ---@private
-function M.on_scope(win, _buf, scope, prev)
+function M.on_scope(win, buf, scope, prev)
   stats.scope = stats.scope + 1
   if prev then -- clear previous scope
     Snacks.util.redraw_range(win, prev.from, prev.to)
@@ -382,6 +382,7 @@ function M.on_scope(win, _buf, scope, prev)
         vim.tbl_extend("keep", {
           int = true,
           id = "indent_scope_" .. win,
+          buf = buf,
         }, config.scope.animate)
       )
     end

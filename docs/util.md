@@ -74,6 +74,13 @@ Check if the colorscheme is transparent.
 Snacks.util.is_transparent()
 ```
 
+### `Snacks.util.keycode()`
+
+```lua
+---@param str string
+Snacks.util.keycode(str)
+```
+
 ### `Snacks.util.on_module()`
 
 Call a function when a module is loaded.

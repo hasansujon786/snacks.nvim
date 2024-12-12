@@ -24,6 +24,7 @@ local config = {
   input = { enabled = false },
   notifier = { enabled = false },
   quickfile = { enabled = false },
+  scope = { enabled = false },
   scroll = { enabled = false },
   statuscolumn = { enabled = false },
   styles = {},
@@ -108,7 +109,7 @@ function M.setup(opts)
     BufReadPre = { "bigfile" },
     BufReadPost = { "quickfile", "indent" },
     LspAttach = { "words" },
-    UIEnter = { "dashboard", "scroll", "input" },
+    UIEnter = { "dashboard", "scroll", "input", "scope" },
   }
 
   local function load(event)

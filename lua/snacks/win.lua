@@ -653,6 +653,10 @@ function M:win_opts()
   opts.row = opts.row or math.floor((parent.height - opts.height - border_offset) / 2)
   opts.col = opts.col or math.floor((parent.width - opts.width - border_offset) / 2)
 
+  if vim.fn.has("nvim-0.10") == 0 then
+    opts.footer, opts.footer_pos = nil, nil
+  end
+
   return opts
 end
 
