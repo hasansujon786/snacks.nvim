@@ -117,19 +117,7 @@ Please refer to the readme of each plugin for their specific configuration.
 ---@field words? snacks.words.Config
 ---@field zen? snacks.zen.Config
 ---@field styles? table<string, snacks.win.Config>
-{
-  bigfile = { enabled = false },
-  dashboard = { enabled = false },
-  indent = { enabled = false },
-  input = { enabled = false },
-  notifier = { enabled = false },
-  quickfile = { enabled = false },
-  scope = { enabled = false },
-  scroll = { enabled = false },
-  statuscolumn = { enabled = false },
-  styles = {},
-  words = { enabled = false },
-}
+{}
 ```
 
 <!-- config:end -->

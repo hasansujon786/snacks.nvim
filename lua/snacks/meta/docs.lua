@@ -413,7 +413,13 @@ function M.types(types)
   vim.list_extend(lines, types.fields)
   lines[#lines + 1] = ""
   lines[#lines + 1] = "---@class snacks.plugins.Config"
-  vim.list_extend(lines, types.config)
+  vim.list_extend(
+    lines,
+    vim.tbl_map(function(field)
+      -- make all fields optional
+      return field .. "|{}"
+    end, types.config)
+  )
 
   vim.fn.writefile(lines, "lua/snacks/meta/types.lua")
 end

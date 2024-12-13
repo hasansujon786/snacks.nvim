@@ -109,8 +109,12 @@ function M.zen(opts)
   end
 
   local parent_win = vim.api.nvim_get_current_win()
+  local parent_zindex = vim.api.nvim_win_get_config(parent_win).zindex
+
   local buf = vim.api.nvim_get_current_buf()
   local win_opts = Snacks.win.resolve({ style = "zen" }, opts.win, { buf = buf })
+  win_opts.zindex = parent_zindex and parent_zindex + 1 or win_opts.zindex
+
   if Snacks.util.is_transparent() and type(win_opts.backdrop) == "table" then
     win_opts.backdrop.transparent = false
   end

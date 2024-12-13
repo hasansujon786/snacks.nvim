@@ -188,8 +188,9 @@ function M.open(opts)
 
     vim.fn.mkdir(opts.root, "p")
     local fname = Snacks.util.file_encode(table.concat(filekey, "|") .. "." .. ft)
-    file = vim.fs.normalize(opts.root .. "/" .. fname)
+    file = opts.root .. "/" .. fname
   end
+  file = vim.fs.normalize(file)
 
   local icon, icon_hl = unpack(type(opts.icon) == "table" and opts.icon or { opts.icon, nil })
   ---@cast icon string

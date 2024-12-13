@@ -17,23 +17,13 @@ _G.Snacks = M
 
 ---@class snacks.Config: snacks.plugins.Config
 ---@field styles? table<string, snacks.win.Config>
-local config = {
-  bigfile = { enabled = false },
-  dashboard = { enabled = false },
-  indent = { enabled = false },
-  input = { enabled = false },
-  notifier = { enabled = false },
-  quickfile = { enabled = false },
-  scope = { enabled = false },
-  scroll = { enabled = false },
-  statuscolumn = { enabled = false },
-  styles = {},
-  words = { enabled = false },
-}
+local config = {}
+config.styles = {}
 
 ---@class snacks.config: snacks.Config
 M.config = setmetatable({}, {
   __index = function(_, k)
+    config[k] = config[k] or {}
     return config[k]
   end,
 })
@@ -59,7 +49,7 @@ end
 ---@param ... T[]
 ---@return T
 function M.config.get(snack, defaults, ...)
-  local merge, todo = {}, { defaults, config[snack], ... }
+  local merge, todo = {}, { defaults, config[snack] or {}, ... }
   for i = 1, select("#", ...) + 2 do
     local v = todo[i] --[[@as snacks.Config.base]]
     if type(v) == "table" then

@@ -81,7 +81,23 @@ local function env(opts)
 
     if vim.v.shell_error == 0 and #lines > 1 then
       config_dir = vim.split(lines[1], "\n", { plain = true })[1]
-      vim.env.LG_CONFIG_FILE = vim.fs.normalize(config_dir .. "/config.yml" .. "," .. opts.theme_path)
+
+      ---@type string[]
+      local config_files = vim.tbl_filter(function(v)
+        return v:match("%S")
+      end, vim.split(vim.env.LG_CONFIG_FILE or "", ",", { plain = true }))
+
+      -- add the default config file if it's not already there
+      if #config_files == 0 then
+        config_files[1] = vim.fs.normalize(config_dir .. "/config.yml")
+      end
+
+      -- add the theme file if it's not already there
+      if not vim.tbl_contains(config_files, opts.theme_path) then
+        table.insert(config_files, opts.theme_path)
+      end
+
+      vim.env.LG_CONFIG_FILE = table.concat(config_files, ",")
     else
       local msg = {
         "Failed to get **lazygit** config directory.",

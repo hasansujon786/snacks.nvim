@@ -394,6 +394,8 @@ function M.get(opts)
     ret = Class:find(opts)
   end
 
+  -- when end_pos is provided, get its scope and expand the current scope
+  -- to include it.
   if ret and opts.end_pos and false then
     local end_scope = M.get(vim.tbl_extend("keep", { pos = opts.end_pos, end_pos = false }, opts))
     if end_scope and end_scope.from < ret.from then
@@ -435,7 +437,7 @@ function M.get(opts)
       prev_s = prev_s and prev_s:size() == 1 and prev_s
       next_s = next_s and next_s:size() == 1 and next_s
       local s = prev_dist < next_dist and prev_s or next_s or prev_s
-      if s then
+      if s and (s.from < ret.from or s.to > ret.to) then
         ret = Scope.with(ret, { from = math.min(ret.from, s.from), to = math.max(ret.to, s.to) })
       else
         break
@@ -623,9 +625,9 @@ function M.textobject(opts)
     local parent = scope:parent()
     if not same or not parent then
       -- select the range
-      vim.api.nvim_win_set_cursor(0, to)
-      vim.cmd("normal! " .. (opts.linewise and "V" or "v"))
       vim.api.nvim_win_set_cursor(0, from)
+      vim.cmd("normal! " .. (opts.linewise and "V" or "v"))
+      vim.api.nvim_win_set_cursor(0, to)
       return
     end
 
