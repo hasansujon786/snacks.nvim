@@ -7,7 +7,6 @@ Table of Contents                               *snacks-dim-table-of-contents*
 2. Config                                                  |snacks-dim-config|
 3. Module                                                  |snacks-dim-module|
   - Snacks.dim()                              |snacks-dim-module-snacks.dim()|
-  - Snacks.dim.animate()              |snacks-dim-module-snacks.dim.animate()|
   - Snacks.dim.disable()              |snacks-dim-module-snacks.dim.disable()|
   - Snacks.dim.enable()                |snacks-dim-module-snacks.dim.enable()|
 4. Links                                                    |snacks-dim-links|
@@ -78,15 +77,6 @@ Similar plugins:
 >lua
     ---@type fun(opts: snacks.dim.Config)
     Snacks.dim()
-<
-
-
-`Snacks.dim.animate()`                                  *Snacks.dim.animate()*
-
-Toggle scope animations
-
->lua
-    Snacks.dim.animate()
 <
 
 

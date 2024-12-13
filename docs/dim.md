@@ -67,14 +67,6 @@ Similar plugins:
 Snacks.dim()
 ```
 
-### `Snacks.dim.animate()`
-
-Toggle scope animations
-
-```lua
-Snacks.dim.animate()
-```
-
 ### `Snacks.dim.disable()`
 
 Disable dimming

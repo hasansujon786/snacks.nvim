@@ -6,7 +6,6 @@ M.meta = {
 }
 
 M.enabled = false
-M.animating = false
 
 ---@class snacks.indent.Config
 ---@field enabled? boolean
@@ -31,20 +30,27 @@ local defaults = {
     --     "SnacksIndent8",
     -- },
   },
+  -- animate scopes. Enabled by default for Neovim >= 0.10
+  -- Works on older versions but has to trigger redraws during animation.
+  ---@class snacks.indent.animate: snacks.animate.Config
+  ---@field enabled? boolean
+  --- * out: animate outwards from the cursor
+  --- * up: animate upwards from the cursor
+  --- * down: animate downwards from the cursor
+  --- * up_down: animate up or down based on the cursor position
+  ---@field style? "out"|"up_down"|"down"|"up"
+  animate = {
+    enabled = vim.fn.has("nvim-0.10") == 1,
+    style = "out",
+    easing = "linear",
+    duration = {
+      step = 20, -- ms per step
+      total = 500, -- maximum duration
+    },
+  },
   ---@class snacks.indent.Scope.Config: snacks.scope.Config
   scope = {
     enabled = true, -- enable highlighting the current scope
-    -- animate scopes. Enabled by default for Neovim >= 0.10
-    -- Works on older versions but has to trigger redraws during animation.
-    ---@type snacks.animate.Config|{enabled?: boolean}
-    animate = {
-      enabled = vim.fn.has("nvim-0.10") == 1,
-      easing = "linear",
-      duration = {
-        step = 20, -- ms per step
-        total = 500, -- maximum duration
-      },
-    },
     char = "│",
     underline = false, -- underline the start of the scope
     only_current = false, -- only show scope in the current window
@@ -83,6 +89,7 @@ local defaults = {
 ---@class snacks.indent.Scope: snacks.scope.Scope
 ---@field win number
 ---@field step? number
+---@field animate? {from: number, to: number}
 
 local config = Snacks.config.get("scope", defaults)
 local ns = vim.api.nvim_create_namespace("snacks_indent")
@@ -134,7 +141,7 @@ end
 ---@param indent number
 ---@param state snacks.indent.State
 local function get_extmark(indent, state)
-  local key = indent .. ":" .. state.leftcol .. ":" .. state.shiftwidth
+  local key = indent .. ":" .. state.leftcol .. ":" .. state.shiftwidth .. ":" .. state.indent_offset
   if cache_extmarks[key] ~= nil then
     return cache_extmarks[key]
   end
@@ -145,6 +152,7 @@ local function get_extmark(indent, state)
   indent = indent - state.leftcol -- adjust for visible indents
   local rem = indent % sw -- remaining spaces of the first partially visible indent
   indent = math.floor(indent / sw) -- full visible indents
+  local offset = math.max(math.floor((state.indent_offset - state.leftcol + sw) / sw), 0) -- offset for the scope
 
   -- hide if indent is 0 and no remaining spaces
   if indent < 1 and rem == 0 then
@@ -159,13 +167,18 @@ local function get_extmark(indent, state)
   text[1] = rem > 0 and { (config.indent.blank):rep(rem), get_hl(hidden, config.blank.hl) } or nil
 
   for i = 1, indent do
-    text[#text + 1] = { config.indent.char, get_hl(i + hidden, config.indent.hl) }
+    if i >= offset then
+      text[#text + 1] = { config.indent.char, get_hl(i + hidden, config.indent.hl) }
+    else
+      text[#text + 1] = { blank, get_hl(i + hidden, config.blank.hl) }
+    end
     text[#text + 1] = { blank, get_hl(i + hidden, config.blank.hl) }
   end
 
   cache_extmarks[key] = {
     virt_text = text,
     virt_text_pos = "overlay",
+    virt_text_win_col = 0,
     hl_mode = "combine",
     priority = config.priority,
     ephemeral = true,
@@ -194,6 +207,7 @@ local function get_state(win, buf, top, bottom)
     leftcol = vim.api.nvim_buf_call(buf, vim.fn.winsaveview).leftcol --[[@as number]],
     shiftwidth = vim.bo[buf].shiftwidth,
     indents = prev and prev.indents or { [0] = 0 },
+    indent_offset = 0, -- the start column of the indent guides
   }
   state.shiftwidth = state.shiftwidth == 0 and vim.bo[buf].tabstop or state.shiftwidth
   states[win] = state
@@ -211,14 +225,13 @@ function M.on_win(win, buf, top, bottom)
   local state = get_state(win, buf, top, bottom)
 
   local scope = scopes and scopes:get(win) --[[@as snacks.indent.Scope?]]
-  local indent_col = 0 -- the start column of the indent guides
 
   -- adjust top and bottom if only_scope is enabled
   if config.indent.only_scope then
     if not scope then
       return
     end
-    indent_col = scope.indent or 0
+    state.indent_offset = scope.indent or 0
     state.top = math.max(state.top, scope.from)
     state.bottom = math.min(state.bottom, scope.to)
   end
@@ -230,7 +243,7 @@ function M.on_win(win, buf, top, bottom)
   -- Calculate and render indents
   local indents = state.indents
   vim.api.nvim_buf_call(buf, function()
-    for l = top, bottom do
+    for l = state.top, state.bottom do
       local indent = indents[l]
       if not indent then
         stats.indents = stats.indents + 1
@@ -250,9 +263,9 @@ function M.on_win(win, buf, top, bottom)
         end
         indents[l] = indent
       end
-      local opts = show_indent and indent > 0 and get_extmark(indent - indent_col, state)
+      local opts = show_indent and indent > 0 and get_extmark(indent, state)
       if opts then
-        vim.api.nvim_buf_set_extmark(buf, ns, l - 1, indent_col, opts)
+        vim.api.nvim_buf_set_extmark(buf, ns, l - 1, 0, opts)
       end
     end
   end)
@@ -268,6 +281,20 @@ function M.on_win(win, buf, top, bottom)
   end
 end
 
+---@param scope snacks.indent.Scope
+---@param state snacks.indent.State
+---@return number from, number to
+local function bounds(scope, state)
+  local from, to = scope.from, scope.to
+  if scope.animate then
+    from = math.max(scope.animate.from, scope.from)
+    to = math.min(scope.animate.to, scope.to)
+  end
+  from = math.max(from, state.top)
+  to = math.min(to, state.bottom)
+  return from, to
+end
+
 --- Render the scope overlappping the given range
 ---@param scope snacks.indent.Scope
 ---@param state snacks.indent.State
@@ -275,10 +302,10 @@ end
 function M.render_scope(scope, state)
   local indent = (scope.indent or 2)
   local hl = get_hl(scope.indent + 1, config.scope.hl)
-  local to = M.animating and scope.step or scope.to
+  local from, to = bounds(scope, state)
   local col = indent - state.leftcol
 
-  if config.scope.underline and scope.from >= state.top and scope.from <= state.bottom then
+  if config.scope.underline and scope.from == from then
     vim.api.nvim_buf_set_extmark(scope.buf, ns, scope.from - 1, math.max(col, 0), {
       end_col = #vim.api.nvim_buf_get_lines(scope.buf, scope.from - 1, scope.from, false)[1],
       hl_group = get_underline_hl(hl),
@@ -293,7 +320,7 @@ function M.render_scope(scope, state)
     return
   end
 
-  for l = math.max(scope.from, state.top), math.min(to, state.bottom) do
+  for l = from, to do
     local i = state.indents[l]
     if i and i > indent then
       vim.api.nvim_buf_set_extmark(scope.buf, ns, l - 1, 0, {
@@ -319,7 +346,7 @@ function M.render_chunk(scope, state)
   if col < 0 then -- scope is hidden
     return
   end
-  local to = M.animating and scope.step or scope.to
+  local from, to = bounds(scope, state)
   local hl = get_hl(scope.indent + 1, config.chunk.hl)
   local char = config.chunk.char
 
@@ -337,7 +364,7 @@ function M.render_chunk(scope, state)
     })
   end
 
-  for l = math.max(scope.from, state.top), math.min(to, state.bottom) do
+  for l = from, to do
     local i = state.indents[l] - state.leftcol
     if l == scope.from then -- top line
       add(l, char.corner_top .. (char.horizontal):rep(i - col - 1))
@@ -349,9 +376,29 @@ function M.render_chunk(scope, state)
   end
 end
 
--- Toggle scope animations
-function M.animate()
-  M.animating = not M.animating
+---@param scope snacks.indent.Scope
+---@param value number
+---@param prev? number
+local function step(scope, value, prev)
+  prev = prev or 0
+  local cursor = vim.api.nvim_win_get_cursor(scope.win)
+  local dt = math.abs(scope.from - cursor[1])
+  local db = math.abs(scope.to - cursor[1])
+  local style = config.animate.style == "up_down" and (dt < db and "down" or "up") or config.animate.style
+  if style == "down" then
+    scope.animate = { from = scope.from, to = scope.from + value }
+  elseif style == "up" then
+    scope.animate = { from = scope.to - value, to = scope.to }
+  elseif style == "out" then
+    local line = math.min(math.max(scope.from, cursor[1]), scope.to)
+    scope.animate = {
+      from = math.max(scope.from, line - value),
+      to = math.min(scope.to, line + value),
+    }
+  else
+    Snacks.notify.error("Invalid animate style: " .. style, { title = "Snacks Indent", once = true })
+  end
+  Snacks.util.redraw_range(scope.win, scope.animate.from, scope.animate.to)
 end
 
 -- Called when the scope changes
@@ -362,31 +409,38 @@ end
 ---@private
 function M.on_scope(win, buf, scope, prev)
   stats.scope = stats.scope + 1
-  if prev then -- clear previous scope
-    Snacks.util.redraw_range(win, prev.from, prev.to)
-  end
   if scope then
     scope.win = win
-    scope.step = scope.from
-    if M.animating then
+    local animate = Snacks.animate.enabled({ buf = buf, name = "indent" })
+
+    -- skip animation if new lines have been added before or inside the scope
+    if prev and (vim.fn.nextnonblank(prev.from) == scope.from) then
+      animate = false
+    end
+
+    if animate then
+      step(scope, 0)
       Snacks.animate(
-        scope.from,
-        scope.to,
+        0,
+        scope.to - scope.from,
         function(value, ctx)
           if scopes and scopes:get(win) ~= scope then
             return
           end
-          scope.step = value
-          Snacks.util.redraw_range(win, math.min(ctx.prev, value), math.max(ctx.prev, value))
+          step(scope, value, ctx.prev)
         end,
         vim.tbl_extend("keep", {
           int = true,
           id = "indent_scope_" .. win,
           buf = buf,
-        }, config.scope.animate)
+        }, config.animate)
       )
+    else
+      Snacks.util.redraw_range(win, scope.from, scope.to)
     end
-    Snacks.util.redraw_range(win, scope.from, M.animating and scope.from + 1 or scope.to)
+  end
+  if prev then -- clear previous scope
+    Snacks.util.redraw_range(win, prev.from, prev.to)
   end
 end
 
@@ -416,9 +470,7 @@ function M.enable()
     M.debug()
   end
 
-  if config.scope.animate.enabled then
-    M.animate()
-  end
+  vim.g.snacks_animate_indent = config.animate.enabled
 
   M.enabled = true
 

@@ -712,14 +712,10 @@ function D:update()
     buffer = self.buf,
     callback = function()
       local item = self:find(vim.api.nvim_win_get_cursor(self.win), last)
-      if not item then -- can happen for panes without actionable items
-        for _, it in ipairs(self.items) do
-          if it.action then
-            item = it
-            break
-          end
-        end
-      end
+      -- can happen for panes without actionable items
+      item = item or vim.tbl_filter(function(it)
+        return it.action and it._
+      end, self.items)[1]
       if item then
         local col = self.lines[item._.row]:find("[%w%d%p]", item._.col + 1)
         col = col or (item._.col + 1 + (item.indent and (item.indent + 1) or 0))

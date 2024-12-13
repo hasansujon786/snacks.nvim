@@ -119,3 +119,14 @@ Delete an animation
 ---@param id number|string
 Snacks.animate.del(id)
 ```
+
+### `Snacks.animate.enabled()`
+
+Check if animations are enabled.
+Will return false if `snacks_animate` is set to false or if the buffer
+local variable `snacks_animate` is set to false.
+
+```lua
+---@param opts? {buf?: number, name?: string}
+Snacks.animate.enabled(opts)
+```

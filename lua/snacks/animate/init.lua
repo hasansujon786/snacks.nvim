@@ -60,6 +60,7 @@ local scheduled = false
 ---@field opts snacks.animate.Opts
 ---@field from number start value
 ---@field to number end value
+---@field done boolean
 ---@field duration number total duration in ms
 ---@field easing snacks.animate.easing.Fn
 ---@field value number current value
@@ -83,7 +84,7 @@ function Animation:next()
 end
 
 function Animation:enabled()
-  return vim.g.snacks_animate ~= false and (vim.b[self.opts.buf or 0].snacks_animate ~= false)
+  return M.enabled({ buf = self.opts.buf, name = tostring(self.id) })
 end
 
 ---@return boolean done
@@ -93,6 +94,7 @@ function Animation:update()
   if prev ~= value or done then
     self.cb(value, { anim = self, prev = prev, done = done })
     self.value = value
+    self.done = done
   end
   return done
 end
@@ -104,6 +106,19 @@ end
 
 function Animation:stop()
   active[self.id] = nil
+end
+
+--- Check if animations are enabled.
+--- Will return false if `snacks_animate` is set to false or if the buffer
+--- local variable `snacks_animate` is set to false.
+---@param opts? {buf?: number, name?: string}
+function M.enabled(opts)
+  opts = opts or {}
+  if opts.name and not M.enabled({ buf = opts.buf }) then
+    return false
+  end
+  local key = "snacks_animate" .. (opts.name and ("_" .. opts.name) or "")
+  return Snacks.util.var(opts.buf, key, true)
 end
 
 --- Add an animation

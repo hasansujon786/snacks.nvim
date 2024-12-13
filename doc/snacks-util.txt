@@ -17,6 +17,7 @@ Table of Contents                              *snacks-util-table-of-contents*
   - Snacks.util.redraw()             |snacks-util-module-snacks.util.redraw()|
   - Snacks.util.redraw_range() |snacks-util-module-snacks.util.redraw_range()|
   - Snacks.util.set_hl()             |snacks-util-module-snacks.util.set_hl()|
+  - Snacks.util.var()                   |snacks-util-module-snacks.util.var()|
   - Snacks.util.wo()                     |snacks-util-module-snacks.util.wo()|
 
 ==============================================================================
@@ -153,6 +154,20 @@ Ensures the hl groups are always set, even after a colorscheme change.
     ---@param groups snacks.util.hl
     ---@param opts? { prefix?:string, default?:boolean, managed?:boolean }
     Snacks.util.set_hl(groups, opts)
+<
+
+
+`Snacks.util.var()`                                        *Snacks.util.var()*
+
+Get a buffer or global variable.
+
+>lua
+    ---@generic T
+    ---@param buf? number
+    ---@param name string
+    ---@param default? T
+    ---@return T
+    Snacks.util.var(buf, name, default)
 <
 
 

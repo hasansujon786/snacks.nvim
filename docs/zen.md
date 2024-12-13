@@ -51,7 +51,12 @@ Similar plugins:
   },
   ---@type snacks.win.Config
   win = { style = "zen" },
-
+  --- Callback when the window is opened.
+  ---@param win snacks.win
+  on_open = function(win) end,
+  --- Callback when the window is closed.
+  ---@param win snacks.win
+  on_close = function(win) end,
   --- Options for the `Snacks.zen.zoom()`
   ---@type snacks.zen.Config
   zoom = {

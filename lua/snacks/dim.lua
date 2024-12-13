@@ -64,8 +64,9 @@ function M.on_win(win, buf, top, bottom)
       ephemeral = true,
     })
   end
-  local from = M.animating and scopes_anim[win] and scopes_anim[win].from or scope.from
-  local to = M.animating and scopes_anim[win] and scopes_anim[win].to or scope.to
+  local animating = Snacks.animate.enabled({ buf = buf, name = "dim" })
+  local from = animating and scopes_anim[win] and scopes_anim[win].from or scope.from
+  local to = animating and scopes_anim[win] and scopes_anim[win].to or scope.to
   for l = top, math.min(from - 1, bottom) do
     add(l)
   end
@@ -83,9 +84,7 @@ function M.enable(opts)
 
   M.enabled = true
 
-  if opts.animate then
-    M.animating = true
-  end
+  vim.g.snacks_animate_dim = opts.animate.enabled
 
   -- setup decoration provider
   vim.api.nvim_set_decoration_provider(ns, {
@@ -98,7 +97,7 @@ function M.enable(opts)
 
   scopes = scopes
     or Snacks.scope.attach(function(win, buf, scope)
-      if not M.animating then
+      if not Snacks.animate.enabled({ buf = buf, name = "dim" }) then
         Snacks.util.redraw(win)
       else
         if not (scopes_anim[win] and scopes_anim[win].buf == buf) then
@@ -143,11 +142,6 @@ function M.disable()
   end
   scopes_anim = {}
   vim.cmd([[redraw!]])
-end
-
--- Toggle scope animations
-function M.animate()
-  M.animating = not M.animating
 end
 
 return M

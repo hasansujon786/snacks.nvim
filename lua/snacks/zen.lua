@@ -29,7 +29,12 @@ local defaults = {
   },
   ---@type snacks.win.Config
   win = { style = "zen" },
-
+  --- Callback when the window is opened.
+  ---@param win snacks.win
+  on_open = function(win) end,
+  --- Callback when the window is closed.
+  ---@param win snacks.win
+  on_close = function(win) end,
   --- Options for the `Snacks.zen.zoom()`
   ---@type snacks.zen.Config
   zoom = {
@@ -158,6 +163,7 @@ function M.zen(opts)
       toggle:set(state)
     end
   end
+  opts.on_open(win)
 
   -- restore toggle states when window is closed
   vim.api.nvim_create_autocmd("WinClosed", {
@@ -170,6 +176,7 @@ function M.zen(opts)
       for _, state in ipairs(states) do
         state.toggle:set(state.state)
       end
+      opts.on_close(win)
     end),
   })
 
