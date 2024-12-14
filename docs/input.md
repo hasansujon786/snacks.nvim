@@ -27,11 +27,15 @@ Better `vim.ui.input`.
 ```lua
 ---@class snacks.input.Config
 ---@field enabled? boolean
----@field win? snacks.win.Config
+---@field win? snacks.win.Config|{}
 ---@field icon? string
+---@field icon_pos? snacks.input.Pos
+---@field prompt_pos? snacks.input.Pos
 {
   icon = " ",
   icon_hl = "SnacksInputIcon",
+  icon_pos = "left",
+  prompt_pos = "title",
   win = { style = "input" },
   expand = true,
 }
@@ -50,6 +54,7 @@ Better `vim.ui.input`.
   height = 1,
   width = 60,
   relative = "editor",
+  noautocmd = true,
   row = 2,
   -- relative = "cursor",
   -- row = -3,
@@ -70,6 +75,10 @@ Better `vim.ui.input`.
 ```
 
 ## 📚 Types
+
+```lua
+---@alias snacks.input.Pos "left"|"title"|false
+```
 
 ```lua
 ---@class snacks.input.Opts: snacks.input.Config

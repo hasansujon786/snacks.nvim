@@ -52,8 +52,8 @@ Snacks.win({
 ---@field file? string If set, use this file instead of creating a new buffer
 ---@field enter? boolean Enter the window after opening (default: false)
 ---@field backdrop? number|false|snacks.win.Backdrop Opacity of the backdrop (default: 60)
----@field wo? vim.wo window options
----@field bo? vim.bo buffer options
+---@field wo? vim.wo|{} window options
+---@field bo? vim.bo|{} buffer options
 ---@field ft? string filetype to use for treesitter/syntax highlighting. Won't override existing filetype
 ---@field keys? table<string, false|string|fun(self: snacks.win)|snacks.win.Keys> Key mappings
 ---@field on_buf? fun(self: snacks.win) Callback after opening the buffer
@@ -227,11 +227,17 @@ win:hide()
 win:is_floating()
 ```
 
+### `win:line()`
+
+```lua
+win:line(line)
+```
+
 ### `win:lines()`
 
 ```lua
----@param from? number
----@param to? number
+---@param from? number 1-indexed, inclusive
+---@param to? number 1-indexed, inclusive
 win:lines(from, to)
 ```
 
@@ -257,8 +263,8 @@ win:size()
 ### `win:text()`
 
 ```lua
----@param from? number
----@param to? number
+---@param from? number 1-indexed, inclusive
+---@param to? number 1-indexed, inclusive
 win:text(from, to)
 ```
 

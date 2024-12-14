@@ -11,13 +11,19 @@ M.meta = {
   needs_setup = true,
 }
 
+---@alias snacks.input.Pos "left"|"title"|false
+
 ---@class snacks.input.Config
 ---@field enabled? boolean
----@field win? snacks.win.Config
+---@field win? snacks.win.Config|{}
 ---@field icon? string
+---@field icon_pos? snacks.input.Pos
+---@field prompt_pos? snacks.input.Pos
 local defaults = {
   icon = " ",
   icon_hl = "SnacksInputIcon",
+  icon_pos = "left",
+  prompt_pos = "title",
   win = { style = "input" },
   expand = true,
 }
@@ -27,6 +33,7 @@ Snacks.util.set_hl({
   Normal = "Normal",
   Border = "DiagnosticInfo",
   Title = "DiagnosticInfo",
+  Prompt = "SnacksInputTitle",
 }, { prefix = "SnacksInput", default = true })
 
 Snacks.config.style("input", {
@@ -37,6 +44,7 @@ Snacks.config.style("input", {
   height = 1,
   width = 60,
   relative = "editor",
+  noautocmd = true,
   row = 2,
   -- relative = "cursor",
   -- row = -3,
@@ -74,33 +82,57 @@ function M.input(opts, on_confirm)
   assert(type(on_confirm) == "function", "`on_confirm` must be a function")
 
   local parent_win = vim.api.nvim_get_current_win()
+  local mode = vim.fn.mode()
 
   local function confirm(value)
     ctx.win = nil
     ctx.opts = nil
     vim.cmd.stopinsert()
     vim.schedule(function()
-      vim.api.nvim_set_current_win(parent_win)
+      if vim.api.nvim_win_is_valid(parent_win) then
+        vim.api.nvim_set_current_win(parent_win)
+        if mode == "i" then
+          vim.cmd("startinsert")
+        end
+      end
       on_confirm(value)
     end)
   end
 
   opts = Snacks.config.get("input", defaults, opts) --[[@as snacks.input.Opts]]
-  opts.prompt = opts.prompt:gsub(":%s*$", "")
-  local statuscolumn = " %#" .. opts.icon_hl .. "#" .. opts.icon .. " "
-  if not opts.icon or opts.icon == "" then
-    statuscolumn = " "
+  opts.prompt = opts.prompt or "Input"
+  opts.prompt = vim.trim(opts.prompt)
+  opts.prompt = opts.prompt_pos == "title" and opts.prompt:gsub(":$", "") or opts.prompt
+
+  local title, statuscolumn = {}, {} ---@type string[], string[]
+  local function add(text, hl, pos)
+    if pos == "title" then
+      table.insert(title, { " " .. text, hl })
+    else
+      table.insert(statuscolumn, "%#" .. hl .. "#" .. text)
+    end
+  end
+
+  if opts.icon_pos and (opts.icon or "") ~= "" then
+    add(opts.icon, "SnacksInputIcon", opts.icon_pos)
+  end
+  add(opts.prompt, "SnacksInputBorder", opts.prompt_pos)
+
+  if next(title) then
+    table.insert(title, { " " })
   end
 
   opts.win = Snacks.win.resolve("input", opts.win, {
     enter = true,
-    title = (" %s "):format(vim.trim(opts.prompt or "Input")),
+    title = next(title) and title or nil,
     bo = {
       modifiable = true,
       completefunc = "v:lua.Snacks.input.complete",
       omnifunc = "v:lua.Snacks.input.complete",
     },
-    wo = { statuscolumn = statuscolumn },
+    wo = {
+      statuscolumn = next(statuscolumn) and " " .. table.concat(statuscolumn, " ") .. " " or nil,
+    },
     actions = {
       cancel = function(self)
         confirm()
@@ -152,9 +184,11 @@ function M.input(opts, on_confirm)
     vim.api.nvim_create_autocmd("TextChangedI", {
       buffer = win.buf,
       callback = function()
-        vim.api.nvim_win_call(parent_win, function()
-          win:update()
-        end)
+        if vim.api.nvim_win_is_valid(parent_win) then
+          vim.api.nvim_win_call(parent_win, function()
+            win:update()
+          end)
+        end
         vim.api.nvim_win_call(win.win, function()
           vim.fn.winrestview({ leftcol = 0 })
         end)

@@ -69,7 +69,7 @@ end
 
 --- Register a new window style config.
 ---@param name string
----@param defaults snacks.win.Config
+---@param defaults snacks.win.Config|{}
 function M.config.style(name, defaults)
   config.styles[name] = vim.tbl_deep_extend("force", vim.deepcopy(defaults), config.styles[name] or {})
 end
