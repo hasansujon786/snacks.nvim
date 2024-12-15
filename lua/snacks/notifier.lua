@@ -91,7 +91,7 @@ Snacks.config.style("notification", {
   bo = { filetype = "snacks_notif" },
 })
 
-Snacks.config.style("notification.history", {
+Snacks.config.style("notification_history", {
   border = "rounded",
   zindex = 100,
   width = 0.6,
@@ -456,7 +456,7 @@ function N:show_history(opts)
     vim.cmd("close")
     return
   end
-  local win = Snacks.win({ style = "notification.history", enter = true, show = false })
+  local win = Snacks.win({ style = "notification_history", enter = true, show = false })
   local buf = win:open_buf()
   opts = opts or {}
   if opts.reverse == nil then

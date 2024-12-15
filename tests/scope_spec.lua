@@ -44,6 +44,7 @@ describe("scope", function()
     [8] = { 1, 8 },
   }
   Snacks.config.scope = {
+    cursor = false,
     min_size = 2,
     treesitter = {
       blocks = false,
