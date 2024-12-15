@@ -22,6 +22,8 @@
 
 ```lua
 ---@class snacks.statuscolumn.Config
+---@field left snacks.statuscolumn.Components
+---@field right snacks.statuscolumn.Components
 ---@field enabled? boolean
 {
   left = { "mark", "sign" }, -- priority of signs on the left (high to low)
@@ -36,6 +38,13 @@
   },
   refresh = 50, -- refresh at most every 50ms
 }
+```
+
+## 📚 Types
+
+```lua
+---@alias snacks.statuscolumn.Component "mark"|"sign"|"fold"|"git"
+---@alias snacks.statuscolumn.Components snacks.statuscolumn.Component[]|fun(win:number,buf:number,lnum:number):snacks.statuscolumn.Component[]
 ```
 
 ## 📦 Module

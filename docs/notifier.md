@@ -218,6 +218,7 @@ Notification options
 ---@field style? snacks.notifier.style
 ---@field opts? fun(notif: snacks.notifier.Notif) -- dynamic opts
 ---@field hl? snacks.notifier.hl -- highlight overrides
+---@field history? boolean
 ```
 
 Notification object
