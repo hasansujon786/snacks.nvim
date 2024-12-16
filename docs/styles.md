@@ -114,6 +114,10 @@ The other options are used with `:lua Snacks.dashboard()`
     cursorline = false,
   },
   bo = { filetype = "snacks_input" },
+  --- buffer local variables
+  b = {
+    completion = false, -- disable blink completions in input
+  },
   keys = {
     i_esc = { "<esc>", { "cmp_close", "cancel" }, mode = "i" },
     -- i_esc = { "<esc>", "stopinsert", mode = "i" },

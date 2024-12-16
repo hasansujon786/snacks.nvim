@@ -55,6 +55,8 @@ Snacks.win({
 ---@field backdrop? number|false|snacks.win.Backdrop Opacity of the backdrop (default: 60)
 ---@field wo? vim.wo|{} window options
 ---@field bo? vim.bo|{} buffer options
+---@field b? table<string, any> buffer local variables
+---@field w? table<string, any> window local variables
 ---@field ft? string filetype to use for treesitter/syntax highlighting. Won't override existing filetype
 ---@field keys? table<string, false|string|fun(self: snacks.win)|snacks.win.Keys> Key mappings
 ---@field on_buf? fun(self: snacks.win) Callback after opening the buffer

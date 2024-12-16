@@ -168,13 +168,13 @@ local function get_extmark(indent, state)
   local blank = space:rep(sw - vim.api.nvim_strwidth(config.indent.char))
 
   local text = {} ---@type string[][]
-  text[1] = rem > 0 and { (blank):rep(rem), get_hl(hidden, config.blank.hl) } or nil
+  text[1] = rem > 0 and { (space):rep(rem), get_hl(hidden, config.blank.hl) } or nil
 
   for i = 1, indent do
     if i >= offset then
       text[#text + 1] = { config.indent.char, get_hl(i + hidden, config.indent.hl) }
     else
-      text[#text + 1] = { blank, get_hl(i + hidden, config.blank.hl) }
+      text[#text + 1] = { space, get_hl(i + hidden, config.blank.hl) }
     end
     text[#text + 1] = { blank, get_hl(i + hidden, config.blank.hl) }
   end
@@ -213,6 +213,7 @@ local function get_state(win, buf, top, bottom)
   end
   ---@class snacks.indent.State
   ---@field indents table<number, number>
+  ---@field blanks table<number, boolean>
   local state = {
     win = win,
     buf = buf,
@@ -223,6 +224,7 @@ local function get_state(win, buf, top, bottom)
     leftcol = vim.api.nvim_buf_call(buf, vim.fn.winsaveview).leftcol --[[@as number]],
     shiftwidth = vim.bo[buf].shiftwidth,
     indents = prev and prev.indents or { [0] = 0 },
+    blanks = prev and prev.blanks or {},
     indent_offset = 0, -- the start column of the indent guides
     listchars = get_listchars(win),
   }
@@ -269,6 +271,7 @@ function M.on_win(win, buf, top, bottom)
         -- Indent for a blank line is the minimum of the previous and next non-blank line.
         -- If the previous and next non-blank lines have different indents, add shiftwidth.
         if next ~= l then
+          state.blanks[l] = true
           local prev = vim.fn.prevnonblank(l)
           indents[prev] = indents[prev] or vim.fn.indent(prev)
           indents[next] = indents[next] or vim.fn.indent(next)
@@ -345,7 +348,7 @@ function M.render_scope(scope, state)
 
   for l = from, to do
     local i = state.indents[l]
-    if (i and i > indent) or vim.g.snacks_indent_overlap then
+    if (i and i > indent) or vim.g.snacks_indent_overlap or state.blanks[l] then
       vim.api.nvim_buf_set_extmark(scope.buf, ns, l - 1, 0, {
         virt_text = { { config.scope.char, hl } },
         virt_text_pos = "overlay",

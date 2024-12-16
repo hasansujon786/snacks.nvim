@@ -282,9 +282,7 @@ function IndentScope:find(opts)
   end
 
   if opts.cursor then
-    local before = vim.fn.getline(opts.pos[1]):sub(1, opts.pos[2])
-    before = before:gsub("\t", (" "):rep(vim.bo[opts.buf].tabstop or 2))
-    indent = math.min(indent, vim.api.nvim_strwidth(before) + 1)
+    indent = math.min(indent, vim.fn.virtcol(opts.pos) + 1)
   end
 
   -- expand to include bigger indents
@@ -407,8 +405,15 @@ function TSScope:find(opts)
   if opts.cursor then
     -- expand to biggest ancestor with a lower start position
     local n = node ---@type TSNode?
-    while n and n ~= n:tree():root() and ({ n:range() })[2] > opts.pos[2] do
-      node, n = n, n:parent()
+    local virtcol = vim.fn.virtcol(opts.pos)
+    while n and n ~= n:tree():root() do
+      local r, c = n:range()
+      local virtcol_n = vim.fn.virtcol({ r + 1, c })
+      if virtcol_n > virtcol then
+        node, n = n, n:parent()
+      else
+        break
+      end
     end
   end
 
