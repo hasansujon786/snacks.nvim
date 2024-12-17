@@ -143,9 +143,18 @@ end
 ---@param indent number
 ---@param state snacks.indent.State
 local function get_extmark(indent, state)
-  local listchars = state.listchars
-  local space = config.indent.blank or listchars.lead or listchars.space or " "
-  local key = indent .. ":" .. state.leftcol .. ":" .. state.shiftwidth .. ":" .. state.indent_offset .. ":" .. space
+  local space = state.space
+  local key = indent
+    .. ":"
+    .. state.leftcol
+    .. ":"
+    .. state.shiftwidth
+    .. ":"
+    .. state.indent_offset
+    .. ":"
+    .. space
+    .. ":"
+    .. (state.breakindent and "bi" or "")
   if cache_extmarks[key] ~= nil then
     return cache_extmarks[key]
   end
@@ -186,6 +195,7 @@ local function get_extmark(indent, state)
     hl_mode = "combine",
     priority = config.indent.priority,
     ephemeral = true,
+    virt_text_repeat_linebreak = state.breakindent,
   }
   return cache_extmarks[key]
 end
@@ -227,7 +237,10 @@ local function get_state(win, buf, top, bottom)
     blanks = prev and prev.blanks or {},
     indent_offset = 0, -- the start column of the indent guides
     listchars = get_listchars(win),
+    breakindent = vim.wo[win].breakindent and vim.wo[win].wrap,
+    space = " ",
   }
+  state.space = config.indent.blank or state.listchars.lead or state.listchars.space or " "
   state.shiftwidth = state.shiftwidth == 0 and vim.bo[buf].tabstop or state.shiftwidth
   states[win] = state
   return state
@@ -357,6 +370,7 @@ function M.render_scope(scope, state)
         priority = config.scope.priority,
         strict = false,
         ephemeral = true,
+        virt_text_repeat_linebreak = state.breakindent,
       })
     end
   end
@@ -378,7 +392,8 @@ function M.render_chunk(scope, state)
 
   ---@param l number
   ---@param line string
-  local function add(l, line)
+  ---@param repeat_indent? boolean
+  local function add(l, line, repeat_indent)
     vim.api.nvim_buf_set_extmark(scope.buf, ns, l - 1, 0, {
       virt_text = { { line, hl } },
       virt_text_pos = "overlay",
@@ -386,6 +401,7 @@ function M.render_chunk(scope, state)
       hl_mode = "combine",
       priority = config.chunk.priority,
       strict = false,
+      virt_text_repeat_linebreak = repeat_indent,
       ephemeral = true,
     })
   end
@@ -393,11 +409,17 @@ function M.render_chunk(scope, state)
   for l = from, to do
     local i = state.indents[l] - state.leftcol
     if l == scope.from then -- top line
+      if state.breakindent then
+        add(l, char.vertical, true)
+      end
       add(l, char.corner_top .. (char.horizontal):rep(i - col - 1))
     elseif l == scope.to then -- bottom line
+      if state.breakindent then
+        add(l, char.vertical .. (state.space):rep(i - col - 2), true)
+      end
       add(l, char.corner_bottom .. (char.horizontal):rep(i - col - 2) .. char.arrow)
     elseif i and i > col then -- middle line
-      add(l, char.vertical)
+      add(l, char.vertical, state.breakindent)
     end
   end
 end

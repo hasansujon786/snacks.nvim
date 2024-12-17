@@ -167,6 +167,9 @@ function M.input(opts, on_confirm)
     },
   })
 
+  local parent_zindex = vim.api.nvim_win_get_config(parent_win).zindex
+  opts.win.zindex = parent_zindex and parent_zindex + 1 or opts.win.zindex
+
   local min_width = opts.win.width or 60
   if opts.expand then
     ---@param self snacks.win

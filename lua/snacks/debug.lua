@@ -26,19 +26,15 @@ function M.inspect(...)
   local caller = debug.getinfo(1, "S")
   for level = 2, 10 do
     local info = debug.getinfo(level, "S")
-    if
-      info
-      and info.source ~= caller.source
-      and info.what ~= "C"
-      and info.source ~= "lua"
-      and info.source ~= "@" .. (vim.env.MYVIMRC or "")
-    then
+    if info and info.source ~= caller.source and info.what ~= "C" and info.source ~= "lua" then
       caller = info
       break
     end
   end
-  local title = "Debug: " .. vim.fn.fnamemodify(caller.source:sub(2), ":~:.") .. ":" .. caller.linedefined
-  Snacks.notify.warn(vim.inspect(len == 1 and obj[1] or len > 0 and obj or nil), { title = title, ft = "lua" })
+  vim.schedule(function()
+    local title = "Debug: " .. vim.fn.fnamemodify(caller.source:sub(2), ":~:.") .. ":" .. caller.linedefined
+    Snacks.notify.warn(vim.inspect(len == 1 and obj[1] or len > 0 and obj or nil), { title = title, ft = "lua" })
+  end)
 end
 
 --- Run the current buffer or a range of lines.
