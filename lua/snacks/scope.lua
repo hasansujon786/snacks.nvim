@@ -246,6 +246,9 @@ function IndentScope:with_edge()
   local indent = math.min(math.max(before_i or self.indent, after_i or self.indent), self.indent)
   local from = before_i and before_i == indent and before_l or self.from
   local to = after_i and after_i == indent and after_l or self.to
+  if from == 0 or to == 0 or indent < 0 then
+    return self
+  end
   return self:with({ from = from, to = to, indent = indent })
 end
 

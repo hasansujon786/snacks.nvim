@@ -6,7 +6,7 @@
 ---@field augroup? number
 ---@field backdrop? snacks.win
 ---@field keys snacks.win.Keys[]
----@overload fun(opts? :snacks.win.Config): snacks.win
+---@overload fun(opts? :snacks.win.Config|{}): snacks.win
 local M = setmetatable({}, {
   __call = function(t, ...)
     return t.new(...)
@@ -176,7 +176,7 @@ function M.resolve(...)
   return ret
 end
 
----@param opts? snacks.win.Config
+---@param opts? snacks.win.Config|{}
 ---@return snacks.win
 function M.new(opts)
   local self = setmetatable({}, { __index = M })

@@ -11,12 +11,13 @@ M.meta = {
 }
 
 local uv = vim.uv or vim.loop
-local ns = vim.api.nvim_create_namespace("snacks_debug")
 
-Snacks.util.set_hl({
-  Indent = "LineNr",
-  Print = "NonText",
-}, { prefix = "SnacksDebug", default = true })
+vim.schedule(function()
+  Snacks.util.set_hl({
+    Indent = "LineNr",
+    Print = "NonText",
+  }, { prefix = "SnacksDebug", default = true })
+end)
 
 -- Show a notification with a pretty printed dump of the object(s)
 -- with lua treesitter highlighting and the location of the caller
@@ -26,7 +27,13 @@ function M.inspect(...)
   local caller = debug.getinfo(1, "S")
   for level = 2, 10 do
     local info = debug.getinfo(level, "S")
-    if info and info.source ~= caller.source and info.what ~= "C" and info.source ~= "lua" then
+    if
+      info
+      and info.source ~= caller.source
+      and info.what ~= "C"
+      and info.source ~= "lua"
+      and info.source ~= "@" .. (os.getenv("MYVIMRC") or "")
+    then
       caller = info
       break
     end
@@ -42,6 +49,7 @@ end
 --- Any error will be shown as a diagnostic.
 ---@param opts? {name?:string, buf?:number, print?:boolean}
 function M.run(opts)
+  local ns = vim.api.nvim_create_namespace("snacks_debug")
   opts = vim.tbl_extend("force", { print = true }, opts or {})
   local buf = opts.buf or 0
   buf = buf == 0 and vim.api.nvim_get_current_buf() or buf
