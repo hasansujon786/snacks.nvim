@@ -182,7 +182,7 @@ function M._get()
   end
   local win = vim.g.statusline_winid
   local show_signs = vim.v.virtnum == 0 and vim.wo[win].signcolumn ~= "no"
-  local components = { "", LINE_NR, "" } -- left, middle, right
+  local components = { "", LINE_NR, "", "" } -- left, middle, right
 
   if show_signs then
     local buf = vim.api.nvim_win_get_buf(win)
@@ -206,7 +206,7 @@ function M._get()
 
       local left_c = type(config.left) == "function" and config.left(win, buf, vim.v.lnum) or config.left --[[@as snacks.statuscolumn.Component[] ]]
       local right_c = type(config.right) == "function" and config.right(win, buf, vim.v.lnum) or config.right --[[@as snacks.statuscolumn.Component[] ]]
-      local left, right = find(left_c), find(right_c)
+      local left, right, far_right = find(left_c), find(right_c), find({ "fold" })
 
       if config.folds.git_hl then
         local git = signs_by_type.git
@@ -219,9 +219,11 @@ function M._get()
       end
       components[1] = left and M.icon(left) or " " -- left
       components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
+      components[4] = is_file and (far_right and M.icon(far_right) or " ") or "" -- far_right
     else
       components[1] = " "
       components[3] = is_file and " " or ""
+      components[4] = is_file and " " or ""
     end
   end
 
