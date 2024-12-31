@@ -219,7 +219,7 @@ function M._get()
       end
       components[1] = left and M.icon(left) or " " -- left
       components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
-      components[4] = is_file and (far_right and M.icon(far_right) or " ") or "" -- far_right
+      components[4] = is_file and (far_right and M.icon(far_right) or "%#None# ") or "" -- far_right
     else
       components[1] = " "
       components[3] = is_file and " " or ""
