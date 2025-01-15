@@ -102,7 +102,7 @@ function M.file(ctx)
           line = line:sub(1, ctx.picker.opts.previewers.file.max_line_length) .. "..."
         end
         -- Check for binary data in the current line
-        if line:find("[%z\1-\8\13\14\16-\31]") then
+        if line:find("[%z\1-\8\11\12\14-\31]") then
           ctx.preview:notify("binary file", "warn")
           return
         end
@@ -125,14 +125,33 @@ end
 function M.cmd(cmd, ctx, opts)
   opts = opts or {}
   local buf = ctx.preview:scratch()
+  local pty = opts.pty ~= false and not opts.ft
   local killed = false
-  local chan = vim.api.nvim_open_term(buf, {})
+  local chan = pty and vim.api.nvim_open_term(buf, {}) or nil
   local output = {} ---@type string[]
+
+  ---@param data string
+  local function add(data)
+    output[#output + 1] = data
+    if chan then
+      if pcall(vim.api.nvim_chan_send, chan, data) then
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd("norm! gg")
+        end)
+      end
+    else
+      vim.bo[buf].modifiable = true
+      local lines = vim.split(table.concat(output, "\n"), "\n")
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      vim.bo[buf].modifiable = false
+    end
+  end
+
   local jid = vim.fn.jobstart(cmd, {
-    height = vim.api.nvim_win_get_height(ctx.win),
-    width = vim.api.nvim_win_get_width(ctx.win),
-    pty = opts.pty ~= false and not opts.ft,
-    cwd = ctx.item.cwd,
+    height = pty and vim.api.nvim_win_get_height(ctx.win) or nil,
+    width = pty and vim.api.nvim_win_get_width(ctx.win) or nil,
+    pty = pty,
+    cwd = ctx.item.cwd or ctx.picker.opts.cwd,
     env = vim.tbl_extend("force", {
       PAGER = "cat",
       DELTA_PAGER = "cat",
@@ -141,14 +160,7 @@ function M.cmd(cmd, ctx, opts)
       if not vim.api.nvim_buf_is_valid(buf) then
         return
       end
-      data = table.concat(data, "\n")
-      local ok = pcall(vim.api.nvim_chan_send, chan, data)
-      if ok then
-        vim.api.nvim_buf_call(buf, function()
-          vim.cmd("norm! gg")
-        end)
-      end
-      table.insert(output, data)
+      add(table.concat(data, "\n"))
     end,
     on_exit = function(_, code)
       if not killed and code ~= 0 then
@@ -171,7 +183,9 @@ function M.cmd(cmd, ctx, opts)
     callback = function()
       killed = true
       vim.fn.jobstop(jid)
-      vim.fn.chanclose(chan)
+      if chan then
+        vim.fn.chanclose(chan)
+      end
     end,
   })
   if jid <= 0 then
@@ -181,6 +195,7 @@ end
 
 ---@param ctx snacks.picker.preview.ctx
 function M.git_show(ctx)
+  local native = ctx.picker.opts.previewers.git.native
   local cmd = {
     "git",
     "-c",
@@ -188,11 +203,15 @@ function M.git_show(ctx)
     "show",
     ctx.item.commit,
   }
-  M.cmd(cmd, ctx)
+  if not native then
+    table.insert(cmd, 2, "--no-pager")
+  end
+  M.cmd(cmd, ctx, { ft = not native and "git" or nil })
 end
 
 ---@param ctx snacks.picker.preview.ctx
 function M.git_diff(ctx)
+  local native = ctx.picker.opts.previewers.git.native
   local cmd = {
     "git",
     "-c",
@@ -201,7 +220,10 @@ function M.git_diff(ctx)
     "--",
     ctx.item.file,
   }
-  M.cmd(cmd, ctx)
+  if not native then
+    table.insert(cmd, 2, "--no-pager")
+  end
+  M.cmd(cmd, ctx, { ft = not native and "diff" or nil })
 end
 
 ---@param ctx snacks.picker.preview.ctx

@@ -88,7 +88,7 @@ end
 function M.qflist(picker)
   picker:close()
   local sel = picker:selected()
-  local items = #sel > 0 and sel or picker.finder.items
+  local items = #sel > 0 and sel or picker:items()
   setqflist(items)
 end
 
@@ -96,7 +96,7 @@ end
 function M.loclist(picker)
   picker:close()
   local sel = picker:selected()
-  local items = #sel > 0 and sel or picker.finder.items
+  local items = #sel > 0 and sel or picker:items()
   setqflist(items, { win = picker.main })
 end
 
@@ -144,6 +144,12 @@ end
 function M.select_and_prev(picker)
   picker.list:select()
   M.list_up(picker)
+end
+
+--- Selects all items in the list.
+--- Or clears the selection if all items are selected.
+function M.select_all(picker)
+  picker.list:select_all()
 end
 
 function M.cmd(picker, item)

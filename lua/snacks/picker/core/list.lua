@@ -290,6 +290,10 @@ function M:select()
   self:render()
 end
 
+function M:select_all()
+  self:set_selected(#self.selected == self:count() and {} or self.items)
+end
+
 ---@param item snacks.picker.Item
 ---@return string
 function M:select_key(item)

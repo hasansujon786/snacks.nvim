@@ -276,12 +276,12 @@ function M:show()
   end
 end
 
---- Returns an iterator over the items in the picker.
+--- Returns an iterator over the filtered items in the picker.
 --- Items will be in sorted order.
 ---@return fun():snacks.picker.Item?
 function M:iter()
   local i = 0
-  local n = self.finder:count()
+  local n = self.list:count()
   return function()
     i = i + 1
     if i <= n then
@@ -290,9 +290,13 @@ function M:iter()
   end
 end
 
---- Get all finder items
+--- Get all filtered items in the picker.
 function M:items()
-  return self.finder.items
+  local ret = {} ---@type snacks.picker.Item[]
+  for item in self:iter() do
+    ret[#ret + 1] = item
+  end
+  return ret
 end
 
 --- Get the current item at the cursor

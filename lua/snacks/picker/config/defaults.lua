@@ -33,17 +33,6 @@ local M = {}
 ---@field idx? number
 ---@field score? number
 
----@class snacks.picker.sources.Config
-
----@class snacks.picker.preview.Config
----@field man_pager? string MANPAGER env to use for `man` preview
----@field file snacks.picker.preview.file.Config
-
----@class snacks.picker.preview.file.Config
----@field max_size? number default 1MB
----@field max_line_length? number defaults to 500
----@field ft? string defaults to auto-detect
-
 ---@class snacks.picker.layout.Config
 ---@field layout snacks.layout.Box
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
@@ -78,7 +67,8 @@ local M = {}
 ---@field icons? snacks.picker.icons
 ---@field prompt? string prompt text / icon
 --- Preset options
----@field previewers? snacks.picker.preview.Config
+---@field previewers? snacks.picker.previewers.Config|{}
+---@field formatters? snacks.picker.formatters.Config|{}
 ---@field sources? snacks.picker.sources.Config|{}
 ---@field layouts? table<string, snacks.picker.layout.Config>
 --- Actions
@@ -99,11 +89,23 @@ local defaults = {
     end,
   },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
+  ---@class snacks.picker.formatters.Config
+  formatters = {
+    file = {
+      filename_first = false, -- display filename before the file path
+    },
+  },
+  ---@class snacks.picker.previewers.Config
   previewers = {
+    git = {
+      native = false, -- use native (terminal) or Neovim for previewing git diffs and commits
+    },
     file = {
       max_size = 1024 * 1024, -- 1MB
-      max_line_length = 500,
+      max_line_length = 500, -- max line length
+      ft = nil, ---@type string? filetype for highlighting. Use `nil` for auto detect
     },
+    man_pager = nil, ---@type string? MANPAGER env to use for `man` preview
   },
   win = {
     -- input window
@@ -121,7 +123,8 @@ local defaults = {
         ["/"] = "toggle_focus",
         ["q"] = "close",
         ["?"] = "toggle_help",
-        ["<c-i>"] = { "inspect", mode = { "n", "i" } },
+        ["<a-d>"] = { "inspect", mode = { "n", "i" } },
+        ["<c-a>"] = { "select_all", mode = { "n", "i" } },
         ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
         ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
         ["<a-w>"] = { "cycle_win", mode = { "i", "n" } },
@@ -167,7 +170,7 @@ local defaults = {
         ["<S-Tab>"] = "select_and_prev",
         ["<Down>"] = "list_down",
         ["<Up>"] = "list_up",
-        ["<c-i>"] = "inspect",
+        ["<a-d>"] = "inspect",
         ["<c-d>"] = "list_scroll_down",
         ["<c-u>"] = "list_scroll_up",
         ["zt"] = "list_scroll_top",
@@ -176,6 +179,7 @@ local defaults = {
         ["/"] = "toggle_focus",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
+        ["<c-a>"] = "select_all",
         ["<c-f>"] = "preview_scroll_down",
         ["<c-b>"] = "preview_scroll_up",
         ["<c-v>"] = "edit_vsplit",
@@ -190,11 +194,6 @@ local defaults = {
     },
     -- preview window
     preview = {
-      minimal = false,
-      wo = {
-        cursorline = false,
-        colorcolumn = "",
-      },
       keys = {
         ["<Esc>"] = "close",
         ["q"] = "close",

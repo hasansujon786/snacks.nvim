@@ -13,8 +13,7 @@ M.__index = M
 M.DEFAULT_SCORE = 1000
 M.INVERSE_SCORE = 1000
 
-local YIELD_MATCH = 5 -- ms
-local clear = require("table.clear")
+local YIELD_MATCH = 1 -- ms
 
 ---@class snacks.picker.matcher.Mods
 ---@field pattern string
@@ -27,18 +26,6 @@ local clear = require("table.clear")
 ---@field exact_suffix? boolean
 ---@field exact_prefix? boolean
 ---@field inverse? boolean
-
--- PERF: reuse tables to avoid allocations and GC
-local fuzzy_positions = {} ---@type number[]
-local fuzzy_best_positions = {} ---@type number[]
-local fuzzy_last_positions = {} ---@type number[]
-local fuzzy_fast_positions = {} ---@type number[]
-
----@param t number[]
-function M.clear(t)
-  clear(t) -- luajit table.clear is faster
-  return t
-end
 
 ---@param opts? snacks.picker.matcher.Config
 function M.new(opts)
@@ -207,6 +194,9 @@ function M:_prepare(pattern)
   mods.entropy = mods.entropy + math.min(#mods.pattern, 20) + rare_chars * 2
   if not mods.ignorecase and not is_lower then
     mods.entropy = mods.entropy * 2
+  end
+  if mods.ignorecase then
+    mods.pattern = mods.pattern:lower()
   end
   for c = 1, #mods.pattern do
     mods.chars[c] = mods.pattern:sub(c, c)
@@ -390,18 +380,18 @@ function M:fuzzy(str, pattern)
   local from, to = self:fuzzy_find(str, pattern)
   if not from then
     return
-  elseif from == to then
-    return from, to
   end
 
-  local best_from, best_to, best_width = from, to, to - from
-  repeat
-    local width = to - from
+  local best_from, best_to, best_width = from, to, to - from + 1
+  local n, width = #pattern, 0
+  -- short circuit if we have a perfect match
+  while from and best_width > n do
+    width = to - from + 1
     if width < best_width then
       best_from, best_to, best_width = from, to, width
     end
     from, to = self:fuzzy_find(str, pattern, from + 1)
-  until not from
+  end
   return best_from, best_to
 end
 

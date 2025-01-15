@@ -34,6 +34,7 @@ function M.select(items, opts, on_choice)
   return Snacks.picker.pick({
     source = "select",
     items = finder_items,
+    main = { current = true },
     format = Snacks.picker.format.ui_select(opts.kind, #items),
     actions = {
       confirm = function(picker, item)

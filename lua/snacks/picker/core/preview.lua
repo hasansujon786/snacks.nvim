@@ -28,6 +28,13 @@ function M.new(opts, main)
   local win_opts = Snacks.win.resolve(
     {
       title_pos = "center",
+      minimal = false,
+      wo = {
+        cursorline = false,
+        colorcolumn = "",
+        number = true,
+        relativenumber = true,
+      },
     },
     opts.win.preview,
     {
@@ -121,6 +128,11 @@ function M:set_title(title)
   self.win:set_title(title)
 end
 
+---@param wo vim.wo|{}
+function M:wo(wo)
+  Snacks.util.wo(self.win.win, wo)
+end
+
 ---@param buf? number
 function M:clear(buf)
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then
@@ -143,7 +155,8 @@ function M:reset()
   self:clear(self.win.buf)
   vim.bo[self.win.buf].filetype = "snacks_picker_preview"
   vim.bo[self.win.buf].syntax = ""
-  vim.wo[self.win.win].cursorline = false
+  self:wo({ cursorline = false })
+  self:wo(self.win.opts.wo)
 end
 
 -- create a new scratch buffer
@@ -155,6 +168,7 @@ function M:scratch()
   vim.bo[buf].filetype = "snacks_picker_preview"
   vim.o.eventignore = ei
   vim.api.nvim_win_set_buf(self.win.win, buf)
+  self:wo({ number = false, relativenumber = false })
   return buf
 end
 
@@ -188,7 +202,7 @@ function M:loc()
     vim.api.nvim_win_set_cursor(self.win.win, { self.item.pos[1], 0 })
     vim.api.nvim_win_call(self.win.win, function()
       vim.cmd("norm! zz")
-      vim.wo[self.win.win].cursorline = true
+      self:wo({ cursorline = true })
     end)
     if self.item.end_pos then
       vim.api.nvim_buf_set_extmark(self.win.buf, ns_loc, self.item.pos[1] - 1, self.item.pos[2] - 1, {
@@ -202,7 +216,7 @@ function M:loc()
       vim.cmd("keepjumps norm! gg")
       if pcall(vim.cmd, self.item.search) then
         vim.cmd("norm! zz")
-        vim.wo[self.win.win].cursorline = true
+        self:wo({ cursorline = true })
       end
     end)
   end

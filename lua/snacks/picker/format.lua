@@ -41,18 +41,24 @@ function M.filename(item, picker)
   end
 
   local dir, file = path:match("^(.*)/(.+)$")
-  if dir then
-    table.insert(ret, { dir .. "/", "SnacksPickerDir" })
-    table.insert(ret, { file, "SnacksPickerFile" })
+  if file and dir then
+    if picker.opts.formatters.file.filename_first then
+      ret[#ret + 1] = { file, "SnacksPickerFile" }
+      ret[#ret + 1] = { " " }
+      ret[#ret + 1] = { dir, "SnacksPickerDir" }
+    else
+      ret[#ret + 1] = { dir .. "/", "SnacksPickerDir" }
+      ret[#ret + 1] = { file, "SnacksPickerFile" }
+    end
   else
-    table.insert(ret, { path, "SnacksPickerFile" })
+    ret[#ret + 1] = { path, "SnacksPickerFile" }
   end
   if item.pos then
-    table.insert(ret, { ":", "SnacksPickerDelim" })
-    table.insert(ret, { tostring(item.pos[1]), "SnacksPickerRow" })
+    ret[#ret + 1] = { ":", "SnacksPickerDelim" }
+    ret[#ret + 1] = { tostring(item.pos[1]), "SnacksPickerRow" }
     if item.pos[2] > 0 then
-      table.insert(ret, { ":", "SnacksPickerDelim" })
-      table.insert(ret, { tostring(item.pos[2]), "SnacksPickerCol" })
+      ret[#ret + 1] = { ":", "SnacksPickerDelim" }
+      ret[#ret + 1] = { tostring(item.pos[2]), "SnacksPickerCol" }
     end
   end
   ret[#ret + 1] = { " " }
@@ -63,13 +69,13 @@ function M.file(item, picker)
   ---@type snacks.picker.Highlight[]
   local ret = {}
 
-  if item.severity then
-    vim.list_extend(ret, M.severity(item, picker))
+  if item.label then
+    ret[#ret + 1] = { item.label, "SnacksPickerLabel" }
+    ret[#ret + 1] = { " ", virtual = true }
   end
 
-  if item.label then
-    table.insert(ret, 1, { item.label, "SnacksPickerLabel" })
-    table.insert(ret, 2, { " ", virtual = true })
+  if item.severity then
+    vim.list_extend(ret, M.severity(item, picker))
   end
 
   vim.list_extend(ret, M.filename(item, picker))

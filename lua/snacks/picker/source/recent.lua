@@ -7,15 +7,17 @@ local uv = vim.uv or vim.loop
 ---@field projects fun(opts?: snacks.picker.projects.Config): snacks.Picker
 
 ---@param filter snacks.picker.Filter
-local function oldfiles(filter)
+---@param extra? string[]
+local function oldfiles(filter, extra)
   local done = {} ---@type table<string, boolean>
-  local i = 1
+  local files = {} ---@type string[]
+  vim.list_extend(files, extra or {})
+  vim.list_extend(files, vim.v.oldfiles)
   return function()
-    while vim.v.oldfiles[i] do
-      local file = vim.fs.normalize(vim.v.oldfiles[i], { _fast = true, expand_env = false })
+    for _, file in ipairs(files) do
+      file = vim.fs.normalize(file, { _fast = true, expand_env = false })
       local want = not done[file] and filter:match({ file = file, text = "" })
       done[file] = true
-      i = i + 1
       if want and uv.fs_stat(file) then
         return file
       end
@@ -28,11 +30,24 @@ end
 ---@param opts snacks.picker.recent.Config
 ---@type snacks.picker.finder
 function M.files(opts, filter)
+  local current_file = vim.fs.normalize(vim.api.nvim_buf_get_name(0), { _fast = true })
+  ---@type number[]
+  local bufs = vim.tbl_filter(function(b)
+    return vim.api.nvim_buf_get_name(b) ~= "" and vim.bo[b].buftype == "" and vim.bo[b].buflisted
+  end, vim.api.nvim_list_bufs())
+  table.sort(bufs, function(a, b)
+    return vim.fn.getbufinfo(a)[1].lastused > vim.fn.getbufinfo(b)[1].lastused
+  end)
+  local extra = vim.tbl_map(function(b)
+    return vim.api.nvim_buf_get_name(b)
+  end, bufs)
   ---@async
   ---@param cb async fun(item: snacks.picker.finder.Item)
   return function(cb)
-    for file in oldfiles(filter) do
-      cb({ file = file, text = file })
+    for file in oldfiles(filter, extra) do
+      if file ~= current_file then
+        cb({ file = file, text = file })
+      end
     end
   end
 end
