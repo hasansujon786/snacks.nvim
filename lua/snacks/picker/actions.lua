@@ -58,6 +58,33 @@ function M.toggle_preview(picker)
   picker:show_preview()
 end
 
+function M.bufdelete(picker)
+  for _, item in ipairs(picker:selected({ fallback = true })) do
+    Snacks.bufdelete.delete(item.buf)
+  end
+  local cursor = picker.list.cursor
+  picker:find({
+    on_done = function()
+      picker.list:view(cursor)
+    end,
+  })
+end
+
+function M.git_stage(picker)
+  local items = picker:selected({ fallback = true })
+  local cursor = picker.list.cursor
+  for _, item in ipairs(items) do
+    local cmd = item.status:sub(2) == " " and { "git", "restore", "--staged", item.file } or { "git", "add", item.file }
+    Snacks.picker.util.cmd(cmd, function(data, code)
+      picker:find({
+        on_done = function()
+          picker.list:view(cursor + 1)
+        end,
+      })
+    end, { cwd = item.cwd })
+  end
+end
+
 ---@param items snacks.picker.Item[]
 ---@param opts? {win?:number}
 local function setqflist(items, opts)

@@ -9,6 +9,38 @@ function M.path(item)
   return vim.fs.normalize(item.cwd and item.cwd .. "/" .. item.file or item.file, { _fast = true, expand_env = false })
 end
 
+---@param cmd string|string[]
+---@param cb fun(output: string[], code: number)
+---@param opts? {env?: table<string, string>, cwd?: string}
+function M.cmd(cmd, cb, opts)
+  local output = {} ---@type string[]
+  local id = vim.fn.jobstart(
+    cmd,
+    vim.tbl_extend("force", opts or {}, {
+      on_stdout = function(_, data)
+        output[#output + 1] = table.concat(data, "\n")
+      end,
+      on_exit = function(_, code)
+        cb(output, code)
+        if code ~= 0 then
+          Snacks.notify.error(
+            ("Terminal **cmd** `%s` failed with code `%d`:\n- `vim.o.shell = %q`\n\nOutput:\n%s"):format(
+              cmd,
+              code,
+              vim.o.shell,
+              vim.trim(table.concat(output, ""))
+            )
+          )
+        end
+      end,
+    })
+  )
+  if id <= 0 then
+    Snacks.notify.error(("Failed to start job `%s`"):format(cmd))
+  end
+  return id > 0 and id or nil
+end
+
 ---@param item table<string, any>
 ---@param keys string[]
 function M.text(item, keys)

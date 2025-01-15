@@ -212,11 +212,6 @@ Snacks.picker.pick({source = "files", ...})
     },
     -- preview window
     preview = {
-      minimal = false,
-      wo = {
-        cursorline = false,
-        colorcolumn = "",
-      },
       keys = {
         ["<Esc>"] = "close",
         ["q"] = "close",
@@ -396,15 +391,6 @@ Snacks.picker.pick({source = "files", ...})
 ## 📚 Types
 
 ```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
-
-```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -463,6 +449,15 @@ Generic filter used by finders to pre-filter items
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
 ```
 
 ## 📦 Module
@@ -542,6 +537,10 @@ Snacks.picker.select(...)
   unloaded = true,
   current = true,
   sort_lastused = true,
+  win = {
+    input = { keys = { ["dd"] = "bufdelete" } },
+    list = { keys = { ["dd"] = "bufdelete" } },
+  },
 }
 ```
 
@@ -733,6 +732,13 @@ Git log
   finder = "git_status",
   format = "git_status",
   preview = "git_status",
+  win = {
+    input = {
+      keys = {
+        ["<Tab>"] = { "git_stage", mode = { "n", "i" } },
+      },
+    },
+  },
 }
 ```
 
@@ -1381,6 +1387,12 @@ Open a project from zoxide
 local M = {}
 ```
 
+### `Snacks.picker.actions.bufdelete()`
+
+```lua
+Snacks.picker.actions.bufdelete(picker)
+```
+
 ### `Snacks.picker.actions.cmd()`
 
 ```lua
@@ -1439,6 +1451,12 @@ Snacks.picker.actions.focus_list(picker)
 
 ```lua
 Snacks.picker.actions.focus_preview(picker)
+```
+
+### `Snacks.picker.actions.git_stage()`
+
+```lua
+Snacks.picker.actions.git_stage(picker)
 ```
 
 ### `Snacks.picker.actions.help()`
@@ -1636,6 +1654,8 @@ Snacks.picker.actions.toggle_maximize(picker)
 Snacks.picker.actions.toggle_preview(picker)
 ```
 
+
+
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -1792,5 +1812,3 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
-
-

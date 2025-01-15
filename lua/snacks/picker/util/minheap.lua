@@ -28,6 +28,7 @@ end
 
 function M:clear()
   self.data = {}
+  self.sorted = nil
 end
 
 -- Private: swap two indices
