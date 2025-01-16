@@ -21,6 +21,9 @@ local BONUS_NONWORD = SCORE_MATCH / 2 -- 8
 local BONUS_CAMEL_123 = BONUS_BOUNDARY - 1 -- 7
 local BONUS_CONSECUTIVE = -(SCORE_GAP_START + SCORE_GAP_EXTENSION) -- 4
 local BONUS_FIRST_CHAR_MULTIPLIER = 2
+local BONUS_NO_PATH_SEP = BONUS_BOUNDARY - 2 -- added when there is no path separator following the from position
+
+local PATH_SEP = package.config:sub(1, 1)
 
 -- ASCII char classes (simplified); adapt as needed:
 local CHAR_WHITE = 0
@@ -124,6 +127,9 @@ function M:init(str, first)
   self.prev = nil
   if first > 1 then
     self.prev_class = CHAR_CLASS[str:byte(first - 1)] or CHAR_NONWORD
+  end
+  if not str:find(PATH_SEP, first + 1, true) then
+    self.score = self.score + BONUS_NO_PATH_SEP
   end
   self.in_gap = false
   self:update(first)
