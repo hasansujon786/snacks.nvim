@@ -518,6 +518,15 @@ M.search_history = {
   confirm = "search",
 }
 
+---@class snacks.picker.smart.Config: snacks.picker.Config
+---@field finders? string[] list of finders to use
+---@field filter? snacks.picker.filter.Config
+M.smart = {
+  finder = "smart",
+  finders = { "buffers", "recent", "files" },
+  format = "file",
+}
+
 -- Open a project from zoxide
 M.zoxide = {
   finder = "files_zoxide",

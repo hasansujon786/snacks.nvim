@@ -31,6 +31,8 @@ local M = {}
 ---@field [string] any
 ---@field idx number
 ---@field score number
+---@field score_add? number
+---@field score_mul? number
 ---@field match_tick? number
 ---@field text string
 ---@field pos? {[1]:number, [2]:number}
@@ -87,6 +89,8 @@ local M = {}
 ---@field main? snacks.picker.main.Config main editor window config
 ---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
+--- Other
+---@field debug? snacks.picker.debug|{}
 local defaults = {
   prompt = " ",
   sources = {},
@@ -121,6 +125,7 @@ local defaults = {
     input = {
       keys = {
         ["<Esc>"] = "close",
+        ["<C-c>"] = { "close", mode = "i" },
         -- to close the picker on ESC instead of going to normal mode,
         -- add the following keymap to your config
         -- ["<Esc>"] = { "close", mode = { "n", "i" } },
@@ -279,6 +284,7 @@ local defaults = {
       Variable      = "󰀫 ",
     },
   },
+  ---@class snacks.picker.debug
   debug = {
     scores = false, -- show scores in the list
   },

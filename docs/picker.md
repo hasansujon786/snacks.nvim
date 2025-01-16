@@ -96,6 +96,8 @@ Snacks.picker.pick({source = "files", ...})
 ---@field main? snacks.picker.main.Config main editor window config
 ---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
+--- Other
+---@field debug? snacks.picker.debug|{}
 {
   prompt = " ",
   sources = {},
@@ -130,6 +132,7 @@ Snacks.picker.pick({source = "files", ...})
     input = {
       keys = {
         ["<Esc>"] = "close",
+        ["<C-c>"] = { "close", mode = "i" },
         -- to close the picker on ESC instead of going to normal mode,
         -- add the following keymap to your config
         -- ["<Esc>"] = { "close", mode = { "n", "i" } },
@@ -287,6 +290,7 @@ Snacks.picker.pick({source = "files", ...})
       Variable      = "󰀫 ",
     },
   },
+  ---@class snacks.picker.debug
   debug = {
     scores = false, -- show scores in the list
   },
@@ -435,6 +439,8 @@ It's a previewer that shows a preview based on the item data.
 ---@field [string] any
 ---@field idx number
 ---@field score number
+---@field score_add? number
+---@field score_mul? number
 ---@field match_tick? number
 ---@field text string
 ---@field pos? {[1]:number, [2]:number}
@@ -1226,6 +1232,19 @@ Neovim search history
     preset = "vscode",
   },
   confirm = "search",
+}
+```
+
+### `smart`
+
+```lua
+---@class snacks.picker.smart.Config: snacks.picker.Config
+---@field finders? string[] list of finders to use
+---@field filter? snacks.picker.filter.Config
+{
+  finder = "smart",
+  finders = { "buffers", "recent", "files" },
+  format = "file",
 }
 ```
 

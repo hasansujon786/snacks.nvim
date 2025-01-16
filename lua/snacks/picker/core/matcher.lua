@@ -63,7 +63,7 @@ function M:run(picker, opts)
   self.task:abort()
 
   -- PERF: fast path for empty pattern
-  if self:empty() and not picker.finder.task:running() then
+  if self:empty() and not picker.finder.task:running() and not picker.finder.has_scores then
     picker.list.items = picker.finder.items
     picker:update()
     return
@@ -213,6 +213,14 @@ function M:update(item)
     return false
   end
   local score = self:match(item)
+  if score ~= 0 then
+    if item.score_add then
+      score = score + item.score_add
+    end
+    if item.score_mul then
+      score = score * item.score_mul
+    end
+  end
   item.match_tick, item.score = self.tick, score
   return true
 end
