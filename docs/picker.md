@@ -287,6 +287,9 @@ Snacks.picker.pick({source = "files", ...})
       Variable      = "󰀫 ",
     },
   },
+  debug = {
+    scores = false, -- show scores in the list
+  },
 }
 ```
 
@@ -416,6 +419,17 @@ Generic filter used by finders to pre-filter items
 ---@field ignorecase? boolean use ignorecase (defaults to true)
 ```
 
+This is only used when using `opts.preview = "preview"`.
+It's a previewer that shows a preview based on the item data.
+
+```lua
+---@class snacks.picker.Item.preview
+---@field text string text to show in the preview buffer
+---@field ft? string optional filetype used tohighlight the preview buffer
+---@field extmarks? snacks.picker.Extmark[] additional extmarks
+---@field loc? boolean set to false to disable showing the item location in the preview
+```
+
 ```lua
 ---@class snacks.picker.Item
 ---@field [string] any
@@ -426,6 +440,7 @@ Generic filter used by finders to pre-filter items
 ---@field pos? {[1]:number, [2]:number}
 ---@field end_pos? {[1]:number, [2]:number}
 ---@field highlights? snacks.picker.Highlight[][]
+---@field preview? snacks.picker.Item.preview
 ```
 
 ```lua
@@ -538,7 +553,12 @@ Snacks.picker.select(...)
   current = true,
   sort_lastused = true,
   win = {
-    input = { keys = { ["dd"] = "bufdelete" } },
+    input = {
+      keys = {
+        ["dd"] = "bufdelete",
+        ["<c-x>"] = { "bufdelete", mode = { "n", "i" } },
+      },
+    },
     list = { keys = { ["dd"] = "bufdelete" } },
   },
 }
@@ -661,6 +681,16 @@ Neovim commands
   ignored = false,
   follow = false,
   supports_live = true,
+}
+```
+
+### `git_diff`
+
+```lua
+{
+  finder = "git_diff",
+  format = "file",
+  preview = "preview",
 }
 ```
 

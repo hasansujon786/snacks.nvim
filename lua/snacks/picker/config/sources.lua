@@ -26,7 +26,12 @@ M.buffers = {
   current = true,
   sort_lastused = true,
   win = {
-    input = { keys = { ["dd"] = "bufdelete" } },
+    input = {
+      keys = {
+        ["dd"] = "bufdelete",
+        ["<c-x>"] = { "bufdelete", mode = { "n", "i" } },
+      },
+    },
     list = { keys = { ["dd"] = "bufdelete" } },
   },
 }
@@ -174,6 +179,12 @@ M.git_status = {
       },
     },
   },
+}
+
+M.git_diff = {
+  finder = "git_diff",
+  format = "file",
+  preview = "preview",
 }
 
 ---@class snacks.picker.grep.Config: snacks.picker.proc.Config
