@@ -30,7 +30,10 @@ function M.new(picker)
       vim.cmd.startinsert()
       vim.api.nvim_win_set_cursor(self.win.win, { 1, #self:get() + 1 })
       vim.fn.prompt_setcallback(self.win.buf, function()
-        self.win:execute("confirm")
+        vim.cmd.stopinsert()
+        vim.schedule(function()
+          self.win:execute("confirm")
+        end)
       end)
     end,
     bo = {

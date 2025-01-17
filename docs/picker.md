@@ -87,7 +87,7 @@ Snacks.picker.pick({source = "files", ...})
 --- Preset options
 ---@field previewers? snacks.picker.previewers.Config|{}
 ---@field formatters? snacks.picker.formatters.Config|{}
----@field sources? snacks.picker.sources.Config|{}
+---@field sources? snacks.picker.sources.Config|{}|table<string, snacks.picker.Config|{}>
 ---@field layouts? table<string, snacks.picker.layout.Config>
 --- Actions
 ---@field actions? table<string, snacks.picker.Action.spec> actions used by keymaps
@@ -96,6 +96,7 @@ Snacks.picker.pick({source = "files", ...})
 ---@field main? snacks.picker.main.Config main editor window config
 ---@field on_change? fun(picker:snacks.Picker, item:snacks.picker.Item) called when the cursor changes
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
+---@field jump? snacks.picker.jump.Config|{}
 --- Other
 ---@field debug? snacks.picker.debug|{}
 {
@@ -126,6 +127,10 @@ Snacks.picker.pick({source = "files", ...})
     file = {
       filename_first = false, -- display filename before the file path
     },
+    selected = {
+      show_always = false, -- only show the selected column when there are multiple selections
+      unselected = true, -- use the unselected icon for unselected items
+    },
   },
   ---@class snacks.picker.previewers.Config
   previewers = {
@@ -138,6 +143,12 @@ Snacks.picker.pick({source = "files", ...})
       ft = nil, ---@type string? filetype for highlighting. Use `nil` for auto detect
     },
     man_pager = nil, ---@type string? MANPAGER env to use for `man` preview
+  },
+  ---@class snacks.picker.jump.Config
+  jump = {
+    jumplist = true, -- save the current position in the jumplist
+    tagstack = false, -- save the current position in the tagstack
+    reuse_win = false, -- reuse an existing window if the buffer is already open
   },
   win = {
     -- input window
@@ -250,6 +261,7 @@ Snacks.picker.pick({source = "files", ...})
     ui = {
       live        = "󰐰 ",
       selected    = "● ",
+      unselected = "○ ",
       -- selected = " ",
     },
     git = {
@@ -297,7 +309,7 @@ Snacks.picker.pick({source = "files", ...})
       Text          = " ",
       TypeParameter = " ",
       Unit          = " ",
-      Uknown        = " ",
+      Unknown        = " ",
       Value         = " ",
       Variable      = "󰀫 ",
     },
@@ -685,6 +697,7 @@ Neovim commands
 ---@field ignored? boolean show ignored files
 ---@field dirs? string[] directories to search
 ---@field follow? boolean follow symlinks
+---@field exclude? string[] exclude patterns
 {
   finder = "files",
   format = "file",
@@ -797,6 +810,7 @@ Git log
 ---@field regex? boolean use regex search pattern (defaults to `true`)
 ---@field buffers? boolean search in open buffers
 ---@field need_search? boolean require a search pattern
+---@field exclude? string[] exclude patterns
 {
   finder = "grep",
   format = "file",
@@ -949,6 +963,7 @@ LSP declarations
   format = "file",
   include_current = false,
   auto_confirm = true,
+  jump = { tagstack = true, reuse_win = true },
 }
 ```
 
@@ -963,6 +978,7 @@ LSP definitions
   format = "file",
   include_current = false,
   auto_confirm = true,
+  jump = { tagstack = true, reuse_win = true },
 }
 ```
 
@@ -977,6 +993,7 @@ LSP implementations
   format = "file",
   include_current = false,
   auto_confirm = true,
+  jump = { tagstack = true, reuse_win = true },
 }
 ```
 
@@ -993,6 +1010,7 @@ LSP references
   include_declaration = true,
   include_current = false,
   auto_confirm = true,
+  jump = { tagstack = true, reuse_win = true },
 }
 ```
 
@@ -1058,6 +1076,7 @@ LSP type definitions
   format = "file",
   include_current = false,
   auto_confirm = true,
+  jump = { tagstack = true, reuse_win = true },
 }
 ```
 
@@ -1468,12 +1487,6 @@ Snacks.picker.actions.copy(_, item)
 Snacks.picker.actions.cycle_win(picker)
 ```
 
-### `Snacks.picker.actions.edit()`
-
-```lua
-Snacks.picker.actions.edit(picker)
-```
-
 ### `Snacks.picker.actions.edit_split()`
 
 ```lua
@@ -1538,6 +1551,12 @@ Snacks.picker.actions.history_forward(picker)
 
 ```lua
 Snacks.picker.actions.inspect(picker, item)
+```
+
+### `Snacks.picker.actions.jump()`
+
+```lua
+Snacks.picker.actions.jump(picker)
 ```
 
 ### `Snacks.picker.actions.list_bottom()`

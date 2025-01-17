@@ -5,14 +5,9 @@ local M = {}
 local SCROLL_WHEEL_DOWN = Snacks.util.keycode("<ScrollWheelDown>")
 local SCROLL_WHEEL_UP = Snacks.util.keycode("<ScrollWheelUp>")
 
-function M.edit(picker)
+function M.jump(picker)
   picker:close()
   local win = vim.api.nvim_get_current_win()
-
-  -- save position in jump list
-  vim.api.nvim_win_call(win, function()
-    vim.cmd("normal! m'")
-  end)
 
   local current_buf = vim.api.nvim_get_current_buf()
   local current_empty = vim.bo[current_buf].buftype == ""
@@ -21,13 +16,37 @@ function M.edit(picker)
     and vim.api.nvim_buf_get_lines(current_buf, 0, -1, false)[1] == ""
     and vim.api.nvim_buf_get_name(current_buf) == ""
 
+  if not current_empty then
+    -- save position in jump list
+    if picker.opts.jump.jumplist then
+      vim.api.nvim_win_call(win, function()
+        vim.cmd("normal! m'")
+      end)
+    end
+
+    -- save position in tag stack
+    if picker.opts.jump.tagstack then
+      local from = vim.fn.getpos(".")
+      from[1] = current_buf
+      local tagstack = { { tagname = vim.fn.expand("<cword>"), from = from } }
+      vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, "t")
+    end
+  end
+
   local items = picker:selected({ fallback = true })
+
   for _, item in ipairs(items) do
     -- load the buffer
     local buf = item.buf ---@type number
     if not buf then
       local path = assert(Snacks.picker.util.path(item), "Either item.buf or item.file is required")
       buf = vim.fn.bufadd(path)
+    end
+
+    -- use an existing window if possible
+    if #items == 1 and picker.opts.jump.reuse_win and buf ~= current_buf then
+      win = vim.fn.win_findbuf(buf)[1] or win
+      vim.api.nvim_set_current_win(win)
     end
 
     if not vim.api.nvim_buf_is_loaded(buf) then
@@ -67,7 +86,8 @@ end
 
 M.cancel = function() end
 
-M.confirm = M.edit
+M.edit = M.jump
+M.confirm = M.jump
 
 function M.toggle_maximize(picker)
   picker.layout:maximize()

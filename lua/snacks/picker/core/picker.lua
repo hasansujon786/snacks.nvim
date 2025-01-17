@@ -331,10 +331,11 @@ function M:close()
   if self.closed then
     return
   end
+  vim.cmd.stopinsert()
+  self.closed = true
   M.last.selected = self:selected({ fallback = false })
   M.last.cursor = self.list.cursor
   M.last.topline = self.list.top
-  self.closed = true
   Snacks.picker.current = nil
   local current = vim.api.nvim_get_current_win()
   local is_picker_win = vim.tbl_contains({ self.input.win.win, self.list.win.win, self.preview.win.win }, current)
