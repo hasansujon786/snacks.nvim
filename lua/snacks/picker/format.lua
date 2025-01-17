@@ -43,15 +43,15 @@ function M.filename(item, picker)
   local dir, file = path:match("^(.*)/(.+)$")
   if file and dir then
     if picker.opts.formatters.file.filename_first then
-      ret[#ret + 1] = { file, "SnacksPickerFile" }
+      ret[#ret + 1] = { file, "SnacksPickerFile", field = "file" }
       ret[#ret + 1] = { " " }
-      ret[#ret + 1] = { dir, "SnacksPickerDir" }
+      ret[#ret + 1] = { dir, "SnacksPickerDir", field = "file" }
     else
-      ret[#ret + 1] = { dir .. "/", "SnacksPickerDir" }
-      ret[#ret + 1] = { file, "SnacksPickerFile" }
+      ret[#ret + 1] = { dir .. "/", "SnacksPickerDir", field = "file" }
+      ret[#ret + 1] = { file, "SnacksPickerFile", field = "file" }
     end
   else
-    ret[#ret + 1] = { path, "SnacksPickerFile" }
+    ret[#ret + 1] = { path, "SnacksPickerFile", field = "file" }
   end
   if item.pos then
     ret[#ret + 1] = { ":", "SnacksPickerDelim" }
@@ -384,6 +384,31 @@ function M.buffer(item, picker)
   ret[#ret + 1] = { Snacks.picker.util.align(item.flags, 2, { align = "right" }), "SnacksPickerBufFlags" }
   ret[#ret + 1] = { " " }
   vim.list_extend(ret, M.filename(item, picker))
+  return ret
+end
+
+function M.selected(item, picker)
+  local selected = picker.list:is_selected(item)
+  local icon = picker.opts.icons.ui.selected
+  local icon_width = vim.api.nvim_strwidth(icon)
+  local ret = {} ---@type snacks.picker.Highlight[]
+  ret[#ret + 1] = { selected and icon or string.rep(" ", icon_width), "SnacksPickerSelected", virtual = true }
+  return ret
+end
+
+function M.debug(item, picker)
+  local score = item.score
+  if not picker.matcher.sorting then
+    score = picker.matcher.DEFAULT_SCORE
+    if item.score_add then
+      score = score + item.score_add
+    end
+    if item.score_mul then
+      score = score * item.score_mul
+    end
+  end
+  local ret = {} ---@type snacks.picker.Highlight[]
+  ret[#ret + 1] = { ("%.2f "):format(score), "Number" }
   return ret
 end
 

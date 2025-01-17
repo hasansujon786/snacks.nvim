@@ -1,7 +1,7 @@
 local M = {}
 
----@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number}
----@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
+---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
+---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
 ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
 ---@alias snacks.picker.preview fun(ctx: snacks.picker.preview.ctx):boolean?
@@ -13,11 +13,6 @@ local M = {}
 ---@field buf? boolean|number only show items for the current or given buffer
 ---@field paths? table<string, boolean> only show items that include or exclude the given paths
 ---@field filter? fun(item:snacks.picker.finder.Item):boolean custom filter function
-
----@class snacks.picker.matcher.Config
----@field fuzzy? boolean use fuzzy matching (defaults to true)
----@field smartcase? boolean use smartcase (defaults to true)
----@field ignorecase? boolean use ignorecase (defaults to true)
 
 --- This is only used when using `opts.preview = "preview"`.
 --- It's a previewer that shows a preview based on the item data.
@@ -100,6 +95,18 @@ local defaults = {
     preset = function()
       return vim.o.columns >= 120 and "default" or "vertical"
     end,
+  },
+  ---@class snacks.picker.matcher.Config
+  matcher = {
+    fuzzy = true, -- use fuzzy matching
+    smartcase = true, -- use smartcase
+    ignorecase = true, -- use ignorecase
+    sort_empty = false, -- sort results when the search string is empty
+    filename_bonus = true, -- give bonus for matching file names (last part of the path)
+  },
+  sort = {
+    -- default sort is by score, text length and index
+    fields = { "score:desc", "#text", "idx" },
   },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
   ---@class snacks.picker.formatters.Config

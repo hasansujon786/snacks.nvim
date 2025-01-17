@@ -439,7 +439,6 @@ end
 --- Clear the list and run the finder and matcher
 ---@param opts? {on_done?: fun()} Callback when done
 function M:find(opts)
-  self.list:clear()
   self.finder:run(self)
   self.matcher:run(self)
   if opts and opts.on_done then
@@ -504,7 +503,6 @@ function M:match()
     vim.list_extend(prios, self.list.items, 1, 1000)
   end
 
-  self.list:clear()
   self.matcher:run(self, { prios = prios })
   self:progress()
 end

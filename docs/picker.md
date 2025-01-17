@@ -108,6 +108,18 @@ Snacks.picker.pick({source = "files", ...})
       return vim.o.columns >= 120 and "default" or "vertical"
     end,
   },
+  ---@class snacks.picker.matcher.Config
+  matcher = {
+    fuzzy = true, -- use fuzzy matching
+    smartcase = true, -- use smartcase
+    ignorecase = true, -- use ignorecase
+    sort_empty = false, -- sort results when the search string is empty
+    filename_bonus = true, -- give bonus for matching file names (last part of the path)
+  },
+  sort = {
+    -- default sort is by score, text length and index
+    fields = { "score:desc", "#text", "idx" },
+  },
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
   ---@class snacks.picker.formatters.Config
   formatters = {
@@ -398,8 +410,17 @@ Snacks.picker.pick({source = "files", ...})
 ## 📚 Types
 
 ```lua
----@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number}
----@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean}
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
+```
+
+```lua
+---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
+---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
 ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
 ---@alias snacks.picker.preview fun(ctx: snacks.picker.preview.ctx):boolean?
@@ -414,13 +435,6 @@ Generic filter used by finders to pre-filter items
 ---@field buf? boolean|number only show items for the current or given buffer
 ---@field paths? table<string, boolean> only show items that include or exclude the given paths
 ---@field filter? fun(item:snacks.picker.finder.Item):boolean custom filter function
-```
-
-```lua
----@class snacks.picker.matcher.Config
----@field fuzzy? boolean use fuzzy matching (defaults to true)
----@field smartcase? boolean use smartcase (defaults to true)
----@field ignorecase? boolean use ignorecase (defaults to true)
 ```
 
 This is only used when using `opts.preview = "preview"`.
@@ -470,15 +484,6 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
-```
-
-```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
 ```
 
 ## 📦 Module
@@ -916,6 +921,7 @@ Search lines in the current buffer
     picker.list:view(cursor[1], info.topline)
     picker:show_preview()
   end,
+  sort = { fields = { "score:desc", "idx" } },
 }
 ```
 
@@ -1245,6 +1251,8 @@ Neovim search history
   finder = "smart",
   finders = { "buffers", "recent", "files" },
   format = "file",
+  -- sort the results even when the filter is empty (frecency)
+  matcher = { sort_empty = true },
 }
 ```
 
@@ -1703,8 +1711,6 @@ Snacks.picker.actions.toggle_maximize(picker)
 Snacks.picker.actions.toggle_preview(picker)
 ```
 
-
-
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -1861,3 +1867,5 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
+
+

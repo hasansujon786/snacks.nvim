@@ -292,6 +292,7 @@ M.lines = {
     picker.list:view(cursor[1], info.topline)
     picker:show_preview()
   end,
+  sort = { fields = { "score:desc", "idx" } },
 }
 
 -- Loclist
@@ -525,6 +526,8 @@ M.smart = {
   finder = "smart",
   finders = { "buffers", "recent", "files" },
   format = "file",
+  -- sort the results even when the filter is empty (frecency)
+  matcher = { sort_empty = true },
 }
 
 -- Open a project from zoxide
