@@ -98,7 +98,7 @@ function M.new(opts)
 
   -- update layout on VimResized
   self.root:on("VimResized", function()
-    self:update({ events = false })
+    self:update()
   end)
   if self.opts.show ~= false then
     vim.schedule(function()
@@ -151,9 +151,7 @@ function M:toggle(win)
 end
 
 ---@package
----@param opts? {events?:boolean}
-function M:update(opts)
-  opts = opts or {}
+function M:update()
   if self.closed then
     return
   end
@@ -178,19 +176,27 @@ function M:update(opts)
     height = vim.o.lines,
   })
 
-  local ei = vim.o.eventignore
-  if opts.events == false then
-    vim.o.eventignore = "all"
-  end
+  local update_wins = {} ---@type snacks.win[]
   for _, win in pairs(self:get_wins()) do
-    win:show()
+    if win:valid() then
+      table.insert(update_wins, win)
+    else
+      win:show()
+    end
   end
   for w, win in pairs(self.wins) do
     if not self:is_enabled(w) and win:win_valid() then
       win:close()
     end
   end
-  if opts.events == false then
+  if #update_wins > 0 then
+    -- update windows with eventignore=all
+    -- to fix issues with syntax being reset
+    local ei = vim.o.eventignore
+    vim.o.eventignore = "all"
+    for _, win in ipairs(update_wins) do
+      win:update()
+    end
     vim.o.eventignore = ei
   end
   if self.opts.on_update then

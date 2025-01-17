@@ -25,9 +25,8 @@ function M.fix_keys(opts)
       local keys = vim.tbl_keys(win.keys) ---@type string[]
       for _, key in ipairs(keys) do
         key_cache[key] = key_cache[key] or vim.fn.keytrans(Snacks.util.keycode(key))
-        local normkey = key_cache[key]
-        if key ~= normkey then
-          win.keys[normkey], win.keys[key] = win.keys[key], nil
+        if key ~= key_cache[key] then
+          win.keys[key_cache[key]], win.keys[key] = win.keys[key], nil
         end
       end
     end
@@ -53,9 +52,9 @@ function M.get(opts)
   M.fix_keys(source)
   ---@type snacks.picker.Config[]
   local todo = {
-    defaults,
-    user,
-    source,
+    vim.deepcopy(defaults),
+    vim.deepcopy(user),
+    vim.deepcopy(source),
     opts,
   }
 
@@ -66,7 +65,7 @@ function M.get(opts)
     end
   end
 
-  local ret = vim.tbl_deep_extend("force", unpack(todo))
+  local ret = Snacks.config.merge(unpack(todo))
   ret.layouts = ret.layouts or {}
   local layouts = require("snacks.picker.config.layouts")
   for k, v in pairs(layouts or {}) do
@@ -90,7 +89,7 @@ function M.layout(opts)
   end
   local preset = M.resolve(layout.preset or "custom", opts.source)
   local ret = vim.deepcopy(opts.layouts and opts.layouts[preset] or layouts[preset] or {})
-  ret = vim.tbl_deep_extend("force", ret, layout or {})
+  ret = Snacks.config.merge(ret, layout)
   ret.preset = nil
   return ret
 end
