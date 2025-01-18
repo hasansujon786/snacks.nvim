@@ -249,8 +249,10 @@ local defaults = {
     },
     ui = {
       live        = "󰐰 ",
+      hidden      = "h",
+      ignored     = "i",
       selected    = "● ",
-      unselected = "○ ",
+      unselected  = "○ ",
       -- selected = " ",
     },
     git = {

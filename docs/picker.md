@@ -260,8 +260,10 @@ Snacks.picker.pick({source = "files", ...})
     },
     ui = {
       live        = "󰐰 ",
+      hidden      = "h",
+      ignored     = "i",
       selected    = "● ",
-      unselected = "○ ",
+      unselected  = "○ ",
       -- selected = " ",
     },
     git = {
@@ -422,12 +424,8 @@ Snacks.picker.pick({source = "files", ...})
 ## 📚 Types
 
 ```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
+---@class snacks.picker.jump.Action: snacks.picker.Action
+---@field cmd? string
 ```
 
 ```lua
@@ -496,6 +494,15 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
 ```
 
 ## 📦 Module
@@ -1306,12 +1313,11 @@ Open a project from zoxide
     {
       box = "vertical",
       border = "rounded",
-      title = "{source} {live}",
-      title_pos = "center",
+      title = "{source} {live} {flags}",
       { win = "input", height = 1, border = "bottom" },
       { win = "list", border = "none" },
     },
-    { win = "preview", border = "rounded", width = 0.5 },
+    { win = "preview", title = "{preview}", border = "rounded", width = 0.5 },
   },
 }
 ```
@@ -1328,11 +1334,11 @@ Open a project from zoxide
     height = 0.8,
     border = "none",
     box = "vertical",
-    { win = "preview", height = 0.4, border = "rounded" },
+    { win = "preview", title = "{preview}", height = 0.4, border = "rounded" },
     {
       box = "vertical",
       border = "rounded",
-      title = "{source} {live}",
+      title = "{source} {live} {flags}",
       title_pos = "center",
       { win = "input", height = 1, border = "bottom" },
       { win = "list", border = "none" },
@@ -1352,13 +1358,13 @@ Open a project from zoxide
     width = 0,
     height = 0.4,
     border = "top",
-    title = " {source} {live}",
+    title = " {source} {live} {flags}",
     title_pos = "left",
     { win = "input", height = 1, border = "bottom" },
     {
       box = "horizontal",
       { win = "list", border = "none" },
-      { win = "preview", width = 0.6, border = "left" },
+      { win = "preview", title = "{preview}", width = 0.6, border = "left" },
     },
   },
 }
@@ -1381,7 +1387,7 @@ Open a project from zoxide
     title_pos = "center",
     { win = "input", height = 1, border = "bottom" },
     { win = "list", border = "none" },
-    { win = "preview", height = 0.4, border = "top" },
+    { win = "preview", title = "{preview}", height = 0.4, border = "top" },
   },
 }
 ```
@@ -1400,13 +1406,13 @@ Open a project from zoxide
     {
       box = "vertical",
       { win = "list", title = " Results ", title_pos = "center", border = "rounded" },
-      { win = "input", height = 1, border = "rounded", title = "{source} {live}", title_pos = "center" },
+      { win = "input", height = 1, border = "rounded", title = "{source} {live} {flags}", title_pos = "center" },
     },
     {
       win = "preview",
+      title = "{preview:Preview}",
       width = 0.45,
       border = "rounded",
-      title = " Preview ",
       title_pos = "center",
     },
   },
@@ -1425,11 +1431,11 @@ Open a project from zoxide
     min_height = 30,
     box = "vertical",
     border = "rounded",
-    title = "{source} {live}",
+    title = "{source} {live} {flags}",
     title_pos = "center",
     { win = "input", height = 1, border = "bottom" },
     { win = "list", border = "none" },
-    { win = "preview", height = 0.4, border = "top" },
+    { win = "preview", title = "{preview}", height = 0.4, border = "top" },
   },
 }
 ```
@@ -1447,9 +1453,9 @@ Open a project from zoxide
     height = 0.4,
     border = "none",
     box = "vertical",
-    { win = "input", height = 1, border = "rounded", title = "{source} {live}", title_pos = "center" },
+    { win = "input", height = 1, border = "rounded", title = "{source} {live} {flags}", title_pos = "center" },
     { win = "list", border = "hpad" },
-    { win = "preview", border = "rounded" },
+    { win = "preview", title = "{preview}", border = "rounded" },
   },
 }
 ```
@@ -1485,24 +1491,6 @@ Snacks.picker.actions.copy(_, item)
 
 ```lua
 Snacks.picker.actions.cycle_win(picker)
-```
-
-### `Snacks.picker.actions.edit_split()`
-
-```lua
-Snacks.picker.actions.edit_split(picker)
-```
-
-### `Snacks.picker.actions.edit_tab()`
-
-```lua
-Snacks.picker.actions.edit_tab(picker)
-```
-
-### `Snacks.picker.actions.edit_vsplit()`
-
-```lua
-Snacks.picker.actions.edit_vsplit(picker)
 ```
 
 ### `Snacks.picker.actions.focus_input()`
@@ -1556,7 +1544,7 @@ Snacks.picker.actions.inspect(picker, item)
 ### `Snacks.picker.actions.jump()`
 
 ```lua
-Snacks.picker.actions.jump(picker)
+Snacks.picker.actions.jump(picker, _, action)
 ```
 
 ### `Snacks.picker.actions.list_bottom()`
@@ -1661,6 +1649,14 @@ Send selected or all items to the quickfix list.
 Snacks.picker.actions.qflist(picker)
 ```
 
+### `Snacks.picker.actions.qflist_all()`
+
+Send all items to the quickfix list.
+
+```lua
+Snacks.picker.actions.qflist_all(picker)
+```
+
 ### `Snacks.picker.actions.search()`
 
 ```lua
@@ -1729,6 +1725,8 @@ Snacks.picker.actions.toggle_maximize(picker)
 ```lua
 Snacks.picker.actions.toggle_preview(picker)
 ```
+
+
 
 ## 📦 `snacks.picker.core.picker`
 
@@ -1879,6 +1877,15 @@ or a custom layout configuration.
 picker:set_layout(layout)
 ```
 
+### `picker:show_preview()`
+
+Show the preview. Show instantly when no item is yet in the preview,
+otherwise throttle the preview.
+
+```lua
+picker:show_preview()
+```
+
 ### `picker:word()`
 
 Get the word under the cursor or the current visual selection
@@ -1886,5 +1893,3 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
-
-

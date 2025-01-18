@@ -271,7 +271,7 @@ function M.new(opts)
         spec[1], spec[2] = key, spec[1]
       end
       ---@cast spec snacks.win.Keys
-      local lhs = vim.fn.keytrans(Snacks.util.keycode(spec[1] or ""))
+      local lhs = Snacks.util.normkey(spec[1] or "")
       local mode = type(spec.mode) == "table" and spec.mode or { spec.mode or "n" }
       ---@cast mode string[]
       mode = #mode == 0 and { "n" } or mode
@@ -472,7 +472,7 @@ end
 
 function M:redraw()
   if vim.api.nvim__redraw then
-    vim.api.nvim__redraw({ win = self.win, valid = false, flush = true })
+    vim.api.nvim__redraw({ win = self.win, valid = false, flush = true, cursor = false })
   else
     vim.cmd("redraw")
   end
@@ -542,23 +542,27 @@ function M:toggle()
   return self
 end
 
----@param title string
+---@param title string|{[1]:string, [2]:string}[]
 ---@param pos? "center"|"left"|"right"
 function M:set_title(title, pos)
   if not self:has_border() then
     return
   end
-  title = vim.trim(title)
-  if title ~= "" then
-    -- HACK: add extra space when last char is non word
-    -- like for icons etc
-    if not title:sub(-1):match("%w") then
-      title = title .. " "
+  if type(title) == "string" then
+    title = vim.trim(title)
+    if title ~= "" then
+      -- HACK: add extra space when last char is non word
+      -- like for icons etc
+      if not title:sub(-1):match("%w") then
+        title = title .. " "
+      end
+      title = " " .. title .. " "
     end
-    title = " " .. title .. " "
+  elseif #title == 0 then
+    title = ""
   end
   pos = pos or self.opts.title_pos or "center"
-  if self.opts.title == title and self.opts.title_pos == pos then
+  if vim.deep_equal(self.opts.title, title) and self.opts.title_pos == pos then
     return
   end
   self.opts.title = title

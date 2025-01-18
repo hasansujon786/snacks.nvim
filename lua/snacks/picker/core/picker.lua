@@ -124,9 +124,8 @@ function M.new(opts)
     end)
   end)
 
-  local show_preview = self.show_preview
-  self.show_preview = Snacks.util.throttle(function()
-    show_preview(self)
+  self._throttled_preview = Snacks.util.throttle(function()
+    self._show_preview(self)
   end, { ms = 60, name = "preview" })
 
   self:find()
@@ -161,6 +160,7 @@ function M:init_layout(layout)
     hidden = { preview_hidden and "preview" or nil },
     on_update = function()
       self:update_titles()
+      self:show_preview()
     end,
     layout = {
       backdrop = backdrop,
@@ -213,7 +213,18 @@ function M:update_titles()
   local data = {
     source = self.source_name,
     live = self.opts.live and self.opts.icons.ui.live or "",
+    preview = vim.trim(self.preview.title or ""),
   }
+  local opts = self.opts --[[@as snacks.picker.files.Config]]
+  local flags = {} ---@type snacks.picker.Text[]
+  if opts.hidden then
+    flags[#flags + 1] = { " " .. self.opts.icons.ui.hidden .. " ", "SnacksPickerFlagHidden" }
+    flags[#flags + 1] = { " ", "FloatTitle" }
+  end
+  if opts.ignored then
+    flags[#flags + 1] = { " " .. self.opts.icons.ui.ignored .. " ", "SnacksPickerFlagIgnored" }
+    flags[#flags + 1] = { " ", "FloatTitle" }
+  end
   local wins = { self.layout.root }
   vim.list_extend(wins, vim.tbl_values(self.layout.wins))
   vim.list_extend(wins, vim.tbl_values(self.layout.box_wins))
@@ -221,7 +232,19 @@ function M:update_titles()
     if win.opts.title then
       local tpl = win.meta.title_tpl or win.opts.title
       win.meta.title_tpl = tpl
-      win:set_title(Snacks.picker.util.tpl(tpl, data))
+      local ret = {} ---@type snacks.picker.Text[]
+      local title = Snacks.picker.util.tpl(tpl, data)
+      if title:find("{flags}", 1, true) then
+        title = title:gsub("{flags}", "")
+        vim.list_extend(ret, flags)
+      end
+      title = vim.trim(title):gsub("%s+", " ")
+      if title ~= "" then
+        -- HACK: add extra space when last char is non word like an icon
+        title = title:sub(-1):match("%w") and title or title .. " "
+        table.insert(ret, 1, { " " .. title .. " ", "FloatTitle" })
+      end
+      win:set_title(ret)
     end
   end
 end
@@ -249,8 +272,9 @@ function M.resume()
   return ret
 end
 
+--- Actual preview code
 ---@hide
-function M:show_preview()
+function M:_show_preview()
   if self.opts.on_change then
     self.opts.on_change(self, self:current())
   end
@@ -258,6 +282,19 @@ function M:show_preview()
     return
   end
   self.preview:show(self)
+  self:update_titles()
+end
+
+-- Throttled preview
+M._throttled_preview = M._show_preview
+
+-- Show the preview. Show instantly when no item is yet in the preview,
+-- otherwise throttle the preview.
+function M:show_preview()
+  if not self.preview.item then
+    self:_show_preview()
+  end
+  return self:_throttled_preview()
 end
 
 ---@hide
@@ -440,6 +477,7 @@ end
 --- Clear the list and run the finder and matcher
 ---@param opts? {on_done?: fun()} Callback when done
 function M:find(opts)
+  self:update_titles()
   self.finder:run(self)
   self.matcher:run(self)
   if opts and opts.on_done then

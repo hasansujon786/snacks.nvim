@@ -392,6 +392,7 @@ end
 ---@param row number
 function M:_render(item, row)
   local text, extmarks = self:format(item)
+  text = text:gsub("\n", " ")
   vim.api.nvim_buf_set_lines(self.win.buf, row - 1, row, false, { text })
   for _, extmark in ipairs(extmarks) do
     local col = extmark.col
@@ -412,7 +413,7 @@ function M:_render(item, row)
 end
 
 function M:update_cursorline()
-  if self.win.win and vim.api.nvim_win_is_valid(self.win.win) then
+  if self.win:win_valid() then
     Snacks.util.wo(self.win.win, { cursorline = self:count() > 0 })
   end
 end

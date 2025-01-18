@@ -5,18 +5,27 @@ local M = {}
 local SCROLL_WHEEL_DOWN = Snacks.util.keycode("<ScrollWheelDown>")
 local SCROLL_WHEEL_UP = Snacks.util.keycode("<ScrollWheelUp>")
 
-function M.jump(picker)
+---@class snacks.picker.jump.Action: snacks.picker.Action
+---@field cmd? string
+
+function M.jump(picker, _, action)
+  ---@cast action snacks.picker.jump.Action
   -- if we're still in insert mode, stop it and schedule
   -- it to prevent issues with cursor position
   if vim.fn.mode():sub(1, 1) == "i" then
     vim.cmd.stopinsert()
     vim.schedule(function()
-      M.jump(picker)
+      M.jump(picker, _, action)
     end)
     return
   end
 
   picker:close()
+
+  if action.cmd then
+    vim.cmd(action.cmd)
+  end
+
   local win = vim.api.nvim_get_current_win()
 
   local current_buf = vim.api.nvim_get_current_buf()
@@ -92,10 +101,12 @@ function M.jump(picker)
   end
 end
 
-M.cancel = function() end
-
+M.cancel = "close"
 M.edit = M.jump
 M.confirm = M.jump
+M.edit_split = { action = "jump", cmd = "split" }
+M.edit_vsplit = { action = "jump", cmd = "vsplit" }
+M.edit_tab = { action = "jump", cmd = "tabnew" }
 
 function M.toggle_maximize(picker)
   picker.layout:maximize()
@@ -167,6 +178,12 @@ function M.qflist(picker)
   setqflist(items)
 end
 
+--- Send all items to the quickfix list.
+function M.qflist_all(picker)
+  picker:close()
+  setqflist(picker:items())
+end
+
 --- Send selected or all items to the location list.
 function M.loclist(picker)
   picker:close()
@@ -187,24 +204,6 @@ end
 
 function M.history_forward(picker)
   picker:hist(true)
-end
-
-function M.edit_tab(picker)
-  picker:close()
-  vim.cmd("tabnew")
-  return picker:action("edit")
-end
-
-function M.edit_split(picker)
-  picker:close()
-  vim.cmd("split")
-  return picker:action("edit")
-end
-
-function M.edit_vsplit(picker)
-  picker:close()
-  vim.cmd("vsplit")
-  return picker:action("edit")
 end
 
 --- Toggles the selection of the current item,
