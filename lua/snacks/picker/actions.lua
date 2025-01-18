@@ -6,6 +6,16 @@ local SCROLL_WHEEL_DOWN = Snacks.util.keycode("<ScrollWheelDown>")
 local SCROLL_WHEEL_UP = Snacks.util.keycode("<ScrollWheelUp>")
 
 function M.jump(picker)
+  -- if we're still in insert mode, stop it and schedule
+  -- it to prevent issues with cursor position
+  if vim.fn.mode():sub(1, 1) == "i" then
+    vim.cmd.stopinsert()
+    vim.schedule(function()
+      M.jump(picker)
+    end)
+    return
+  end
+
   picker:close()
   local win = vim.api.nvim_get_current_win()
 
@@ -50,9 +60,7 @@ function M.jump(picker)
     end
 
     if not vim.api.nvim_buf_is_loaded(buf) then
-      vim.api.nvim_buf_call(buf, function()
-        vim.cmd("edit")
-      end)
+      vim.cmd("buffer " .. buf)
       vim.bo[buf].buflisted = true
     end
 
@@ -137,7 +145,7 @@ local function setqflist(items, opts)
       col = item.pos and item.pos[2] or 1,
       end_lnum = item.end_pos and item.end_pos[1] or nil,
       end_col = item.end_pos and item.end_pos[2] or nil,
-      text = item.text,
+      text = item.line or item.comment or item.label or item.name or item.detail or item.text,
       pattern = item.search,
       valid = true,
     }
