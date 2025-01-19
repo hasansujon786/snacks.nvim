@@ -34,7 +34,7 @@ function M.buffers(opts, filter)
       table.insert(items, {
         flags = table.concat(flags),
         buf = buf,
-        text = name,
+        text = buf .. " " .. name,
         file = name,
         info = info,
         pos = { info.lnum, 0 },

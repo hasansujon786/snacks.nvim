@@ -34,6 +34,7 @@ local M = {}
 ---@field end_pos? {[1]:number, [2]:number}
 ---@field highlights? snacks.picker.Highlight[][]
 ---@field preview? snacks.picker.Item.preview
+---@field resolve? fun(item:snacks.picker.Item)
 
 ---@class snacks.picker.finder.Item: snacks.picker.Item
 ---@field idx? number
@@ -252,6 +253,9 @@ local defaults = {
       vertical    = "│ ",
       middle = "├╴",
       last   = "└╴",
+    },
+    undo = {
+      saved   = " ",
     },
     ui = {
       live        = "󰐰 ",

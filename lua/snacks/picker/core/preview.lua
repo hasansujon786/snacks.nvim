@@ -97,6 +97,7 @@ function M:show(picker)
   if self.item == item then
     return
   end
+  Snacks.picker.util.resolve(item)
   self.item = item
   if item then
     local buf = self.win.buf

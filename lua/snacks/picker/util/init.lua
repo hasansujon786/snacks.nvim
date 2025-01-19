@@ -181,4 +181,34 @@ function M.parse(str)
   return t, args
 end
 
+---@param item snacks.picker.Item
+function M.resolve(item)
+  if item.resolve then
+    item.resolve(item)
+    item.resolve = nil
+  end
+  return item
+end
+
+--- Returns the relative time from a given time
+--- as ... ago
+---@param time number in seconds
+function M.reltime(time)
+  local delta = os.time() - time
+  local tpl = {
+    { 1, 60, "just now", "just now" },
+    { 60, 3600, "a minute ago", "%d minutes ago" },
+    { 3600, 3600 * 24, "an hour ago", "%d hours ago" },
+    { 3600 * 24, 3600 * 24 * 7, "yesterday", "%d days ago" },
+    { 3600 * 24 * 7, 3600 * 24 * 7 * 4, "a week ago", "%d weeks ago" },
+  }
+  for _, v in ipairs(tpl) do
+    if delta < v[2] then
+      local value = math.floor(delta / v[1] + 0.5)
+      return value == 1 and v[3] or v[4]:format(value)
+    end
+  end
+  return os.date("%b %d, %Y", time) ---@type string
+end
+
 return M

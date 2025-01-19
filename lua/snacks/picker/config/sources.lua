@@ -119,6 +119,7 @@ M.diagnostics_buffer = {
 ---@field dirs? string[] directories to search
 ---@field follow? boolean follow symlinks
 ---@field exclude? string[] exclude patterns
+---@field args? string[] additional arguments
 M.files = {
   finder = "files",
   format = "file",
@@ -218,6 +219,7 @@ M.git_diff = {
 ---@field buffers? boolean search in open buffers
 ---@field need_search? boolean require a search pattern
 ---@field exclude? string[] exclude patterns
+---@field args? string[] additional arguments
 M.grep = {
   finder = "grep",
   format = "file",
@@ -568,6 +570,13 @@ M.spelling = {
   finder = "vim_spelling",
   format = "text",
   layout = { preset = "vscode" },
+  confirm = "item_action",
+}
+
+M.undo = {
+  finder = "vim_undo",
+  format = "undo",
+  preview = "preview",
   confirm = "item_action",
 }
 

@@ -47,6 +47,7 @@ function M.new(picker)
     bo = { modifiable = false, filetype = "snacks_picker_list" },
     wo = {
       foldenable = false,
+      foldmethod = "manual",
       cursorline = false,
       winhighlight = Snacks.picker.highlight.winhl("SnacksPickerList", { CursorLine = "Visual" }),
     },
@@ -329,6 +330,7 @@ end
 
 ---@param item snacks.picker.Item
 function M:format(item)
+  Snacks.picker.util.resolve(item)
   -- Add selected and debug info
   local prefix = {} ---@type snacks.picker.Highlight[]
   if #self.selected > 0 or self.picker.opts.formatters.selected.show_always then

@@ -66,6 +66,9 @@ local function get_cmd(opts, filter)
     args[#args + 1] = g
   end
 
+  -- extra args
+  vim.list_extend(args, opts.args or {})
+
   args[#args + 1] = "--"
 
   -- search pattern

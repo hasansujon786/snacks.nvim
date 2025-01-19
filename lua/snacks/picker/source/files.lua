@@ -60,6 +60,9 @@ local function get_cmd(opts, filter)
     args[#args + 1] = "-L"
   end
 
+  -- extra args
+  vim.list_extend(args, opts.args or {})
+
   -- file glob
   ---@type string?
   local pattern, pargs = Snacks.picker.util.parse(filter.search)
