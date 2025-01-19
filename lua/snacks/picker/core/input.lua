@@ -93,7 +93,7 @@ function M:update()
   local sc = self:statuscolumn()
   if self.win.opts.wo.statuscolumn ~= sc then
     self.win.opts.wo.statuscolumn = sc
-    vim.wo[self.win.win].statuscolumn = sc
+    Snacks.util.wo(self.win.win, { statuscolumn = sc })
   end
   local line = {} ---@type snacks.picker.Highlight[]
   if self.picker:is_active() then

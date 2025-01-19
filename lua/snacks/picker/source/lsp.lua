@@ -207,7 +207,7 @@ end
 ---@alias lsp.ResultItem lsp.Symbol|lsp.CallHierarchyItem|{text?:string}
 ---@param client vim.lsp.Client
 ---@param results lsp.ResultItem[]
----@param opts? {default_uri?:string, filter?:fun(result:lsp.ResultItem):boolean}
+---@param opts? {default_uri?:string, filter?:(fun(result:lsp.ResultItem):boolean), text_with_file?:boolean}
 function M.results_to_items(client, results, opts)
   opts = opts or {}
   local items = {} ---@type snacks.picker.finder.Item[]
@@ -252,13 +252,17 @@ function M.results_to_items(client, results, opts)
     ---@type snacks.picker.finder.Item?
     local item
     if sym then
+      local text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail or "" }, " ")
+      if opts.text_with_file and sym.filename then
+        text = text .. " " .. sym.filename
+      end
       item = {
         kind = M.symbol_kind(result.kind),
         parent = parent,
         depth = (parent.depth or 0) + 1,
         detail = result.detail,
         name = result.name,
-        text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail or "", sym.filename or "" }, " "),
+        text = text,
         file = sym.filename,
         buf = sym.bufnr,
         pos = { sym.lnum, sym.col - 1 },
@@ -312,6 +316,7 @@ function M.symbols(opts, filt)
     end, function(client, result, params)
       local items = M.results_to_items(client, result, {
         default_uri = params.textDocument and params.textDocument.uri or nil,
+        text_with_file = opts.workspace,
         filter = function(item)
           return want(M.symbol_kind(item.kind))
         end,

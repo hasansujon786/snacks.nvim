@@ -122,7 +122,7 @@ function M:on_show()
   self.state.scroll = vim.wo[self.win.win].scroll
   self.state.height = vim.api.nvim_win_get_height(self.win.win)
   self.state.mousescroll = tonumber(vim.o.mousescroll:match("ver:(%d+)")) or 1
-  vim.wo[self.win.win].scrolloff = 0
+  Snacks.util.wo(self.win.win, { scrolloff = 0 })
   self.dirty = true
 end
 
