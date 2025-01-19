@@ -493,17 +493,23 @@ function M:close(opts)
 
   local win = self.win
   local buf = wipe and self.buf
+  local scratch_buf = self.scratch_buf ~= self.buf and self.scratch_buf or nil
 
   self.win = nil
+  self.scratch_buf = nil
   if buf then
     self.buf = nil
   end
+
   local close = function()
     if win and vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_close(win, true)
     end
     if buf and vim.api.nvim_buf_is_valid(buf) then
       vim.api.nvim_buf_delete(buf, { force = true })
+    end
+    if scratch_buf and vim.api.nvim_buf_is_valid(scratch_buf) then
+      vim.api.nvim_buf_delete(scratch_buf, { force = true })
     end
     if self.augroup then
       pcall(vim.api.nvim_del_augroup_by_id, self.augroup)

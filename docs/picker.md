@@ -1350,6 +1350,7 @@ Neovim search history
   format = "undo",
   preview = "preview",
   confirm = "item_action",
+  win = { preview = { wo = { number = false, relativenumber = false, signcolumn = "no" } } },
 }
 ```
 

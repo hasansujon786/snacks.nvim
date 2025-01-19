@@ -11,8 +11,7 @@ function M.directory(ctx)
   for file, t in vim.fs.dir(ctx.item.file) do
     ls[#ls + 1] = { file = file, type = t }
   end
-  vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, vim.split(string.rep("\n", #ls), "\n"))
-  vim.bo[ctx.buf].modifiable = false
+  ctx.preview:set_lines(vim.split(string.rep("\n", #ls), "\n"))
   table.sort(ls, function(a, b)
     if a.type ~= b.type then
       return a.type == "directory"
@@ -45,7 +44,7 @@ function M.preview(ctx)
   assert(type(ctx.item.preview) == "table", "item.preview must be a table")
   ctx.preview:reset()
   local lines = vim.split(ctx.item.preview.text, "\n")
-  vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, lines)
+  ctx.preview:set_lines(lines)
   if ctx.item.preview.ft then
     ctx.preview:highlight({ ft = ctx.item.preview.ft })
   end
@@ -61,6 +60,10 @@ end
 
 ---@param ctx snacks.picker.preview.ctx
 function M.file(ctx)
+  if ctx.item.buf and not vim.api.nvim_buf_is_valid(ctx.item.buf) then
+    ctx.preview:notify("Buffer no longer exists", "error")
+    return
+  end
   if ctx.item.buf and vim.api.nvim_buf_is_loaded(ctx.item.buf) then
     local name = vim.api.nvim_buf_get_name(ctx.item.buf)
     name = uv.fs_stat(name) and vim.fn.fnamemodify(name, ":t") or name
@@ -115,9 +118,7 @@ function M.file(ctx)
 
       file:close()
 
-      vim.bo[ctx.buf].buftype = ""
-      vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, lines)
-      vim.bo[ctx.buf].modifiable = false
+      ctx.preview:set_lines(lines)
       ctx.preview:highlight({ file = path, ft = ctx.picker.opts.previewers.file.ft, buf = ctx.buf })
     end
   end
@@ -145,7 +146,7 @@ function M.cmd(cmd, ctx, opts)
     if opts.add then
       opts.add(text, l)
     else
-      vim.api.nvim_buf_set_lines(buf, -1, -1, false, { text })
+      vim.api.nvim_buf_set_lines(buf, l - 1, l, false, { text })
     end
     vim.bo[buf].modifiable = false
   end

@@ -493,7 +493,7 @@ function N:hide(id)
   self.queue[id], self.sorted = nil, nil
   notif.hidden = ts()
   if notif.win then
-    notif.win:hide()
+    notif.win:close()
     notif.win = nil
   end
 end

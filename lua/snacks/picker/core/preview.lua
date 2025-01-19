@@ -159,16 +159,16 @@ function M:reset()
   self:set_title()
   vim.treesitter.stop(self.win.buf)
   vim.bo[self.win.buf].modifiable = true
-  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, {})
+  self:set_lines({})
   self:clear(self.win.buf)
   local ei = vim.o.eventignore
   vim.o.eventignore = "all"
   vim.bo[self.win.buf].filetype = "snacks_picker_preview"
   vim.bo[self.win.buf].syntax = ""
   vim.bo[self.win.buf].buftype = "nofile"
-  vim.o.eventignore = ei
   self:wo({ cursorline = false })
   self:wo(self.win.opts.wo)
+  vim.o.eventignore = ei
 end
 
 -- create a new scratch buffer
@@ -235,6 +235,13 @@ function M:loc()
   end
 end
 
+---@param lines string[]
+function M:set_lines(lines)
+  vim.bo[self.win.buf].modifiable = true
+  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
+  vim.bo[self.win.buf].modifiable = false
+end
+
 ---@param msg string
 ---@param level? "info" | "warn" | "error"
 ---@param opts? {item?:boolean}
@@ -243,6 +250,7 @@ function M:notify(msg, level, opts)
     Snacks.notify(msg, { level = level })
     return
   end
+  self:reset()
   level = level or "info"
   local lines = vim.split(level .. ": " .. msg, "\n", { plain = true })
   local msg_len = #lines
@@ -250,7 +258,7 @@ function M:notify(msg, level, opts)
     lines[#lines + 1] = ""
     vim.list_extend(lines, vim.split(vim.inspect(self.item), "\n", { plain = true }))
   end
-  vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
+  self:set_lines(lines)
   vim.api.nvim_buf_set_extmark(self.win.buf, ns, 0, 0, {
     hl_group = "Diagnostic" .. level:sub(1, 1):upper() .. level:sub(2),
     end_row = msg_len,
