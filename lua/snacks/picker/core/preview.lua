@@ -35,6 +35,7 @@ function M.new(opts, main)
         colorcolumn = "",
         number = true,
         relativenumber = true,
+        list = false,
       },
     },
     opts.win.preview,
@@ -44,7 +45,6 @@ function M.new(opts, main)
       width = 0,
       height = 0,
       fixbuf = false,
-      bo = { filetype = "snacks_picker_preview" },
       on_win = function()
         self.item = nil
         self:reset()
@@ -52,6 +52,7 @@ function M.new(opts, main)
       wo = {
         winhighlight = self.winhl,
       },
+      scratch_ft = "snacks_picker_preview",
     }
   )
   self.win_opts = {
@@ -93,6 +94,9 @@ end
 ---@param picker snacks.Picker
 function M:show(picker)
   local item, prev = picker:current(), self.item
+  if self.item == item then
+    return
+  end
   self.item = item
   if item then
     local buf = self.win.buf
@@ -160,6 +164,7 @@ function M:reset()
   vim.o.eventignore = "all"
   vim.bo[self.win.buf].filetype = "snacks_picker_preview"
   vim.bo[self.win.buf].syntax = ""
+  vim.bo[self.win.buf].buftype = "nofile"
   vim.o.eventignore = ei
   self:wo({ cursorline = false })
   self:wo(self.win.opts.wo)
@@ -174,7 +179,8 @@ function M:scratch()
   vim.bo[buf].filetype = "snacks_picker_preview"
   vim.o.eventignore = ei
   vim.api.nvim_win_set_buf(self.win.win, buf)
-  self:wo({ number = false, relativenumber = false })
+  self.win:map()
+  self:wo({ number = false, relativenumber = false, signcolumn = "no" })
   return buf
 end
 
@@ -232,6 +238,10 @@ end
 ---@param level? "info" | "warn" | "error"
 ---@param opts? {item?:boolean}
 function M:notify(msg, level, opts)
+  if not self.win:buf_valid() then
+    Snacks.notify(msg, { level = level })
+    return
+  end
   level = level or "info"
   local lines = vim.split(level .. ": " .. msg, "\n", { plain = true })
   local msg_len = #lines

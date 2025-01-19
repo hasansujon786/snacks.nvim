@@ -17,7 +17,6 @@ function M.new(picker)
   self.picker = picker
   self.filter = require("snacks.picker.core.filter").new(picker)
   picker.matcher:init({ pattern = self.filter.pattern })
-  self._statuscolumn = self:statuscolumn()
 
   self.win = Snacks.win(Snacks.win.resolve(picker.opts.win.input, {
     show = false,
@@ -36,7 +35,7 @@ function M.new(picker)
       buftype = "prompt",
     },
     wo = {
-      statuscolumn = self._statuscolumn,
+      statuscolumn = self:statuscolumn(),
       cursorline = false,
       winhighlight = Snacks.picker.highlight.winhl("SnacksPickerInput"),
     },
@@ -92,8 +91,8 @@ function M:update()
     return
   end
   local sc = self:statuscolumn()
-  if self._statuscolumn ~= sc then
-    self._statuscolumn = sc
+  if self.win.opts.wo.statuscolumn ~= sc then
+    self.win.opts.wo.statuscolumn = sc
     vim.wo[self.win.win].statuscolumn = sc
   end
   local line = {} ---@type snacks.picker.Highlight[]
@@ -136,7 +135,7 @@ function M:set(pattern, search)
   })
   vim.api.nvim_win_set_cursor(self.win.win, { 1, #self:get() + 1 })
   self.totals = ""
-  self._statuscolumn = ""
+  self.win.opts.wo.statuscolumn = ""
   self:update()
   self.picker:update_titles()
 end

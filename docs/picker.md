@@ -13,6 +13,7 @@ Snacks now comes with a modern fuzzy-finder to navigate the Neovim universe.
 - 🔎 over 40 [built-in sources](https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#-sources)
 - 🚀 Fast and powerful fuzzy matching engine that supports the [fzf](https://junegunn.github.io/fzf/search-syntax/) search syntax
   - additionally supports field searches like `file:lua$ 'function`
+  - `files` and `grep` additionally support adding optiont like `foo -- -e=lua`
 - 🌲 uses **treesitter** highlighting where it makes sense
 - 🧹 Sane default settings so you can start using it right away
 - 💪 Finders and matchers run asynchronously for maximum performance
@@ -84,6 +85,7 @@ Snacks.picker.pick({source = "files", ...})
 ---@field layout? snacks.picker.layout.Config|string|{}|fun(source:string):(snacks.picker.layout.Config|string)
 ---@field icons? snacks.picker.icons
 ---@field prompt? string prompt text / icon
+---@field title? string defaults to a capitalized source name
 --- Preset options
 ---@field previewers? snacks.picker.previewers.Config|{}
 ---@field formatters? snacks.picker.formatters.Config|{}
@@ -195,6 +197,7 @@ Snacks.picker.pick({source = "files", ...})
         ["<c-q>"] = { "qflist", mode = { "i", "n" } },
         ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
         ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+        ["<a-f>"] = { "toggle_follow", mode = { "i", "n" } },
       },
       b = {
         minipairs_disable = true,
@@ -235,6 +238,10 @@ Snacks.picker.pick({source = "files", ...})
         ["<a-w>"] = "cycle_win",
         ["<Esc>"] = "close",
       },
+      wo = {
+        conceallevel = 2,
+        concealcursor = "nvc",
+      },
     },
     -- preview window
     preview = {
@@ -262,6 +269,7 @@ Snacks.picker.pick({source = "files", ...})
       live        = "󰐰 ",
       hidden      = "h",
       ignored     = "i",
+      follow      = "f",
       selected    = "● ",
       unselected  = "○ ",
       -- selected = " ",
@@ -652,7 +660,7 @@ Neovim commands
 ```lua
 {
   finder = "vim_commands",
-  format = "text",
+  format = "command",
   preview = "preview",
   confirm = "cmd",
 }
@@ -676,6 +684,7 @@ Neovim commands
       "lnum",
     },
   },
+  matcher = { sort_empty = true },
   -- only show diagnostics from the cwd by default
   filter = { cwd = true },
 }
@@ -691,6 +700,7 @@ Neovim commands
   sort = {
     fields = { "severity", "file", "lnum" },
   },
+  matcher = { sort_empty = true },
   filter = { buf = true },
 }
 ```
@@ -712,6 +722,26 @@ Neovim commands
   ignored = false,
   follow = false,
   supports_live = true,
+}
+```
+
+### `git_branches`
+
+```lua
+{
+  finder = "git_branches",
+  format = "git_branch",
+  preview = "git_log",
+  confirm = "git_checkout",
+  on_show = function(picker)
+    for i, item in ipairs(picker:items()) do
+      if item.current then
+        picker.list:view(i)
+        Snacks.picker.actions.list_scroll_center(picker)
+        break
+      end
+    end
+  end,
 }
 ```
 
@@ -1029,6 +1059,7 @@ LSP document symbols
 ---@class snacks.picker.lsp.symbols.Config: snacks.picker.Config
 ---@field hierarchy? boolean show symbol hierarchy
 ---@field filter table<string, string[]|boolean>? symbol kind filter
+---@field workspace? boolean show workspace symbols
 {
   finder = "lsp_symbols",
   format = "lsp_symbol",
@@ -1085,6 +1116,18 @@ LSP type definitions
   auto_confirm = true,
   jump = { tagstack = true, reuse_win = true },
 }
+```
+
+### `lsp_workspace_symbols`
+
+```lua
+---@type snacks.picker.lsp.symbols.Config
+vim.tbl_extend("force", {}, M.lsp_symbols, {
+  workspace = true,
+  hierarchy = false,
+  supports_live = true,
+  live = true, -- live by default
+})
 ```
 
 ### `man`
@@ -1282,6 +1325,17 @@ Neovim search history
 }
 ```
 
+### `spelling`
+
+```lua
+{
+  finder = "vim_spelling",
+  format = "text",
+  layout = { preset = "vscode" },
+  confirm = "item_action",
+}
+```
+
 ### `zoxide`
 
 Open a project from zoxide
@@ -1313,7 +1367,7 @@ Open a project from zoxide
     {
       box = "vertical",
       border = "rounded",
-      title = "{source} {live} {flags}",
+      title = "{title} {live} {flags}",
       { win = "input", height = 1, border = "bottom" },
       { win = "list", border = "none" },
     },
@@ -1338,7 +1392,7 @@ Open a project from zoxide
     {
       box = "vertical",
       border = "rounded",
-      title = "{source} {live} {flags}",
+      title = "{title} {live} {flags}",
       title_pos = "center",
       { win = "input", height = 1, border = "bottom" },
       { win = "list", border = "none" },
@@ -1358,7 +1412,7 @@ Open a project from zoxide
     width = 0,
     height = 0.4,
     border = "top",
-    title = " {source} {live} {flags}",
+    title = " {title} {live} {flags}",
     title_pos = "left",
     { win = "input", height = 1, border = "bottom" },
     {
@@ -1406,7 +1460,7 @@ Open a project from zoxide
     {
       box = "vertical",
       { win = "list", title = " Results ", title_pos = "center", border = "rounded" },
-      { win = "input", height = 1, border = "rounded", title = "{source} {live} {flags}", title_pos = "center" },
+      { win = "input", height = 1, border = "rounded", title = "{title} {live} {flags}", title_pos = "center" },
     },
     {
       win = "preview",
@@ -1431,7 +1485,7 @@ Open a project from zoxide
     min_height = 30,
     box = "vertical",
     border = "rounded",
-    title = "{source} {live} {flags}",
+    title = "{title} {live} {flags}",
     title_pos = "center",
     { win = "input", height = 1, border = "bottom" },
     { win = "list", border = "none" },
@@ -1453,7 +1507,7 @@ Open a project from zoxide
     height = 0.4,
     border = "none",
     box = "vertical",
-    { win = "input", height = 1, border = "rounded", title = "{source} {live} {flags}", title_pos = "center" },
+    { win = "input", height = 1, border = "rounded", title = "{title} {live} {flags}", title_pos = "center" },
     { win = "list", border = "hpad" },
     { win = "preview", title = "{preview}", border = "rounded" },
   },
@@ -1511,6 +1565,12 @@ Snacks.picker.actions.focus_list(picker)
 Snacks.picker.actions.focus_preview(picker)
 ```
 
+### `Snacks.picker.actions.git_checkout()`
+
+```lua
+Snacks.picker.actions.git_checkout(picker, item)
+```
+
 ### `Snacks.picker.actions.git_stage()`
 
 ```lua
@@ -1539,6 +1599,12 @@ Snacks.picker.actions.history_forward(picker)
 
 ```lua
 Snacks.picker.actions.inspect(picker, item)
+```
+
+### `Snacks.picker.actions.item_action()`
+
+```lua
+Snacks.picker.actions.item_action(picker, item, action)
 ```
 
 ### `Snacks.picker.actions.jump()`
@@ -1696,6 +1762,12 @@ Snacks.picker.actions.select_and_prev(picker)
 Snacks.picker.actions.toggle_focus(picker)
 ```
 
+### `Snacks.picker.actions.toggle_follow()`
+
+```lua
+Snacks.picker.actions.toggle_follow(picker)
+```
+
 ### `Snacks.picker.actions.toggle_hidden()`
 
 ```lua
@@ -1746,7 +1818,7 @@ Snacks.picker.actions.toggle_preview(picker)
 ---@field sort snacks.picker.sort
 ---@field updater uv.uv_timer_t
 ---@field start_time number
----@field source_name string
+---@field title string
 ---@field closed? boolean
 ---@field hist_idx number
 ---@field hist_cursor number
@@ -1855,6 +1927,17 @@ like during live searches.
 
 ```lua
 picker:match()
+```
+
+### `picker:norm()`
+
+Execute the callback in normal mode.
+When still in insert mode, stop insert mode first,
+and then`vim.schedule` the callback.
+
+```lua
+---@param cb fun()
+picker:norm(cb)
 ```
 
 ### `picker:selected()`

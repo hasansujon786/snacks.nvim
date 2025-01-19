@@ -26,7 +26,7 @@ function M.filename(item, picker)
     return ret
   end
   local path = Snacks.picker.util.path(item) or item.file
-  path = vim.fn.fnamemodify(path, ":~:.")
+  path = vim.fn.fnamemodify(path, ":~:."):gsub("\\", "/")
   local name, cat = path, "file"
   if item.buf and vim.api.nvim_buf_is_loaded(item.buf) then
     name = vim.bo[item.buf].filetype
@@ -98,8 +98,11 @@ function M.git_log(item, picker)
   local ret = {} ---@type snacks.picker.Highlight[]
   ret[#ret + 1] = { picker.opts.icons.git.commit, "SnacksPickerGitCommit" }
   ret[#ret + 1] = { item.commit, "SnacksPickerGitCommit" }
+
   ret[#ret + 1] = { " " }
-  ret[#ret + 1] = { a(item.date, 16), "SnacksPickerGitDate" }
+  if item.date then
+    ret[#ret + 1] = { a(item.date, 16), "SnacksPickerGitDate" }
+  end
 
   local msg = item.msg ---@type string
   local type, scope, breaking, body = msg:match("^(%S+)(%(.-%))(!?):%s*(.*)$")
@@ -130,9 +133,28 @@ function M.git_log(item, picker)
   return ret
 end
 
-function M.lsp_symbol(item, picker)
+function M.git_branch(item, picker)
+  local a = Snacks.picker.util.align
   local ret = {} ---@type snacks.picker.Highlight[]
-  if item.hierarchy then
+  if item.current then
+    ret[#ret + 1] = { a("", 2), "SnacksPickerGitBranchCurrent" }
+    ret[#ret + 1] = { a(item.branch, 30, { truncate = true }), "SnacksPickerGitBranch" }
+  else
+    ret[#ret + 1] = { a("", 2) }
+    ret[#ret + 1] = { a(item.branch, 30, { truncate = true }), "SnacksPickerGitBranch" }
+  end
+  ret[#ret + 1] = { " " }
+  local offset = Snacks.picker.highlight.offset(ret)
+  local log = M.git_log(item, picker)
+  Snacks.picker.highlight.fix_offset(log, offset)
+  vim.list_extend(ret, log)
+  return ret
+end
+
+function M.lsp_symbol(item, picker)
+  local opts = picker.opts --[[@as snacks.picker.lsp.symbols.Config]]
+  local ret = {} ---@type snacks.picker.Highlight[]
+  if item.hierarchy and not opts.workspace then
     local indents = picker.opts.icons.indent
     local indent = {} ---@type string[]
     local node = item
@@ -152,12 +174,15 @@ function M.lsp_symbol(item, picker)
   local kind_hl = "SnacksPickerIcon" .. kind
   ret[#ret + 1] = { picker.opts.icons.kinds[kind], kind_hl }
   ret[#ret + 1] = { " " }
-  -- ret[#ret + 1] = { kind:lower() .. string.rep(" ", 10 - #kind), kind_hl }
-  -- ret[#ret + 1] = { " " }
   local name = vim.trim(item.name:gsub("\r?\n", " "))
   name = name == "" and item.detail or name
   Snacks.picker.highlight.format(item, name, ret)
-  -- ret[#ret + 1] = { name }
+
+  if opts.workspace then
+    local offset = Snacks.picker.highlight.offset(ret, { char_idx = true })
+    ret[#ret + 1] = { Snacks.picker.util.align(" ", 40 - offset) }
+    vim.list_extend(ret, M.filename(item, picker))
+  end
   return ret
 end
 
@@ -216,6 +241,16 @@ function M.text(item)
   return {
     { item.text },
   }
+end
+
+function M.command(item)
+  local ret = {} ---@type snacks.picker.Highlight[]
+  ret[#ret + 1] = { item.cmd, "SnacksPickerCmd" .. (item.cmd:find("^[a-z]") and "Builtin" or "") }
+  if item.desc then
+    ret[#ret + 1] = { " " }
+    ret[#ret + 1] = { item.desc, "SnacksPickerDesc" }
+  end
+  return ret
 end
 
 function M.diagnostic(item, picker)

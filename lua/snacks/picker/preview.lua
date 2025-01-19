@@ -115,6 +115,7 @@ function M.file(ctx)
 
       file:close()
 
+      vim.bo[ctx.buf].buftype = ""
       vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, lines)
       vim.bo[ctx.buf].modifiable = false
       ctx.preview:highlight({ file = path, ft = ctx.picker.opts.previewers.file.ft, buf = ctx.buf })
@@ -125,14 +126,29 @@ end
 
 ---@param cmd string[]
 ---@param ctx snacks.picker.preview.ctx
----@param opts? {env?:table<string, string>, pty?:boolean, ft?:string}
+---@param opts? {add?:fun(text:string, row:number), env?:table<string, string>, pty?:boolean, ft?:string}
 function M.cmd(cmd, ctx, opts)
   opts = opts or {}
   local buf = ctx.preview:scratch()
+  vim.bo[buf].buftype = "nofile"
   local pty = opts.pty ~= false and not opts.ft
   local killed = false
   local chan = pty and vim.api.nvim_open_term(buf, {}) or nil
   local output = {} ---@type string[]
+  local line ---@type string?
+  local l = 0
+
+  ---@param text string
+  local function add_line(text)
+    l = l + 1
+    vim.bo[buf].modifiable = true
+    if opts.add then
+      opts.add(text, l)
+    else
+      vim.api.nvim_buf_set_lines(buf, -1, -1, false, { text })
+    end
+    vim.bo[buf].modifiable = false
+  end
 
   ---@param data string
   local function add(data)
@@ -144,10 +160,12 @@ function M.cmd(cmd, ctx, opts)
         end)
       end
     else
-      vim.bo[buf].modifiable = true
-      local lines = vim.split(table.concat(output, "\n"), "\n")
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-      vim.bo[buf].modifiable = false
+      line = (line or "") .. data
+      local lines = vim.split(line, "\r?\n")
+      line = table.remove(lines)
+      for _, text in ipairs(lines) do
+        add_line(text)
+      end
     end
   end
 
@@ -167,6 +185,9 @@ function M.cmd(cmd, ctx, opts)
       add(table.concat(data, "\n"))
     end,
     on_exit = function(_, code)
+      if not killed and line and line ~= "" and vim.api.nvim_buf_is_valid(buf) then
+        add_line(line)
+      end
       if not killed and code ~= 0 then
         Snacks.notify.error(
           ("Terminal **cmd** `%s` failed with code `%d`:\n- `vim.o.shell = %q`\n\nOutput:\n%s"):format(
@@ -215,6 +236,48 @@ function M.git_show(ctx)
     table.insert(cmd, 2, "--no-pager")
   end
   M.cmd(cmd, ctx, { ft = not native and "git" or nil })
+end
+
+---@param ctx snacks.picker.preview.ctx
+function M.git_log(ctx)
+  local native = ctx.picker.opts.previewers.git.native
+  local cmd = {
+    "git",
+    "-c",
+    "delta." .. vim.o.background .. "=true",
+    "log",
+    "--pretty=format:%h %s (%ch)",
+    "--abbrev-commit",
+    "--decorate",
+    "--date=short",
+    "--color=never",
+    "--no-show-signature",
+    "--no-patch",
+    ctx.item.branch,
+  }
+  if not native then
+    table.insert(cmd, 2, "--no-pager")
+  end
+  local row = 0
+  M.cmd(cmd, ctx, {
+    ft = not native and "git" or nil,
+    ---@param text string
+    add = not native and function(text)
+      local commit, msg, date = text:match("^(%S+) (.*) %((.*)%)$")
+      if commit then
+        row = row + 1
+        local hl = Snacks.picker.format.git_log({
+          idx = 1,
+          score = 0,
+          text = "",
+          commit = commit,
+          msg = msg,
+          date = date,
+        }, ctx.picker)
+        Snacks.picker.highlight.set(ctx.buf, ns, row, hl)
+      end
+    end or nil,
+  })
 end
 
 ---@param ctx snacks.picker.preview.ctx

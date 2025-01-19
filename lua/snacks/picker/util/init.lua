@@ -149,4 +149,36 @@ function M.title(str)
   )
 end
 
+---@param str string
+---@return string text, string[] args
+function M.parse(str)
+  -- Format: this is a test -- -g=hello
+  local t, a = str:match("^(.-)%s*%-%-%s+(.+)$")
+  if not t then
+    return str, {}
+  end
+  t, a = vim.trim(t), vim.trim(a:gsub("%s+", " "))
+  local args = {} ---@type string[]
+  -- tokenize the args, keeping quoted strings together
+  local in_quote = nil ---@type string?
+  local c = 1
+  for i = 1, #a do
+    local char = a:sub(i, i)
+    if char == "'" or char == '"' then
+      if in_quote == char then
+        in_quote = nil
+      else
+        in_quote = char
+      end
+    elseif char == " " and not in_quote then
+      args[#args + 1] = a:sub(c, i - 1)
+      c = i + 1
+    end
+  end
+  if c <= #a then
+    args[#args + 1] = a:sub(c)
+  end
+  return t, args
+end
+
 return M

@@ -62,7 +62,9 @@ local function get_cmd(opts, filter)
 
   -- file glob
   ---@type string?
-  local pattern = filter.search
+  local pattern, pargs = Snacks.picker.util.parse(filter.search)
+  vim.list_extend(args, pargs)
+
   pattern = pattern ~= "" and pattern or nil
   if pattern then
     if is_fd then

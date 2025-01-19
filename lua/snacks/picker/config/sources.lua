@@ -76,7 +76,7 @@ M.command_history = {
 -- Neovim commands
 M.commands = {
   finder = "vim_commands",
-  format = "text",
+  format = "command",
   preview = "preview",
   confirm = "cmd",
 }
@@ -96,6 +96,7 @@ M.diagnostics = {
       "lnum",
     },
   },
+  matcher = { sort_empty = true },
   -- only show diagnostics from the cwd by default
   filter = { cwd = true },
 }
@@ -107,6 +108,7 @@ M.diagnostics_buffer = {
   sort = {
     fields = { "severity", "file", "lnum" },
   },
+  matcher = { sort_empty = true },
   filter = { buf = true },
 }
 
@@ -124,6 +126,22 @@ M.files = {
   ignored = false,
   follow = false,
   supports_live = true,
+}
+
+M.git_branches = {
+  finder = "git_branches",
+  format = "git_branch",
+  preview = "git_log",
+  confirm = "git_checkout",
+  on_show = function(picker)
+    for i, item in ipairs(picker:items()) do
+      if item.current then
+        picker.list:view(i)
+        Snacks.picker.actions.list_scroll_center(picker)
+        break
+      end
+    end
+  end,
 }
 
 -- Find git files
@@ -356,6 +374,7 @@ M.lsp_references = {
 ---@class snacks.picker.lsp.symbols.Config: snacks.picker.Config
 ---@field hierarchy? boolean show symbol hierarchy
 ---@field filter table<string, string[]|boolean>? symbol kind filter
+---@field workspace? boolean show workspace symbols
 M.lsp_symbols = {
   finder = "lsp_symbols",
   format = "lsp_symbol",
@@ -397,6 +416,14 @@ M.lsp_symbols = {
     },
   },
 }
+
+---@type snacks.picker.lsp.symbols.Config
+M.lsp_workspace_symbols = vim.tbl_extend("force", {}, M.lsp_symbols, {
+  workspace = true,
+  hierarchy = false,
+  supports_live = true,
+  live = true, -- live by default
+})
 
 -- LSP type definitions
 ---@type snacks.picker.lsp.Config
@@ -535,6 +562,13 @@ M.smart = {
   format = "file",
   -- sort the results even when the filter is empty (frecency)
   matcher = { sort_empty = true },
+}
+
+M.spelling = {
+  finder = "vim_spelling",
+  format = "text",
+  layout = { preset = "vscode" },
+  confirm = "item_action",
 }
 
 -- Open a project from zoxide
