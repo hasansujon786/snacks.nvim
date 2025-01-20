@@ -1,5 +1,6 @@
 ---@class snacks.picker.Preview
 ---@field item? snacks.picker.Item
+---@field pos? snacks.picker.Pos
 ---@field win snacks.win
 ---@field preview snacks.picker.preview
 ---@field state table<string, any>
@@ -34,7 +35,7 @@ function M.new(opts, main)
         cursorline = false,
         colorcolumn = "",
         number = true,
-        relativenumber = true,
+        relativenumber = false,
         list = false,
       },
     },
@@ -80,6 +81,13 @@ function M.new(opts, main)
   return self
 end
 
+function M:close()
+  self.win:destroy()
+  self.item = nil
+  self.win_opts = { main = {}, layout = {}, win = {} }
+  self.state = {}
+end
+
 ---@param main? number
 function M:update(main)
   self.main = main
@@ -93,12 +101,13 @@ end
 
 ---@param picker snacks.Picker
 function M:show(picker)
-  local item, prev = picker:current(), self.item
-  if self.item == item then
+  local item, prev = picker:current({ resolve = false }), self.item
+  if self.item == item and self.pos == (item and item.pos or nil) then
     return
   end
   Snacks.picker.util.resolve(item)
   self.item = item
+  self.pos = item and item.pos or nil
   if item then
     local buf = self.win.buf
     local ok, err = pcall(
@@ -210,7 +219,10 @@ function M:loc()
   if not self.item then
     return
   end
+
   local line_count = vim.api.nvim_buf_line_count(self.win.buf)
+  Snacks.picker.util.resolve_loc(self.item, self.win.buf)
+
   if self.item.pos and self.item.pos[1] > 0 and self.item.pos[1] <= line_count then
     vim.api.nvim_win_set_cursor(self.win.win, { self.item.pos[1], 0 })
     vim.api.nvim_win_call(self.win.win, function()

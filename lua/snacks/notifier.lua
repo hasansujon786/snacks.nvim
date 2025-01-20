@@ -108,6 +108,7 @@ Snacks.config.style("notification_history", {
 ---@class snacks.notifier.Config
 ---@field enabled? boolean
 ---@field keep? fun(notif: snacks.notifier.Notif): boolean # global keep function
+---@field filter? fun(notif: snacks.notifier.Notif): boolean # filter our unwanted notifications (return false to hide)
 local defaults = {
   timeout = 3000, -- default timeout in ms
   width = { min = 40, max = 0.4 },
@@ -175,7 +176,7 @@ N.styles = {
   minimal = function(buf, notif, ctx)
     ctx.opts.border = "none"
     local whl = ctx.opts.wo.winhighlight
-    ctx.opts.wo.winhighlight = whl:gsub(ctx.hl.msg, "NormalFloat")
+    ctx.opts.wo.winhighlight = whl:gsub(ctx.hl.msg, "SnacksNotifierMinimal")
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(notif.msg, "\n"))
     vim.api.nvim_buf_set_extmark(buf, ctx.ns, 0, 0, {
       virt_text = { { notif.icon, ctx.hl.icon } },
@@ -290,6 +291,7 @@ function N:init()
     [hl("History")] = "Normal",
     [hl("HistoryTitle")] = "Title",
     [hl("HistoryDateTime")] = "Special",
+    SnacksNotifierMinimal = "NormalFloat",
   }
   for _, level in ipairs(N.level_names) do
     local Level = cap(level)
@@ -398,9 +400,12 @@ function N:add(opts)
     notif.dirty = true
   end
   self.sorted = nil
-  if numlevel(notif.level) >= numlevel(self.opts.level) then
-    self.queue[notif.id] = notif
+  local want = numlevel(notif.level) >= numlevel(self.opts.level)
+  want = want and (not self.opts.filter or self.opts.filter(notif))
+  if not want then
+    return notif.id
   end
+  self.queue[notif.id] = notif
   if opts.history ~= false then
     self.history[notif.id] = notif
   end

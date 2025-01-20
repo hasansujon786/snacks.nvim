@@ -15,6 +15,10 @@ local islist = vim.islist or vim.tbl_islist
 ---@alias lsp.Symbol lsp.SymbolInformation|lsp.DocumentSymbol
 ---@alias lsp.Loc lsp.Location|lsp.LocationLink
 
+---@class snacks.picker.lsp.Loc: lsp.Location
+---@field encoding string
+---@field resolved? boolean
+
 local kinds = nil ---@type table<lsp.SymbolKind, string>
 
 --- Gets the original symbol kind name from its number.
@@ -64,6 +68,23 @@ local function wrap(client)
       return client[k]
     end,
   })
+end
+
+---@param item snacks.picker.finder.Item
+---@param result lsp.Loc
+---@param client vim.lsp.Client
+function M.add_loc(item, result, client)
+  ---@type snacks.picker.lsp.Loc
+  local loc = {
+    uri = result.uri or result.targetUri,
+    range = result.range or result.targetSelectionRange,
+    encoding = client.offset_encoding,
+  }
+  item.loc = loc
+  item.pos = { loc.range.start.line + 1, loc.range.start.character }
+  item.end_pos = { loc.range["end"].line + 1, loc.range["end"].character }
+  item.file = vim.uri_to_fname(loc.uri)
+  return item
 end
 
 ---@param buf number
@@ -212,7 +233,6 @@ function M.results_to_items(client, results, opts)
   opts = opts or {}
   local items = {} ---@type snacks.picker.finder.Item[]
   local locs = {} ---@type lsp.Loc[]
-  local processed = {} ---@type table<lsp.ResultItem, {uri:string, loc:lsp.Loc, range?:lsp.Loc}>
 
   ---@param result lsp.ResultItem
   local function process(result)
@@ -222,7 +242,6 @@ function M.results_to_items(client, results, opts)
     if not loc.uri then
       assert(loc.uri, "missing uri in result:\n" .. vim.inspect(result))
     end
-    processed[result] = { uri = uri, loc = loc }
     if not opts.filter or opts.filter(result) then
       locs[#locs + 1] = loc
     end
@@ -235,43 +254,35 @@ function M.results_to_items(client, results, opts)
     process(result)
   end
 
-  local loc_items = vim.lsp.util.locations_to_items(locs, client.offset_encoding)
-  M.fix_locs(loc_items)
-  local ranges = {} ---@type table<lsp.Loc, vim.quickfix.entry>
-  for _, i in ipairs(loc_items) do
-    local loc = i.user_data ---@type lsp.Loc
-    ranges[loc] = i
-  end
-
   local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>
   ---@param result lsp.ResultItem
   ---@param parent snacks.picker.finder.Item
   local function add(result, parent)
-    local loc = processed[result].loc
-    local sym = ranges[loc]
-    ---@type snacks.picker.finder.Item?
-    local item
-    if sym then
-      local text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail or "" }, " ")
-      if opts.text_with_file and sym.filename then
-        text = text .. " " .. sym.filename
-      end
-      item = {
-        kind = M.symbol_kind(result.kind),
-        parent = parent,
-        depth = (parent.depth or 0) + 1,
-        detail = result.detail,
-        name = result.name,
-        text = text,
-        file = sym.filename,
-        buf = sym.bufnr,
-        pos = { sym.lnum, sym.col - 1 },
-        end_pos = sym.end_lnum and sym.end_col and { sym.end_lnum, sym.end_col - 1 } or nil,
-      }
+    ---@type snacks.picker.finder.Item
+    local item = {
+      kind = M.symbol_kind(result.kind),
+      parent = parent,
+      depth = (parent.depth or 0) + 1,
+      detail = result.detail,
+      name = result.name,
+      text = "",
+    }
+    local uri = result.location and result.location.uri or result.uri or opts.default_uri
+    local loc = result.location or { range = result.selectionRange or result.range, uri = uri }
+    loc.uri = loc.uri or uri
+    M.add_loc(item, loc, client)
+    local text = table.concat({ M.symbol_kind(result.kind), result.name, result.detail or "" }, " ")
+    if opts.text_with_file and item.file then
+      text = text .. " " .. item.file
+    end
+    item.text = text
+
+    if not opts.filter or opts.filter(result) then
       items[#items + 1] = item
       last[parent] = item
       parent = item
     end
+
     for _, child in ipairs(result.children or {}) do
       add(child, parent)
     end

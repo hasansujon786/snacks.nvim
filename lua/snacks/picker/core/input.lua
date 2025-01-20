@@ -2,7 +2,6 @@
 ---@field win snacks.win
 ---@field totals string
 ---@field picker snacks.Picker
----@field _statuscolumn string
 ---@field filter snacks.picker.Filter
 local M = {}
 M.__index = M
@@ -41,10 +40,12 @@ function M.new(picker)
     },
   }))
 
+  local ref = picker:ref()
   self.win:on(
     { "TextChangedI", "TextChanged" },
     Snacks.util.throttle(function()
-      if not self.win:valid() then
+      local p = ref()
+      if not p or not self.win:valid() then
         return
       end
       -- only one line
@@ -56,16 +57,21 @@ function M.new(picker)
       end
       vim.bo[self.win.buf].modified = false
       local pattern = self:get()
-      if self.picker.opts.live then
+      if p.opts.live then
         self.filter.search = pattern
       else
         self.filter.pattern = pattern
       end
-      picker:match()
+      p:match()
     end, { ms = picker.opts.live and 100 or 30 }),
     { buf = true }
   )
   return self
+end
+
+function M:close()
+  self.win:destroy()
+  self.picker = nil -- needed for garbage collection of the picker
 end
 
 function M:statuscolumn()

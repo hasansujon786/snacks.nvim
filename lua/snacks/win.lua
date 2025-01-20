@@ -486,6 +486,11 @@ function M:scroll(up)
   end)
 end
 
+function M:destroy()
+  self:close()
+  self.events = {}
+end
+
 ---@param opts? { buf: boolean }
 function M:close(opts)
   opts = opts or {}

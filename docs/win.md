@@ -269,6 +269,12 @@ win:buf_valid()
 win:close(opts)
 ```
 
+### `win:destroy()`
+
+```lua
+win:destroy()
+```
+
 ### `win:dim()`
 
 ```lua

@@ -120,6 +120,7 @@ end
 function M.bufdelete(picker)
   for _, item in ipairs(picker:selected({ fallback = true })) do
     Snacks.bufdelete.delete(item.buf)
+    picker.list:unselect(item)
   end
   local cursor = picker.list.cursor
   picker:find({

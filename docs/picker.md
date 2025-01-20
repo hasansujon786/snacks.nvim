@@ -118,6 +118,7 @@ Snacks.picker.pick({source = "files", ...})
     ignorecase = true, -- use ignorecase
     sort_empty = false, -- sort results when the search string is empty
     filename_bonus = true, -- give bonus for matching file names (last part of the path)
+    file_pos = true, -- support patterns like `file:line:col` and `file:line`
   },
   sort = {
     -- default sort is by score, text length and index
@@ -330,6 +331,7 @@ Snacks.picker.pick({source = "files", ...})
   ---@class snacks.picker.debug
   debug = {
     scores = false, -- show scores in the list
+    leaks = false, -- show when pickers don't get garbage collected
   },
 }
 ```
@@ -440,6 +442,10 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
+---@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
+```
+
+```lua
 ---@class snacks.picker.Last
 ---@field cursor number
 ---@field topline number
@@ -455,6 +461,7 @@ Snacks.picker.pick({source = "files", ...})
 ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
 ---@alias snacks.picker.preview fun(ctx: snacks.picker.preview.ctx):boolean?
 ---@alias snacks.picker.sort fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
+---@alias snacks.picker.Pos {[1]:number, [2]:number}
 ```
 
 Generic filter used by finders to pre-filter items
@@ -486,9 +493,11 @@ It's a previewer that shows a preview based on the item data.
 ---@field score_add? number
 ---@field score_mul? number
 ---@field match_tick? number
+---@field file? string
 ---@field text string
----@field pos? {[1]:number, [2]:number}
----@field end_pos? {[1]:number, [2]:number}
+---@field pos? snacks.picker.Pos
+---@field loc? snacks.picker.lsp.Loc
+---@field end_pos? snacks.picker.Pos
 ---@field highlights? snacks.picker.Highlight[][]
 ---@field preview? snacks.picker.Item.preview
 ---@field resolve? fun(item:snacks.picker.Item)
@@ -1872,7 +1881,8 @@ picker:count()
 Get the current item at the cursor
 
 ```lua
-picker:current()
+---@param opts? {resolve?: boolean} default is `true`
+picker:current(opts)
 ```
 
 ### `picker:empty()`
@@ -1956,6 +1966,20 @@ and then`vim.schedule` the callback.
 picker:norm(cb)
 ```
 
+### `picker:ref()`
+
+```lua
+---@return snacks.Picker.ref
+picker:ref()
+```
+
+### `picker:resolve()`
+
+```lua
+---@param item snacks.picker.Item?
+picker:resolve(item)
+```
+
 ### `picker:selected()`
 
 Get the selected items.
@@ -1963,6 +1987,7 @@ If `fallback=true` and there is no selection, return the current item.
 
 ```lua
 ---@param opts? {fallback?: boolean} default is `false`
+---@return snacks.picker.Item[]
 picker:selected(opts)
 ```
 

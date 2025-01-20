@@ -69,11 +69,11 @@ local function get_cmd(opts, filter)
   -- extra args
   vim.list_extend(args, opts.args or {})
 
-  args[#args + 1] = "--"
-
   -- search pattern
   local pattern, pargs = Snacks.picker.util.parse(filter.search)
   vim.list_extend(args, pargs)
+
+  args[#args + 1] = "--"
   table.insert(args, pattern)
 
   local paths = {} ---@type string[]
