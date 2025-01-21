@@ -84,6 +84,7 @@ function M.file(ctx)
     -- re-use existing preview when path is the same
     if path ~= Snacks.picker.util.path(ctx.prev) then
       ctx.preview:reset()
+      vim.bo[ctx.buf].buftype = ""
 
       local name = vim.fn.fnamemodify(path, ":t")
       ctx.preview:set_title(ctx.item.title or name)

@@ -186,6 +186,9 @@ function Async:abort()
     return
   end
   self._aborted = true
+  if coroutine.running() == self._co then
+    error("aborted", 2)
+  end
   coroutine.resume(self._co, "abort")
 end
 

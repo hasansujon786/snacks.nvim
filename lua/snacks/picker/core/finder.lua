@@ -69,7 +69,6 @@ function M:run(picker)
   ---@cast finder fun(cb:async fun(item:snacks.picker.finder.Item), task:snacks.picker.Async)
   ---@diagnostic disable-next-line: await-in-sync
   self.task = Async.new(function()
-    local async = Async.running()
     ---@async
     finder(function(item)
       if #self.items >= limit then
@@ -83,7 +82,7 @@ function M:run(picker)
       picker.matcher.task:resume()
       yield = yield or Async.yielder(YIELD_FIND)
       yield()
-    end, async)
+    end, self.task)
   end):on("done", function()
     collectgarbage("restart")
     if not self.task:aborted() then
