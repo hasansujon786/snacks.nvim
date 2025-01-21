@@ -58,9 +58,17 @@ function Async:init(fn)
   return M.add(self)
 end
 
+function Async:aborted()
+  return self._aborted
+end
+
 function Async:_done()
+  if self._co == nil then
+    return
+  end
   self:_emit("done")
   self._fn = nil
+  M._threads[self._co] = nil
   self._co = nil
   self._on = {}
 end

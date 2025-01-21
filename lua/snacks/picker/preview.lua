@@ -60,10 +60,16 @@ end
 
 ---@param ctx snacks.picker.preview.ctx
 function M.file(ctx)
-  if ctx.item.buf and not vim.api.nvim_buf_is_valid(ctx.item.buf) then
+  if ctx.item.buf and not ctx.item.file and not vim.api.nvim_buf_is_valid(ctx.item.buf) then
     ctx.preview:notify("Buffer no longer exists", "error")
     return
   end
+
+  -- used by some LSP servers that load buffers with custom URIs
+  if ctx.item.buf and vim.uri_from_bufnr(ctx.item.buf):sub(1, 4) ~= "file" then
+    vim.fn.bufload(ctx.item.buf)
+  end
+
   if ctx.item.buf and vim.api.nvim_buf_is_loaded(ctx.item.buf) then
     local name = vim.api.nvim_buf_get_name(ctx.item.buf)
     name = uv.fs_stat(name) and vim.fn.fnamemodify(name, ":t") or name
@@ -192,7 +198,7 @@ function M.cmd(cmd, ctx, opts)
       if not killed and code ~= 0 then
         Snacks.notify.error(
           ("Terminal **cmd** `%s` failed with code `%d`:\n- `vim.o.shell = %q`\n\nOutput:\n%s"):format(
-            cmd,
+            type(cmd) == "table" and table.concat(cmd, " ") or cmd,
             code,
             vim.o.shell,
             vim.trim(table.concat(output, ""))
@@ -254,7 +260,7 @@ function M.git_log(ctx)
     "--color=never",
     "--no-show-signature",
     "--no-patch",
-    ctx.item.branch,
+    ctx.item.commit,
   }
   if not native then
     table.insert(cmd, 2, "--no-pager")

@@ -455,6 +455,10 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
+---@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
+```
+
+```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -1337,6 +1341,15 @@ Neovim search history
   format = "file",
   -- sort the results even when the filter is empty (frecency)
   matcher = { sort_empty = true },
+  win = {
+    input = {
+      keys = {
+        ["dd"] = "bufdelete",
+        ["<c-x>"] = { "bufdelete", mode = { "n", "i" } },
+      },
+    },
+    list = { keys = { ["dd"] = "bufdelete" } },
+  },
 }
 ```
 
@@ -1845,8 +1858,7 @@ Snacks.picker.actions.toggle_preview(picker)
 ---@field start_time number
 ---@field title string
 ---@field closed? boolean
----@field hist_idx number
----@field hist_cursor number
+---@field history snacks.picker.History
 ---@field visual? snacks.picker.Visual
 local M = {}
 ```
@@ -1883,6 +1895,12 @@ Get the current item at the cursor
 ```lua
 ---@param opts? {resolve?: boolean} default is `true`
 picker:current(opts)
+```
+
+### `picker:cwd()`
+
+```lua
+picker:cwd()
 ```
 
 ### `picker:empty()`
@@ -1989,6 +2007,12 @@ If `fallback=true` and there is no selection, return the current item.
 ---@param opts? {fallback?: boolean} default is `false`
 ---@return snacks.picker.Item[]
 picker:selected(opts)
+```
+
+### `picker:set_cwd()`
+
+```lua
+picker:set_cwd(cwd)
 ```
 
 ### `picker:set_layout()`
