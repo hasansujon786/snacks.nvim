@@ -121,6 +121,7 @@ M.diagnostics_buffer = {
 ---@field follow? boolean follow symlinks
 ---@field exclude? string[] exclude patterns
 ---@field args? string[] additional arguments
+---@field rtp? boolean search in runtimepath
 M.files = {
   finder = "files",
   format = "file",
@@ -221,6 +222,7 @@ M.git_diff = {
 ---@field need_search? boolean require a search pattern
 ---@field exclude? string[] exclude patterns
 ---@field args? string[] additional arguments
+---@field rtp? boolean search in runtimepath
 M.grep = {
   finder = "grep",
   format = "file",
@@ -272,6 +274,16 @@ M.highlights = {
   preview = "preview",
 }
 
+---@class snacks.picker.icons.Config: snacks.picker.Config
+---@field icon_sources? string[]
+M.icons = {
+  icon_sources = { "nerd_fonts", "emoji" },
+  finder = "icons",
+  format = "icon",
+  layout = { preset = "vscode" },
+  confirm = "put",
+}
+
 M.jumps = {
   finder = "vim_jumps",
   format = "file",
@@ -280,12 +292,14 @@ M.jumps = {
 ---@class snacks.picker.keymaps.Config: snacks.picker.Config
 ---@field global? boolean show global keymaps
 ---@field local? boolean show buffer keymaps
+---@field plugs? boolean show plugin keymaps
 ---@field modes? string[]
 M.keymaps = {
   finder = "vim_keymaps",
   format = "keymap",
   preview = "preview",
   global = true,
+  plugs = false,
   ["local"] = true,
   modes = { "n", "v", "x", "s", "o", "i", "c", "t" },
   confirm = function(picker, item)
@@ -294,6 +308,31 @@ M.keymaps = {
       vim.api.nvim_input(item.item.lhs)
     end
   end,
+  actions = {
+    toggle_global = function(picker)
+      picker.opts.global = not picker.opts.global
+      picker:find()
+    end,
+    toggle_buffer = function(picker)
+      picker.opts["local"] = not picker.opts["local"]
+      picker:find()
+    end,
+  },
+  win = {
+    input = {
+      keys = {
+        ["<a-g>"] = { "toggle_global", mode = { "n", "i" }, desc = "Toggle Global Keymaps" },
+        ["<a-b>"] = { "toggle_buffer", mode = { "n", "i" }, desc = "Toggle Buffer Keymaps" },
+      },
+    },
+  },
+}
+
+--- Search for a lazy.nvim plugin spec
+M.lazy = {
+  finder = "lazy_spec",
+  live = true,
+  search = "'",
 }
 
 -- Search lines in the current buffer

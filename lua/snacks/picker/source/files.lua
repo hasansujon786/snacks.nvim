@@ -8,7 +8,7 @@ local uv = vim.uv or vim.loop
 
 local commands = {
   rg = { "--files", "--no-messages", "--color", "never", "-g", "!.git" },
-  fd = { "--type", "f", "--color", "never", "-E", ".git" },
+  fd = { "--type", "f", "--type", "l", "--color", "never", "-E", ".git" },
   find = { ".", "-type", "f", "-not", "-path", "*/.git/*" },
 }
 
@@ -82,8 +82,12 @@ local function get_cmd(opts, filter)
   end
 
   -- dirs
-  if opts.dirs and #opts.dirs > 0 then
-    local dirs = vim.tbl_map(vim.fs.normalize, opts.dirs) ---@type string[]
+  local dirs = opts.dirs or {}
+  if opts.rtp then
+    vim.list_extend(dirs, Snacks.picker.util.rtp())
+  end
+  if #dirs > 0 then
+    dirs = vim.tbl_map(vim.fs.normalize, dirs) ---@type string[]
     if is_fd and not pattern then
       args[#args + 1] = "."
     end
@@ -103,7 +107,9 @@ end
 ---@param opts snacks.picker.files.Config
 ---@type snacks.picker.finder
 function M.files(opts, ctx)
-  local cwd = not (opts.dirs and #opts.dirs > 0) and vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".") or nil
+  local cwd = not (opts.rtp or (opts.dirs and #opts.dirs > 0))
+      and vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".")
+    or nil
   local cmd, args = get_cmd(opts, ctx.filter)
   return require("snacks.picker.source.proc").proc({
     opts,

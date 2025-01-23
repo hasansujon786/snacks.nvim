@@ -138,6 +138,7 @@ Snacks.picker.pick({source = "files", ...})
     },
     file = {
       filename_first = false, -- display filename before the file path
+      truncate = 40, -- truncate the file path to (roughly) this length
     },
     selected = {
       show_always = false, -- only show the selected column when there are multiple selections
@@ -195,6 +196,8 @@ Snacks.picker.pick({source = "files", ...})
         ["<c-k>"] = { "list_up", mode = { "i", "n" } },
         ["<c-n>"] = { "list_down", mode = { "i", "n" } },
         ["<c-p>"] = { "list_up", mode = { "i", "n" } },
+        ["<c-l>"] = { "preview_scroll_left", mode = { "i", "n" } },
+        ["<c-h>"] = { "preview_scroll_right", mode = { "i", "n" } },
         ["<c-b>"] = { "preview_scroll_up", mode = { "i", "n" } },
         ["<c-d>"] = { "list_scroll_down", mode = { "i", "n" } },
         ["<c-f>"] = { "preview_scroll_down", mode = { "i", "n" } },
@@ -239,6 +242,8 @@ Snacks.picker.pick({source = "files", ...})
         ["<c-a>"] = "select_all",
         ["<c-f>"] = "preview_scroll_down",
         ["<c-b>"] = "preview_scroll_up",
+        ["<c-l>"] = "preview_scroll_right",
+        ["<c-h>"] = "preview_scroll_left",
         ["<c-v>"] = "edit_vsplit",
         ["<c-s>"] = "edit_split",
         ["<c-j>"] = "list_down",
@@ -269,6 +274,9 @@ Snacks.picker.pick({source = "files", ...})
   icons = {
     files = {
       enabled = true, -- show file icons
+    },
+    keymaps = {
+      nowait = "󰓅 "
     },
     indent = {
       vertical    = "│ ",
@@ -783,6 +791,7 @@ Neovim commands
 ---@field follow? boolean follow symlinks
 ---@field exclude? string[] exclude patterns
 ---@field args? string[] additional arguments
+---@field rtp? boolean search in runtimepath
 {
   finder = "files",
   format = "file",
@@ -949,6 +958,7 @@ Git log
 ---@field need_search? boolean require a search pattern
 ---@field exclude? string[] exclude patterns
 ---@field args? string[] additional arguments
+---@field rtp? boolean search in runtimepath
 {
   finder = "grep",
   format = "file",
@@ -1034,6 +1044,24 @@ Neovim help tags
 }
 ```
 
+### `icons`
+
+```vim
+:lua Snacks.picker.icons(opts?)
+```
+
+```lua
+---@class snacks.picker.icons.Config: snacks.picker.Config
+---@field icon_sources? string[]
+{
+  icon_sources = { "nerd_fonts", "emoji" },
+  finder = "icons",
+  format = "icon",
+  layout = { preset = "vscode" },
+  confirm = "put",
+}
+```
+
 ### `jumps`
 
 ```vim
@@ -1057,12 +1085,14 @@ Neovim help tags
 ---@class snacks.picker.keymaps.Config: snacks.picker.Config
 ---@field global? boolean show global keymaps
 ---@field local? boolean show buffer keymaps
+---@field plugs? boolean show plugin keymaps
 ---@field modes? string[]
 {
   finder = "vim_keymaps",
   format = "keymap",
   preview = "preview",
   global = true,
+  plugs = false,
   ["local"] = true,
   modes = { "n", "v", "x", "s", "o", "i", "c", "t" },
   confirm = function(picker, item)
@@ -1071,6 +1101,40 @@ Neovim help tags
       vim.api.nvim_input(item.item.lhs)
     end
   end,
+  actions = {
+    toggle_global = function(picker)
+      picker.opts.global = not picker.opts.global
+      picker:find()
+    end,
+    toggle_buffer = function(picker)
+      picker.opts["local"] = not picker.opts["local"]
+      picker:find()
+    end,
+  },
+  win = {
+    input = {
+      keys = {
+        ["<a-g>"] = { "toggle_global", mode = { "n", "i" }, desc = "Toggle Global Keymaps" },
+        ["<a-b>"] = { "toggle_buffer", mode = { "n", "i" }, desc = "Toggle Buffer Keymaps" },
+      },
+    },
+  },
+}
+```
+
+### `lazy`
+
+```vim
+:lua Snacks.picker.lazy(opts?)
+```
+
+Search for a lazy.nvim plugin spec
+
+```lua
+{
+  finder = "lazy_spec",
+  live = true,
+  search = "'",
 }
 ```
 
@@ -1778,12 +1842,6 @@ Snacks.picker.actions.bufdelete(picker)
 Snacks.picker.actions.cmd(picker, item)
 ```
 
-### `Snacks.picker.actions.copy()`
-
-```lua
-Snacks.picker.actions.copy(_, item)
-```
-
 ### `Snacks.picker.actions.cycle_win()`
 
 ```lua
@@ -1944,10 +2002,28 @@ Snacks.picker.actions.loclist(picker)
 Snacks.picker.actions.preview_scroll_down(picker)
 ```
 
+### `Snacks.picker.actions.preview_scroll_left()`
+
+```lua
+Snacks.picker.actions.preview_scroll_left(picker)
+```
+
+### `Snacks.picker.actions.preview_scroll_right()`
+
+```lua
+Snacks.picker.actions.preview_scroll_right(picker)
+```
+
 ### `Snacks.picker.actions.preview_scroll_up()`
 
 ```lua
 Snacks.picker.actions.preview_scroll_up(picker)
+```
+
+### `Snacks.picker.actions.put()`
+
+```lua
+Snacks.picker.actions.put(picker, item)
 ```
 
 ### `Snacks.picker.actions.qflist()`
@@ -2039,6 +2115,12 @@ Snacks.picker.actions.toggle_maximize(picker)
 
 ```lua
 Snacks.picker.actions.toggle_preview(picker)
+```
+
+### `Snacks.picker.actions.yank()`
+
+```lua
+Snacks.picker.actions.yank(_, item)
 ```
 
 

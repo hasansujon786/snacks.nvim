@@ -331,6 +331,7 @@ function M.resume()
   last.opts.pattern = last.filter.pattern
   last.opts.search = last.filter.search
   local ret = M.new(last.opts)
+  ret:show()
   ret.list:set_selected(last.selected)
   ret.list:update()
   ret.input:update()
@@ -346,10 +347,13 @@ end
 --- Actual preview code
 ---@hide
 function M:_show_preview()
+  if self.closed then
+    return
+  end
   if self.opts.on_change then
     self.opts.on_change(self, self:current())
   end
-  if not self.preview.win:valid() then
+  if not (self.preview and self.preview.win:valid()) then
     return
   end
   self.preview:show(self)
@@ -478,6 +482,8 @@ function M:close()
   M.last.selected = self:selected({ fallback = false })
   M.last.cursor = self.list.cursor
   M.last.topline = self.list.top
+  M.last.opts = M.last.opts or {}
+  M.last.opts.live = self.opts.live
   Snacks.picker.current = nil
   local current = vim.api.nvim_get_current_win()
   local is_picker_win = vim.tbl_contains({ self.input.win.win, self.list.win.win, self.preview.win.win }, current)
@@ -638,6 +644,7 @@ function M:find(opts)
   local finding = false
   if self.finder:init(filter) or refresh then
     finding = true
+    self:update_titles()
     if self:count() > 0 then
       -- pause rapid list updates to prevent flickering
       self.list:pause(60)
