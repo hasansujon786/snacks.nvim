@@ -100,33 +100,36 @@ end
 
 ---@param opts snacks.picker.grep.Config
 ---@type snacks.picker.finder
-function M.grep(opts, filter)
-  if opts.need_search ~= false and filter.search == "" then
+function M.grep(opts, ctx)
+  if opts.need_search ~= false and ctx.filter.search == "" then
     return function() end
   end
   local absolute = (opts.dirs and #opts.dirs > 0) or opts.buffers
   local cwd = not absolute and vim.fs.normalize(opts and opts.cwd or uv.cwd() or ".") or nil
-  local cmd, args = get_cmd(opts, filter)
-  return require("snacks.picker.source.proc").proc(vim.tbl_deep_extend("force", {
-    notify = not opts.live,
-    cmd = cmd,
-    args = args,
-    ---@param item snacks.picker.finder.Item
-    transform = function(item)
-      item.cwd = cwd
-      local file, line, col, text = item.text:match("^(.+):(%d+):(%d+):(.*)$")
-      if not file then
-        if not item.text:match("WARNING") then
-          error("invalid grep output: " .. item.text)
+  local cmd, args = get_cmd(opts, ctx.filter)
+  return require("snacks.picker.source.proc").proc({
+    opts,
+    {
+      notify = not opts.live,
+      cmd = cmd,
+      args = args,
+      ---@param item snacks.picker.finder.Item
+      transform = function(item)
+        item.cwd = cwd
+        local file, line, col, text = item.text:match("^(.+):(%d+):(%d+):(.*)$")
+        if not file then
+          if not item.text:match("WARNING") then
+            error("invalid grep output: " .. item.text)
+          end
+          return false
+        else
+          item.line = text
+          item.file = file
+          item.pos = { tonumber(line), tonumber(col) }
         end
-        return false
-      else
-        item.line = text
-        item.file = file
-        item.pos = { tonumber(line), tonumber(col) }
-      end
-    end,
-  }, opts or {}))
+      end,
+    },
+  }, ctx)
 end
 
 return M

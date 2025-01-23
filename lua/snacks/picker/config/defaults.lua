@@ -6,6 +6,7 @@ local M = {}
 ---@alias snacks.picker.format fun(item:snacks.picker.Item, picker:snacks.Picker):snacks.picker.Highlight[]
 ---@alias snacks.picker.preview fun(ctx: snacks.picker.preview.ctx):boolean?
 ---@alias snacks.picker.sort fun(a:snacks.picker.Item, b:snacks.picker.Item):boolean
+---@alias snacks.picker.transform fun(item:snacks.picker.finder.Item, ctx:snacks.picker.finder.ctx):(boolean|snacks.picker.finder.Item|nil)
 ---@alias snacks.picker.Pos {[1]:number, [2]:number}
 
 --- Generic filter used by finders to pre-filter items
@@ -13,7 +14,8 @@ local M = {}
 ---@field cwd? boolean|string only show files for the given cwd
 ---@field buf? boolean|number only show items for the current or given buffer
 ---@field paths? table<string, boolean> only show items that include or exclude the given paths
----@field filter? fun(item:snacks.picker.finder.Item):boolean custom filter function
+---@field filter? fun(item:snacks.picker.finder.Item, filter:snacks.picker.Filter):boolean? custom filter function
+---@field transform? fun(picker:snacks.Picker, filter:snacks.picker.Filter):boolean? filter transform. Return `true` to force refresh
 
 --- This is only used when using `opts.preview = "preview"`.
 --- It's a previewer that shows a preview based on the item data.
@@ -27,9 +29,11 @@ local M = {}
 ---@field [string] any
 ---@field idx number
 ---@field score number
+---@field frecency? number
 ---@field score_add? number
 ---@field score_mul? number
 ---@field match_tick? number
+---@field source_id? number
 ---@field file? string
 ---@field text string
 ---@field pos? snacks.picker.Pos
@@ -57,6 +61,7 @@ local M = {}
 ---@field preview? snacks.win.Config|{} preview window config
 
 ---@class snacks.picker.Config
+---@field multi? (string|snacks.picker.Config)[]
 ---@field source? string source name and config to use
 ---@field pattern? string|fun(picker:snacks.Picker):string pattern used to filter items by the matcher
 ---@field search? string|fun(picker:snacks.Picker):string search string used by finders
@@ -71,6 +76,7 @@ local M = {}
 ---@field preview? snacks.picker.preview|string preview function or preset
 ---@field matcher? snacks.picker.matcher.Config matcher config
 ---@field sort? snacks.picker.sort|snacks.picker.sort.Config sort function or config
+---@field transform? string|snacks.picker.transform transform/filter function
 --- UI
 ---@field win? snacks.picker.win.Config
 ---@field layout? snacks.picker.layout.Config|string|{}|fun(source:string):(snacks.picker.layout.Config|string)
@@ -110,6 +116,10 @@ local defaults = {
     sort_empty = false, -- sort results when the search string is empty
     filename_bonus = true, -- give bonus for matching file names (last part of the path)
     file_pos = true, -- support patterns like `file:line:col` and `file:line`
+    -- the bonusses below, possibly require string concatenation and path normalization,
+    -- so this can have a performance impact for large lists and increase memory usage
+    cwd_bonus = false, -- give bonus for matching files in the cwd
+    frecency = false, -- frecency bonus
   },
   sort = {
     -- default sort is by score, text length and index
@@ -118,6 +128,9 @@ local defaults = {
   ui_select = true, -- replace `vim.ui.select` with the snacks picker
   ---@class snacks.picker.formatters.Config
   formatters = {
+    text = {
+      ft = nil, ---@type string? filetype for highlighting
+    },
     file = {
       filename_first = false, -- display filename before the file path
     },

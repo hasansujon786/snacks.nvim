@@ -275,10 +275,15 @@ function M.lines(item)
   return ret
 end
 
-function M.text(item)
-  return {
-    { item.text },
-  }
+function M.text(item, picker)
+  local ret = {} ---@type snacks.picker.Highlight[]
+  local ft = item.ft or picker.opts.formatters.text.ft
+  if ft then
+    Snacks.picker.highlight.format(item, item.text, ret, { lang = ft })
+  else
+    ret[#ret + 1] = { item.text, item.text_hl }
+  end
+  return ret
 end
 
 function M.command(item)

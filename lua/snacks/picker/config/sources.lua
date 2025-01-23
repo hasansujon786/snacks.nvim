@@ -71,6 +71,7 @@ M.command_history = {
     preset = "vscode",
   },
   confirm = "cmd",
+  formatters = { text = { ft = "vim" } },
 }
 
 -- Neovim commands
@@ -549,30 +550,23 @@ M.search_history = {
   name = "search",
   format = "text",
   preview = "none",
-  layout = {
-    preset = "vscode",
-  },
+  layout = { preset = "vscode" },
   confirm = "search",
+  formatters = { text = { ft = "regex" } },
 }
 
 ---@class snacks.picker.smart.Config: snacks.picker.Config
 ---@field finders? string[] list of finders to use
 ---@field filter? snacks.picker.filter.Config
 M.smart = {
-  finder = "smart",
-  finders = { "buffers", "recent", "files" },
-  format = "file",
-  -- sort the results even when the filter is empty (frecency)
-  matcher = { sort_empty = true },
-  win = {
-    input = {
-      keys = {
-        ["dd"] = "bufdelete",
-        ["<c-x>"] = { "bufdelete", mode = { "n", "i" } },
-      },
-    },
-    list = { keys = { ["dd"] = "bufdelete" } },
+  multi = { "buffers", "recent", "files" },
+  format = "file", -- use `file` format for all sources
+  matcher = {
+    cwd_bonus = true, -- boost cwd matches
+    frecency = true, -- use frecency boosting
+    sort_empty = true, -- sort even when the filter is empty
   },
+  transform = "unique_file",
 }
 
 M.spelling = {
