@@ -22,7 +22,7 @@ function M.truncpath(path, len, opts)
   local home = vim.fs.normalize("~")
   path = vim.fs.normalize(path, { _fast = true, expand_env = false })
 
-  if path:find(cwd, 1, true) == 1 and #path > #cwd then
+  if path:find(cwd .. "/", 1, true) == 1 and #path > #cwd then
     path = path:sub(#cwd + 2)
   else
     local root = Snacks.git.get_root(path)
@@ -351,6 +351,17 @@ function M.reltime(time)
     end
   end
   return os.date("%b %d, %Y", time) ---@type string
+end
+
+---@generic T: table
+---@param t T
+---@return T
+function M.shallow_copy(t)
+  local ret = {}
+  for k, v in pairs(t) do
+    ret[k] = v
+  end
+  return setmetatable(ret, getmetatable(t))
 end
 
 return M

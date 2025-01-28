@@ -22,25 +22,30 @@ function M.new(picker)
   local self = setmetatable({}, M)
   self.current_buf = vim.api.nvim_get_current_buf()
   self.current_win = vim.api.nvim_get_current_win()
-  self.opts = opts.filter or {}
   self.meta = {}
   local function gets(v)
     return type(v) == "function" and v(picker) or v or "" --[[@as string]]
   end
   self.pattern = gets(opts.pattern)
   self.search = gets(opts.search)
-  local filter = opts.filter
-  self.all = not filter or not (filter.cwd or filter.buf or filter.paths or filter.filter)
+  self:init(opts)
+  return self
+end
+
+---@param opts snacks.picker.Config|{filter?:snacks.picker.filter.Config}
+function M:init(opts)
+  self.opts = opts.filter or {}
+  self.all = not self.opts or not (self.opts.cwd or self.opts.buf or self.opts.paths or self.opts.filter)
   self.paths = {}
-  local cwd = filter and filter.cwd
+  local cwd = self.opts and self.opts.cwd
   self.cwd = type(cwd) == "string" and cwd or opts.cwd or uv.cwd() or "."
   self.cwd = vim.fs.normalize(self.cwd --[[@as string]], { _fast = true })
-  if not self.all and filter then
-    self.buf = filter.buf == true and 0 or filter.buf --[[@as number?]]
-    self.buf = self.buf == 0 and vim.api.nvim_get_current_buf() or self.buf
+  if not self.all and self.opts then
+    self.buf = self.opts.buf == true and 0 or self.opts.buf --[[@as number?]]
+    self.buf = self.buf == 0 and M.current_buf or self.buf
     self.file = self.buf and vim.fs.normalize(vim.api.nvim_buf_get_name(self.buf), { _fast = true }) or nil
-    for path, want in pairs(filter.paths or {}) do
-      table.insert(filter, { path = vim.fs.normalize(path), want = want })
+    for path, want in pairs(self.opts.paths or {}) do
+      table.insert(self.paths, { path = vim.fs.normalize(path), want = want })
     end
   end
   return self
@@ -55,7 +60,10 @@ end
 ---@param opts? {trim?:boolean}
 ---@return snacks.picker.Filter
 function M:clone(opts)
-  local ret = setmetatable({}, { __index = self, __call = M.filter })
+  local ret = setmetatable({}, {
+    __index = self,
+    __call = M.filter,
+  })
   if opts and opts.trim then
     ret.pattern = vim.trim(self.pattern)
     ret.search = vim.trim(self.search)
@@ -84,7 +92,7 @@ function M:match(item)
   if not path then
     return false
   end
-  if self.opts.cwd and path:sub(1, #self.cwd) ~= self.cwd then
+  if self.opts.cwd and path ~= self.cwd and not path:find(self.cwd .. "/", 1, true) then
     return false
   end
   if self.opts.paths then
