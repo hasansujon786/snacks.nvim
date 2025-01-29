@@ -312,7 +312,7 @@ function M:update_titles()
       title = vim.trim(title):gsub("%s+", " ")
       if title ~= "" then
         -- HACK: add extra space when last char is non word like an icon
-        title = title:sub(-1):match("%w") and title or title .. " "
+        title = title:sub(-1):match("[%w%p]") and title or title .. " "
         table.insert(ret, 1, { " " .. title .. " ", "FloatTitle" })
       end
       win:set_title(ret)

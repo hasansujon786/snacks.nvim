@@ -109,7 +109,7 @@ M.select = {
     min_height = 10,
     box = "vertical",
     border = "rounded",
-    title = " Select ",
+    title = "{title}",
     title_pos = "center",
     { win = "input", height = 1, border = "bottom" },
     { win = "list", border = "none" },
