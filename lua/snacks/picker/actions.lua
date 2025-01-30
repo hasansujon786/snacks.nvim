@@ -113,8 +113,7 @@ function M.toggle_maximize(picker)
 end
 
 function M.toggle_preview(picker)
-  picker.layout:toggle("preview")
-  picker:show_preview()
+  picker:toggle_preview()
 end
 
 function M.pick_win(picker, item, action)

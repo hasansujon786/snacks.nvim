@@ -88,6 +88,7 @@ Snacks.picker.pick({source = "files", ...})
 ---@field icons? snacks.picker.icons
 ---@field prompt? string prompt text / icon
 ---@field title? string defaults to a capitalized source name
+---@field auto_close? boolean automatically close the picker when focusing another window (defaults to true)
 --- Preset options
 ---@field previewers? snacks.picker.previewers.Config|{}
 ---@field formatters? snacks.picker.formatters.Config|{}
@@ -465,6 +466,23 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
+---@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts? snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
+```
+
+```lua
+---@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
+```
+
+```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -537,23 +555,6 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
-```
-
-```lua
----@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
-```
-
-```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts? snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
-
-```lua
----@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
 ```
 
 ## 📦 Module
@@ -1783,6 +1784,30 @@ Open a project from zoxide
 }
 ```
 
+### `ivy_split`
+
+```lua
+{
+  preview = "main",
+  layout = {
+    box = "vertical",
+    backdrop = false,
+    width = 0,
+    height = 0.4,
+    position = "bottom",
+    border = "top",
+    title = " {title} {live} {flags}",
+    title_pos = "left",
+    { win = "input", height = 1, border = "bottom" },
+    {
+      box = "horizontal",
+      { win = "list", border = "none" },
+      { win = "preview", title = "{preview}", width = 0.6, border = "left" },
+    },
+  },
+}
+```
+
 ### `select`
 
 ```lua
@@ -1799,6 +1824,32 @@ Open a project from zoxide
     title = "{title}",
     title_pos = "center",
     { win = "input", height = 1, border = "bottom" },
+    { win = "list", border = "none" },
+    { win = "preview", title = "{preview}", height = 0.4, border = "top" },
+  },
+}
+```
+
+### `sidebar`
+
+```lua
+{
+  preview = "main",
+  layout = {
+    backdrop = false,
+    width = 40,
+    min_width = 40,
+    height = 0,
+    position = "left",
+    border = "none",
+    box = "vertical",
+    {
+      win = "input",
+      height = 1,
+      border = "rounded",
+      title = "{title} {live} {flags}",
+      title_pos = "center",
+    },
     { win = "list", border = "none" },
     { win = "preview", title = "{preview}", height = 0.4, border = "top" },
   },
@@ -2187,8 +2238,6 @@ Snacks.picker.actions.toggle_preview(picker)
 Snacks.picker.actions.yank(_, item)
 ```
 
-
-
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -2298,6 +2347,12 @@ Check if the finder or matcher is running
 picker:is_active()
 ```
 
+### `picker:is_focused()`
+
+```lua
+picker:is_focused()
+```
+
 ### `picker:items()`
 
 Get all filtered items in the picker.
@@ -2377,6 +2432,13 @@ otherwise throttle the preview.
 picker:show_preview()
 ```
 
+### `picker:toggle_preview()`
+
+```lua
+---@param enable? boolean
+picker:toggle_preview(enable)
+```
+
 ### `picker:word()`
 
 Get the word under the cursor or the current visual selection
@@ -2384,3 +2446,5 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
+
+
