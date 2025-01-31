@@ -27,6 +27,7 @@ local _id = 0
 ---@field closed? boolean
 ---@field history snacks.picker.History
 ---@field visual? snacks.picker.Visual
+---@field jumping? boolean
 local M = {}
 M.__index = M
 
