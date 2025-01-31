@@ -244,6 +244,7 @@ Snacks.picker.pick({source = "files", ...})
         ["<CR>"] = "confirm",
         ["<Down>"] = "list_down",
         ["<Esc>"] = "close",
+        ["<S-CR>"] = { { "pick_win", "jump" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
@@ -304,9 +305,9 @@ Snacks.picker.pick({source = "files", ...})
       nowait = "󰓅 "
     },
     tree = {
-      vertical    = "│ ",
-      middle = "├╴",
-      last   = "└╴",
+      vertical = "│ ",
+      middle   = "├╴",
+      last     = "└╴",
     },
     undo = {
       saved   = " ",
@@ -321,7 +322,16 @@ Snacks.picker.pick({source = "files", ...})
       -- selected = " ",
     },
     git = {
-      commit = "󰜘 ",
+      enabled   = true, -- show git icons
+      commit    = "󰜘 ", -- used by git log
+      staged    = "●", -- staged changes. always overrides the type icons
+      added     = "",
+      deleted   = "",
+      ignored   = " ",
+      modified  = "○",
+      renamed   = "",
+      unmerged  = " ",
+      untracked = "?",
     },
     diagnostics = {
       Error = " ",
@@ -484,23 +494,6 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
----@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
-```
-
-```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts? snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
-
-```lua
----@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
-```
-
-```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -574,6 +567,23 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
+```
+
+```lua
+---@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts? snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
+```
+
+```lua
+---@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
 ```
 
 ## 📦 Module
@@ -812,10 +822,14 @@ Neovim commands
 ---@class snacks.picker.explorer.Config: snacks.picker.files.Config|{}
 ---@field follow_file? boolean follow the file from the current buffer
 ---@field tree? boolean show the file tree (default: true)
+---@field git_status? boolean show git status (default: true)
+---@field git_status_open? boolean show recursive git status for open directories
 {
   finder = "explorer",
   sort = { fields = { "sort" } },
   tree = true,
+  git_status = true,
+  git_status_open = true,
   supports_live = true,
   follow_file = true,
   focus = "list",
@@ -831,6 +845,8 @@ Neovim commands
     list = {
       keys = {
         ["<BS>"] = "explorer_up",
+        ["l"] = "confirm",
+        ["h"] = "explorer_close", -- close directory
         ["a"] = "explorer_add",
         ["d"] = "explorer_del",
         ["r"] = "explorer_rename",
@@ -2324,6 +2340,8 @@ Snacks.picker.actions.vsplit(picker)
 Snacks.picker.actions.yank(_, item)
 ```
 
+
+
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -2532,5 +2550,3 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
-
-

@@ -152,18 +152,24 @@ function M.toggle_preview(picker)
 end
 
 function M.pick_win(picker, item, action)
-  picker.layout:hide()
+  if not picker.layout.split then
+    picker.layout:hide()
+  end
   local win = Snacks.picker.util.pick_win({ main = picker.main })
   if not win then
-    picker.layout:unhide()
+    if not picker.layout.split then
+      picker.layout:unhide()
+    end
     return true
   end
   picker.main = win
-  vim.defer_fn(function()
-    if not picker.closed then
-      picker.layout:unhide()
-    end
-  end, 100)
+  if not picker.layout.split then
+    vim.defer_fn(function()
+      if not picker.closed then
+        picker.layout:unhide()
+      end
+    end, 100)
+  end
 end
 
 function M.bufdelete(picker)

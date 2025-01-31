@@ -238,6 +238,7 @@ local defaults = {
         ["<CR>"] = "confirm",
         ["<Down>"] = "list_down",
         ["<Esc>"] = "close",
+        ["<S-CR>"] = { { "pick_win", "jump" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
         ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
@@ -299,9 +300,9 @@ local defaults = {
       nowait = "󰓅 "
     },
     tree = {
-      vertical    = "│ ",
-      middle = "├╴",
-      last   = "└╴",
+      vertical = "│ ",
+      middle   = "├╴",
+      last     = "└╴",
     },
     undo = {
       saved   = " ",
@@ -316,7 +317,16 @@ local defaults = {
       -- selected = " ",
     },
     git = {
-      commit = "󰜘 ",
+      enabled   = true, -- show git icons
+      commit    = "󰜘 ", -- used by git log
+      staged    = "●", -- staged changes. always overrides the type icons
+      added     = "",
+      deleted   = "",
+      ignored   = " ",
+      modified  = "○",
+      renamed   = "",
+      unmerged  = " ",
+      untracked = "?",
     },
     diagnostics = {
       Error = " ",

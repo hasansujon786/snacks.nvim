@@ -85,7 +85,7 @@ function M:run(picker)
   -- PERF: fast path for empty pattern
   if not (self.sorting or picker.finder.task:running()) then
     picker.list.items = picker.finder.items
-    picker:update()
+    picker:update({ force = true })
     return
   end
 
@@ -151,7 +151,7 @@ function M:run(picker)
       end
     until idx >= #picker.finder.items and not picker.finder.task:running()
 
-    picker:update()
+    picker:update({ force = true })
   end)
 end
 
