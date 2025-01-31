@@ -388,6 +388,20 @@ function M:positions(item)
   return ret
 end
 
+--- Returns the column of the first position of the matched pattern in the item.
+---@param buf number
+---@param item snacks.picker.Item
+---@return snacks.picker.Pos?
+function M:bufpos(buf, item)
+  if not item.pos then
+    return
+  end
+  local line = vim.api.nvim_buf_get_lines(buf, item.pos[1] - 1, item.pos[1], false)[1] or ""
+  local positions = self:positions({ text = line, idx = 1, score = 0 }).text or {}
+  table.sort(positions)
+  return #positions > 0 and { item.pos[1], positions[1] - 1 } or nil
+end
+
 ---@param str string
 ---@param pattern string[]
 ---@param from number

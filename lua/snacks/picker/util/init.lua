@@ -33,6 +33,7 @@ function M.truncpath(path, len, opts)
       path = "~" .. path:sub(#home + 1)
     end
   end
+  path = path:gsub("/$", "")
 
   if vim.api.nvim_strwidth(path) <= len then
     return path

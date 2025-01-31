@@ -20,14 +20,14 @@ function M.jump(picker, _, action)
     return
   end
 
+  local items = picker:selected({ fallback = true })
+
   if picker.opts.jump.close then
     picker:close()
   else
-    picker.jumping = true
     if vim.api.nvim_win_is_valid(picker.main) then
       vim.api.nvim_set_current_win(picker.main)
     end
-    picker.jumping = false
   end
 
   if action.cmd then
@@ -60,8 +60,6 @@ function M.jump(picker, _, action)
     end
   end
 
-  local items = picker:selected({ fallback = true })
-
   for _, item in ipairs(items) do
     -- load the buffer
     local buf = item.buf ---@type number
@@ -85,8 +83,12 @@ function M.jump(picker, _, action)
     vim.api.nvim_win_set_buf(win, buf)
 
     -- set the cursor
-    if item.pos and item.pos[1] > 0 then
-      vim.api.nvim_win_set_cursor(win, { item.pos[1], item.pos[2] })
+    local pos = item.pos
+    if picker.opts.jump.match then
+      pos = picker.matcher:bufpos(buf, item) or pos
+    end
+    if pos and pos[1] > 0 then
+      vim.api.nvim_win_set_cursor(win, { pos[1], pos[2] })
     elseif item.search then
       vim.cmd(item.search)
       vim.cmd("noh")
@@ -120,16 +122,25 @@ M.edit_split = { "split", "confirm" }
 M.edit_vsplit = { "vsplit", "confirm" }
 M.edit_tab = { "tab", "confirm" }
 
-function M.split()
-  vim.cmd("split")
+local function wincmd(picker, cmd)
+  if vim.api.nvim_win_is_valid(picker.main) then
+    vim.api.nvim_win_call(picker.main, function()
+      vim.cmd(cmd)
+      picker.main = vim.api.nvim_get_current_win()
+    end)
+  end
 end
 
-function M.vsplit()
-  vim.cmd("vsplit")
+function M.split(picker)
+  wincmd(picker, "split")
 end
 
-function M.tab()
-  vim.cmd("tabnew")
+function M.vsplit(picker)
+  wincmd(picker, "vsplit")
+end
+
+function M.tab(picker)
+  wincmd(picker, "tab")
 end
 
 function M.toggle_maximize(picker)

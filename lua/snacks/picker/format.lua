@@ -54,12 +54,9 @@ function M.filename(item, picker)
   local dir_hl = "SnacksPickerDir"
 
   if picker.opts.formatters.file.filename_only then
-    path = vim.fn.fnamemodify(path, ":t")
+    path = vim.fn.fnamemodify(item.file, ":t")
     ret[#ret + 1] = { path, base_hl, field = "file" }
   else
-    if item.dir then
-      path = path .. "/"
-    end
     local dir, base = path:match("^(.*)/(.+)$")
     if base and dir then
       if picker.opts.formatters.file.filename_first then

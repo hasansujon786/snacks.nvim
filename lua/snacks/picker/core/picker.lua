@@ -27,7 +27,6 @@ local _id = 0
 ---@field closed? boolean
 ---@field history snacks.picker.History
 ---@field visual? snacks.picker.Visual
----@field jumping? boolean
 local M = {}
 M.__index = M
 
@@ -161,6 +160,9 @@ function M.new(opts)
   local on_focus ---@type fun()?
   self.input.win:on("WinEnter", function()
     if not self.layout:valid() then
+      return
+    end
+    if vim.api.nvim_win_get_config(0).relative ~= "" then
       return
     end
     if self:is_focused() then
@@ -465,13 +467,17 @@ function M:show()
   if self.preview.main then
     self.preview.win:show()
   end
+  self:_focus()
+  if self.opts.on_show then
+    self.opts.on_show(self)
+  end
+end
+
+function M:_focus()
   if self.opts.focus == "input" then
     self.input.win:focus()
   elseif self.opts.focus == "list" then
     self.list.win:focus()
-  end
-  if self.opts.on_show then
-    self.opts.on_show(self)
   end
 end
 
@@ -637,7 +643,7 @@ function M:update()
     if self.opts.live then
       self:show()
     elseif not self:is_active() then
-      if count == 0 then
+      if count == 0 and not self.opts.show_empty then
         -- no results found
         local msg = "No results"
         if self.opts.source then
