@@ -201,8 +201,6 @@ Snacks.picker.pick({source = "files", ...})
         ["<Esc>"] = "close",
         ["<S-CR>"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "i", "n" } },
-        ["<ScrollWheelDown>"] = { "list_scroll_wheel_down", mode = { "i", "n" } },
-        ["<ScrollWheelUp>"] = { "list_scroll_wheel_up", mode = { "i", "n" } },
         ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
         ["<Up>"] = { "list_up", mode = { "i", "n" } },
         ["<a-d>"] = { "inspect", mode = { "n", "i" } },
@@ -246,8 +244,6 @@ Snacks.picker.pick({source = "files", ...})
         ["<Esc>"] = "close",
         ["<S-CR>"] = { { "pick_win", "jump" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
-        ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
-        ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
         ["<Tab>"] = { "select_and_next", mode = { "n", "x" } },
         ["<Up>"] = "list_up",
         ["<a-d>"] = "inspect",
@@ -2170,18 +2166,6 @@ Snacks.picker.actions.list_scroll_top(picker)
 
 ```lua
 Snacks.picker.actions.list_scroll_up(picker)
-```
-
-### `Snacks.picker.actions.list_scroll_wheel_down()`
-
-```lua
-Snacks.picker.actions.list_scroll_wheel_down(picker)
-```
-
-### `Snacks.picker.actions.list_scroll_wheel_up()`
-
-```lua
-Snacks.picker.actions.list_scroll_wheel_up(picker)
 ```
 
 ### `Snacks.picker.actions.list_top()`
