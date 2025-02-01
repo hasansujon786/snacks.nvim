@@ -467,7 +467,15 @@ end
 
 function M:update_cursorline()
   if self.win:win_valid() then
-    Snacks.util.wo(self.win.win, { cursorline = self:count() > 0 })
+    ---@type vim.wo|{}
+    local wo = {
+      cursorline = self:count() > 0,
+      winhighlight = self.win.opts.wo.winhighlight:gsub(
+        "CursorLine:.*CursorLine",
+        "CursorLine:" .. (self.picker:is_focused() and "SnacksPickerListCursorLine" or "CursorLine")
+      ),
+    }
+    Snacks.util.wo(self.win.win, wo)
   end
 end
 
