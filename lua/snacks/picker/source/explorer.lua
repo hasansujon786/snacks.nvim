@@ -1,3 +1,6 @@
+local Async = require("snacks.picker.util.async")
+local Git = require("snacks.picker.source.git")
+
 local M = {}
 
 ---@class snacks.picker
@@ -132,12 +135,15 @@ local tree = Tree.new()
 
 ---@class snacks.picker.explorer.State
 ---@field cwd string
+---@field tick number
 ---@field tree snacks.picker.explorer.Tree
 ---@field all? boolean
 ---@field ref snacks.Picker.ref
 ---@field opts snacks.picker.explorer.Config
 ---@field on_find? fun()?
 ---@field git_status {file: string, status: string, sort?:string}[]
+---@field git_tree_status table<string, string>
+---@field expanded table<string, boolean>
 local State = {}
 State.__index = State
 ---@param picker snacks.Picker
@@ -148,7 +154,10 @@ function State.new(picker)
   local filter = picker:filter()
   self.cwd = filter.cwd
   self.tree = tree
+  self.tick = 0
   self.git_status = {}
+  self.git_tree_status = {}
+  self.expanded = {}
   local buf = vim.api.nvim_win_get_buf(picker.main)
   local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   if uv.fs_stat(buf_file) then
@@ -181,7 +190,8 @@ function State.new(picker)
   return self
 end
 
-function State:sort_git_status()
+function State:update_git_status()
+  -- Setup hierarchical sorting
   for _, s in ipairs(self.git_status) do
     if self.tree:in_cwd(self.cwd, s.file) then
       local parts = vim.split(s.file:sub(#self.cwd + 2), "/", { plain = true })
@@ -197,6 +207,28 @@ function State:sort_git_status()
   table.sort(self.git_status, function(a, b)
     return a.sort < b.sort
   end)
+
+  -- Update tree status
+  self.git_tree_status = {}
+
+  ---@param p string
+  ---@param s string
+  ---@param is_dir? boolean
+  local function add_git_status(p, s, is_dir)
+    if not self.opts.git_status_open and is_dir and (self.expanded[p] or self.all) then
+      return
+    end
+    self.git_tree_status[p] = self.git_tree_status[p] and Git.merge_status(self.git_tree_status[p], s) or s
+  end
+
+  -- Add git status to files and parents
+  for _, s in ipairs(self.git_status) do
+    add_git_status(s.file, s.status)
+    add_git_status(self.cwd, s.status, true)
+    for dir in Snacks.picker.util.parents(s.file, self.cwd) do
+      add_git_status(dir, s.status, true)
+    end
+  end
 end
 
 function State:picker()
@@ -287,6 +319,7 @@ end
 ---@param opts snacks.picker.explorer.Config
 ---@param ctx snacks.picker.finder.ctx
 function State:setup(opts, ctx)
+  self.tick = self.tick + 1
   opts = Snacks.picker.util.shallow_copy(opts)
   opts.cmd = "fd"
   opts.cwd = self.cwd
@@ -299,6 +332,7 @@ function State:setup(opts, ctx)
     "--follow", -- always needed to make sure we see symlinked dirs as dirs
   }
   self.all = #ctx.filter.search > 0
+  self.expanded = {}
   if self.all then
     local picker = self:picker()
     if not picker then
@@ -318,6 +352,9 @@ function State:setup(opts, ctx)
     end
   else
     opts.dirs = self.tree:dirs(self.cwd)
+    for _, dir in ipairs(opts.dirs or {}) do
+      self.expanded[dir] = true
+    end
     vim.list_extend(opts.args, { "--max-depth", "1" })
   end
   return opts
@@ -592,6 +629,7 @@ end
 function M.explorer(opts, ctx)
   local state = M.get_state(ctx.picker)
   opts = state:setup(opts, ctx)
+  local tick = state.tick
   opts.notify = false
   local expanded = {} ---@type table<string, boolean>
   for _, dir in ipairs(opts.dirs or {}) do
@@ -603,8 +641,6 @@ function M.explorer(opts, ctx)
   local function is_open(path)
     return state.all or expanded[path]
   end
-
-  local Git = require("snacks.picker.source.git")
 
   local files = require("snacks.picker.source.files").files(opts, ctx)
   local git = Git.status(opts, ctx)
@@ -625,14 +661,12 @@ function M.explorer(opts, ctx)
   dirs[cwd] = root
   state.git_status = {}
 
-  local items = {} ---@type table<string, snacks.picker.explorer.Item>
   ---@async
   return function(cb)
     if state.on_find then
       ctx.picker.matcher.task:on("done", vim.schedule_wrap(state.on_find))
       state.on_find = nil
     end
-    items[cwd] = root
     cb(root)
 
     ---@param item snacks.picker.explorer.Item
@@ -647,6 +681,7 @@ function M.explorer(opts, ctx)
       else
         item.sort = parent.sort .. "#" .. basename .. " "
       end
+      item.status = state.git_tree_status[item.file or ""]
 
       if opts.tree then
         -- tree
@@ -659,23 +694,8 @@ function M.explorer(opts, ctx)
           last[parent] = item
         end
       end
-      items[item.file] = item
       -- add to picker
       cb(item)
-    end
-
-    -- gather git status in a separate coroutine,
-    -- so that both git and fd can run in parallel
-    local git_async ---@type snacks.picker.Async?
-    if opts.git_status then
-      git_async = require("snacks.picker.util.async").new(function()
-        git(function(item)
-          local path = Snacks.picker.util.path(item)
-          if path then
-            table.insert(state.git_status, { file = path, status = item.status })
-          end
-        end)
-      end)
     end
 
     -- get files and directories
@@ -712,35 +732,37 @@ function M.explorer(opts, ctx)
       add(item)
     end)
 
-    -- wait for git status to finish
-    if git_async then
-      git_async:wait()
-    end
+    -- gather git status in a separate coroutine,
+    -- so that git doesn't block the picker
+    if opts.git_status then
+      ---@async
+      Async.new(function()
+        local me = Async.running()
 
-    local function add_git_status(path, status)
-      if not opts.git_status_open and is_open(path) then
-        return
-      end
-      local item = items[path]
-      if item then
-        if item.status then
-          item.status = Git.merge_status(item.status, status)
-        else
-          item.status = status
+        local check = function() -- check if we need to abort
+          return state.tick ~= tick or ctx.picker.closed and me:abort()
         end
-      end
-    end
 
-    state:sort_git_status()
+        -- fetch git status
+        git(function(item)
+          check()
+          table.insert(state.git_status, {
+            file = Snacks.picker.util.path(item),
+            status = item.status,
+          })
+        end)
+        check()
 
-    -- Add git status to files and parents
-    for _, s in ipairs(state.git_status) do
-      local file, status = s.file, s.status
-      add_git_status(file, status)
-      add_git_status(cwd, status)
-      for dir in Snacks.picker.util.parents(file, cwd) do
-        add_git_status(dir, status)
-      end
+        state:update_git_status()
+
+        ctx.async:wait() -- wait till fd is done
+        check()
+        -- add git status to picker items
+        for item in ctx.picker:iter() do
+          item.status = state.git_tree_status[item.file or ""]
+        end
+        ctx.picker:update({ force = true })
+      end)
     end
   end
 end

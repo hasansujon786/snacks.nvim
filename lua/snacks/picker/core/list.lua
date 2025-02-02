@@ -331,7 +331,11 @@ function M:height()
   return math.min(self.state.height, self:count())
 end
 
-function M:update()
+---@param opts? {force?: boolean}
+function M:update(opts)
+  if opts and opts.force then
+    self.dirty = true
+  end
   if vim.in_fast_event() then
     return vim.schedule(function()
       self:update()
