@@ -86,18 +86,18 @@ function M.jump(picker, _, action)
         local path = assert(Snacks.picker.util.path(item), "Either item.buf or item.file is required")
         buf = vim.fn.bufadd(path)
       end
+      vim.bo[buf].buflisted = true
 
       -- use an existing window if possible
-      if #items == 1 and picker.opts.jump.reuse_win and buf ~= current_buf then
+      if cmd == "buffer" and #items == 1 and picker.opts.jump.reuse_win and buf ~= current_buf then
         win = vim.fn.win_findbuf(buf)[1] or win
         vim.api.nvim_set_current_win(win)
       end
 
-      vim.bo[buf].buflisted = true
-
       -- open the first buffer
       if i == 1 then
         vim.cmd(("%s %d"):format(cmd, buf))
+        win = vim.api.nvim_get_current_win()
       end
     end
   end
@@ -182,27 +182,25 @@ function M.lcd(_, item)
   end
 end
 
-function M.picker_files(_, item)
-  if item then
-    Snacks.picker.files({ cwd = Snacks.picker.util.dir(item) })
+function M.picker(picker, item, action)
+  if not item then
+    return
   end
+  local source = action.source or "files"
+  for _, p in ipairs(Snacks.picker.get({ source = source })) do
+    p:close()
+  end
+  Snacks.picker(source, {
+    cwd = Snacks.picker.util.dir(item),
+    on_show = function()
+      picker:close()
+    end,
+  })
 end
 
-function M.picker_explorer(_, item)
-  if item then
-    local p = Snacks.picker.get({ source = "explorer" })[1]
-    if p then
-      p:close()
-    end
-    Snacks.picker.explorer({ cwd = Snacks.picker.util.dir(item) })
-  end
-end
-
-function M.picker_recent(_, item)
-  if item then
-    Snacks.picker.recent({ filter = { cwd = Snacks.picker.util.dir(item) } })
-  end
-end
+M.picker_files = { action = "picker", source = "files" }
+M.picker_explorer = { action = "picker", source = "explorer" }
+M.picker_recent = { action = "picker", source = "recent" }
 
 function M.pick_win(picker, item, action)
   if not picker.layout.split then
@@ -226,6 +224,7 @@ function M.pick_win(picker, item, action)
 end
 
 function M.bufdelete(picker)
+  picker.preview:reset()
   local non_buf_delete_requested = false
   for _, item in ipairs(picker:selected({ fallback = true })) do
     if item.buf then
@@ -233,19 +232,13 @@ function M.bufdelete(picker)
     else
       non_buf_delete_requested = true
     end
-    picker.list:unselect(item)
   end
-
   if non_buf_delete_requested then
     Snacks.notify.warn("Only open buffers can be deleted", { title = "Snacks Picker" })
   end
-
-  local cursor = picker.list.cursor
-  picker:find({
-    on_done = function()
-      picker.list:view(cursor)
-    end,
-  })
+  picker.list:set_selected()
+  picker.list:set_target()
+  picker:find()
 end
 
 function M.git_stage(picker)

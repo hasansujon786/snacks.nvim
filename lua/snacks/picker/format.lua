@@ -51,6 +51,21 @@ function M.filename(item, picker)
   end
 
   local base_hl = item.dir and "SnacksPickerDirectory" or "SnacksPickerFile"
+  local function is(prop)
+    local it = item
+    while it do
+      if it[prop] then
+        return true
+      end
+      it = it.parent
+    end
+  end
+
+  if is("ignored") then
+    base_hl = "SnacksPickerPathIgnored"
+  elseif is("hidden") then
+    base_hl = "SnacksPickerPathHidden"
+  end
   local dir_hl = "SnacksPickerDir"
 
   if picker.opts.formatters.file.filename_only then

@@ -252,6 +252,8 @@ M.git_stash = {
   confirm = "git_stash_apply",
 }
 
+---@class snacks.picker.git.status.Config: snacks.picker.Config
+---@field ignored? boolean show ignored files
 M.git_status = {
   finder = "git_status",
   format = "git_status",

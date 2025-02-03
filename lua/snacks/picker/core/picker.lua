@@ -297,20 +297,18 @@ function M:init_layout(layout)
     left_picker = self:is_focused()
   end)
 
-  local last_win = self.input.filter.current_win
   local last_pwin ---@type number?
   self.layout.root:on("WinEnter", function()
-    local win = vim.api.nvim_get_current_win()
     if self:is_focused() then
-      last_pwin = win
-    elseif win ~= self.layout.root.win then
-      last_win = win
+      last_pwin = vim.api.nvim_get_current_win()
     end
   end)
 
   self.layout.root:on("WinEnter", function()
-    if left_picker and last_win and vim.api.nvim_win_is_valid(last_win) then
-      vim.api.nvim_set_current_win(last_win)
+    if left_picker then
+      local pos = self.layout.root.opts.position
+      local wincmds = { left = "l", right = "h", top = "j", bottom = "k" }
+      vim.cmd("wincmd " .. wincmds[pos])
     elseif last_pwin and vim.api.nvim_win_is_valid(last_pwin) then
       vim.api.nvim_set_current_win(last_pwin)
     else
