@@ -4,7 +4,7 @@ local Git = require("snacks.picker.source.git")
 local M = {}
 
 ---@class snacks.picker
----@field explorer fun(opts?: snacks.picker.explorer.Config): snacks.Picker
+---@field explorer fun(opts?: snacks.picker.explorer.Config|{}): snacks.Picker
 
 ---@type table<snacks.Picker, snacks.picker.explorer.State>
 M._state = setmetatable({}, { __mode = "k" })
@@ -132,6 +132,8 @@ function Tree:dirs(cwd, ret)
   return ret
 end
 local tree = Tree.new()
+-- global git status
+local git_tree_status = {} ---@type table<string, string>
 
 ---@class snacks.picker.explorer.State
 ---@field cwd string
@@ -142,7 +144,6 @@ local tree = Tree.new()
 ---@field opts snacks.picker.explorer.Config
 ---@field on_find? fun()?
 ---@field git_status {file: string, status: string, sort?:string}[]
----@field git_tree_status table<string, string>
 ---@field expanded table<string, boolean>
 local State = {}
 State.__index = State
@@ -156,7 +157,6 @@ function State.new(picker)
   self.tree = tree
   self.tick = 0
   self.git_status = {}
-  self.git_tree_status = {}
   self.expanded = {}
   local buf = vim.api.nvim_win_get_buf(picker.main)
   local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
@@ -209,16 +209,13 @@ function State:update_git_status()
   end)
 
   -- Update tree status
-  self.git_tree_status = {}
+  git_tree_status = {}
 
   ---@param p string
   ---@param s string
   ---@param is_dir? boolean
   local function add_git_status(p, s, is_dir)
-    if not self.opts.git_status_open and is_dir and (self.expanded[p] or self.all) then
-      return
-    end
-    self.git_tree_status[p] = self.git_tree_status[p] and Git.merge_status(self.git_tree_status[p], s) or s
+    git_tree_status[p] = git_tree_status[p] and Git.merge_status(git_tree_status[p], s) or s
   end
 
   -- Add git status to files and parents
@@ -410,6 +407,16 @@ function M.setup(opts)
   })
 end
 
+---@param prompt string
+---@param fn fun()
+function M.confirm(prompt, fn)
+  Snacks.picker.select({ "Yes", "No" }, { prompt = prompt }, function(_, idx)
+    if idx == 1 then
+      fn()
+    end
+  end)
+end
+
 ---@type table<string, snacks.picker.Action.spec>
 M.actions = {
   explorer_update = function(picker)
@@ -502,57 +509,58 @@ M.actions = {
     ---@type string[]
     local paths = vim.tbl_map(Snacks.picker.util.path, picker:selected())
     if #paths == 0 then
-      Snacks.notify.warn("No files selected to move")
-      return
+      Snacks.notify.warn("No files selected to move. Renaming instead.")
+      return M.actions.explorer_rename(picker, picker:current())
     end
     local target = state:dir()
     local what = #paths == 1 and vim.fn.fnamemodify(paths[1], ":p:~:.") or #paths .. " files"
     local t = vim.fn.fnamemodify(target, ":p:~:.")
 
-    Snacks.picker.select({ "Yes", "No" }, { prompt = "Move " .. what .. " to " .. t .. "?" }, function(_, idx)
-      if idx == 1 then
-        for _, from in ipairs(paths) do
-          local to = target .. "/" .. vim.fn.fnamemodify(from, ":t")
-          Snacks.rename.on_rename_file(from, to, function()
-            local ok, err = pcall(vim.fn.rename, from, to)
-            if not ok then
-              Snacks.notify.error("Failed to move `" .. from .. "`:\n- " .. err)
-            end
-          end)
-        end
-        state:update()
+    M.confirm("Move " .. what .. " to " .. t .. "?", function()
+      for _, from in ipairs(paths) do
+        local to = target .. "/" .. vim.fn.fnamemodify(from, ":t")
+        Snacks.rename.on_rename_file(from, to, function()
+          local ok, err = pcall(vim.fn.rename, from, to)
+          if not ok then
+            Snacks.notify.error("Failed to move `" .. from .. "`:\n- " .. err)
+          end
+        end)
       end
+      picker.list:set_selected() -- clear selection
+      state:update()
     end)
   end,
   explorer_copy = function(picker, item)
     if not item then
       return
     end
-    if item.dir then
-      Snacks.notify.warn("Cannot copy directories")
+    local state = M.get_state(picker)
+    ---@type string[]
+    local paths = vim.tbl_map(Snacks.picker.util.path, picker:selected())
+    -- Copy selection
+    if #paths > 0 then
+      local dir = state:dir()
+      Snacks.picker.util.copy(paths, dir)
+      state:open(dir)
+      picker.list:set_selected() -- clear selection
+      state:update()
       return
     end
-    local state = M.get_state(picker)
     Snacks.input({
       prompt = "Copy to",
     }, function(value)
       if not value or value:find("^%s$") then
         return
       end
-      local dir = state:dir()
-      local path = vim.fs.normalize(dir .. "/" .. value)
-      vim.fn.mkdir(vim.fs.dirname(path), "p")
-      state:open(dir)
-      if uv.fs_stat(path) then
-        Snacks.notify.warn("File already exists:\n- `" .. path .. "`")
+      local dir = vim.fs.dirname(item.file)
+      local to = vim.fs.normalize(dir .. "/" .. value)
+      if uv.fs_stat(to) then
+        Snacks.notify.warn("File already exists:\n- `" .. to .. "`")
         return
       end
-      uv.fs_copyfile(item.file, path, function(err)
-        if err then
-          Snacks.notify.error("Failed to copy `" .. item.file .. "` to `" .. path .. "`:\n- " .. err)
-        end
-        state:update()
-      end)
+      Snacks.picker.util.copy_path(item.file, to)
+      state:open(dir)
+      state:update()
     end)
   end,
   explorer_del = function(picker)
@@ -563,16 +571,14 @@ M.actions = {
       return
     end
     local what = #paths == 1 and vim.fn.fnamemodify(paths[1], ":p:~:.") or #paths .. " files"
-    Snacks.picker.select({ "Yes", "No" }, { prompt = "Delete " .. what .. "?" }, function(_, idx)
-      if idx == 1 then
-        for _, path in ipairs(paths) do
-          local ok, err = pcall(vim.fn.delete, path, "rf")
-          if not ok then
-            Snacks.notify.error("Failed to delete `" .. path .. "`:\n- " .. err)
-          end
+    M.confirm("Delete " .. what .. "?", function(_, idx)
+      for _, path in ipairs(paths) do
+        local ok, err = pcall(vim.fn.delete, path, "rf")
+        if not ok then
+          Snacks.notify.error("Failed to delete `" .. path .. "`:\n- " .. err)
         end
-        state:update()
       end
+      state:update()
     end)
   end,
   explorer_focus = function(picker)
@@ -600,7 +606,6 @@ M.actions = {
   end,
   confirm = function(picker, item, action)
     local state = M.get_state(picker)
-    local item = picker:current()
     if not item then
       return
     elseif item.dir then
@@ -661,6 +666,11 @@ function M.explorer(opts, ctx)
   dirs[cwd] = root
   state.git_status = {}
 
+  ---@param item snacks.picker.explorer.Item
+  local function add_git_status(item)
+    item.status = (opts.git_status_open or not item.open) and git_tree_status[item.file or ""] or nil
+  end
+
   ---@async
   return function(cb)
     if state.on_find then
@@ -681,7 +691,7 @@ function M.explorer(opts, ctx)
       else
         item.sort = parent.sort .. "#" .. basename .. " "
       end
-      item.status = state.git_tree_status[item.file or ""]
+      add_git_status(item)
 
       if opts.tree then
         -- tree
@@ -759,7 +769,8 @@ function M.explorer(opts, ctx)
         check()
         -- add git status to picker items
         for item in ctx.picker:iter() do
-          item.status = state.git_tree_status[item.file or ""]
+          ---@cast item snacks.picker.explorer.Item
+          add_git_status(item)
         end
         ctx.picker:update({ force = true })
       end)

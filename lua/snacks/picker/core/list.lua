@@ -14,6 +14,7 @@
 ---@field selected snacks.picker.Item[]
 ---@field selected_map table<string, snacks.picker.Item>
 ---@field matcher snacks.picker.Matcher matcher for formatting list items
+---@field matcher_regex snacks.picker.Matcher matcher for formatting list items
 ---@field target? {cursor: number, top?: number}
 local M = {}
 M.__index = M
@@ -63,6 +64,7 @@ function M.new(picker)
   self.selected = {}
   self.selected_map = {}
   self.matcher = require("snacks.picker.core.matcher").new(picker.opts.matcher)
+  self.matcher_regex = require("snacks.picker.core.matcher").new({ regex = true })
   local win_opts = Snacks.win.resolve(picker.opts.win.list, {
     show = false,
     enter = false,
@@ -413,8 +415,9 @@ function M:select_key(item)
   return item._select_key
 end
 
----@param items snacks.picker.Item[]
+---@param items? snacks.picker.Item[]
 function M:set_selected(items)
+  items = items or {}
   self.selected = items
   self.selected_map = {}
   for _, item in ipairs(items) do
@@ -487,8 +490,10 @@ function M:format(item)
   end
 
   -- Highlight match positions for text
-  local positions = self.matcher:positions({ text = text:gsub("%s*$", ""), idx = 1, score = 0, file = item.file })
-  for _, pos in ipairs(positions.text or {}) do
+  local it = { text = text:gsub("%s*$", ""), idx = 1, score = 0, file = item.file }
+  local positions = self.matcher:positions(it).text or {}
+  vim.list_extend(positions, self.matcher_regex:positions(it).text or {})
+  for _, pos in ipairs(positions) do
     table.insert(extmarks, {
       col = pos - 1,
       end_col = pos,
@@ -561,9 +566,13 @@ function M:render()
     vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
 
     -- matcher for highlighting should include the search filter
-    local pattern = vim.trim(self.picker.input.filter.pattern .. " " .. self.picker.input.filter.search)
+    local pattern = vim.trim(self.picker.input.filter.pattern)
     if self.matcher.pattern ~= pattern then
       self.matcher:init(pattern)
+    end
+    local search = Snacks.picker.util.parse(vim.trim(self.picker.input.filter.search))
+    if self.matcher_regex.pattern ~= search then
+      self.matcher_regex:init(search)
     end
 
     -- render items

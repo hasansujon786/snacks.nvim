@@ -490,6 +490,23 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
+---@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts? snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
+```
+
+```lua
+---@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
+```
+
+```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -563,23 +580,6 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
-```
-
-```lua
----@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
-```
-
-```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts? snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
-
-```lua
----@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
 ```
 
 ## 📦 Module
@@ -841,6 +841,9 @@ Neovim commands
   auto_close = false,
   jump = { close = false },
   layout = { preset = "sidebar", preview = false },
+  -- to show the explorer to the right, add the below to
+  -- your config under `opts.picker.sources.explorer`
+  -- layout = { layout = { position = "right" } },
   formatters = { file = { filename_only = true } },
   matcher = { sort_empty = true },
   config = function(opts)
@@ -1617,13 +1620,43 @@ Open recent projects
 ```lua
 ---@class snacks.picker.projects.Config: snacks.picker.Config
 ---@field filter? snacks.picker.filter.Config
+---@field dev? string|string[] top-level directories containing multiple projects (sub-folders that contains a root pattern)
+---@field projects? string[] list of project directories
+---@field patterns? string[] patterns to detect project root directories
+---@field recent? boolean include project directories of recent files
 {
   finder = "recent_projects",
   format = "file",
+  dev = { "~/dev", "~/projects" },
   confirm = "load_session",
+  patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "package.json", "Makefile" },
+  recent = true,
+  matcher = {
+    frecency = true, -- use frecency boosting
+    sort_empty = true, -- sort even when the filter is empty
+    cwd_bonus = false,
+  },
+  sort = { fields = { "score:desc", "idx" } },
   win = {
-    preview = {
-      minimal = true,
+    preview = { minimal = true },
+    input = {
+      keys = {
+        -- every action will always first change the cwd of the current tabpage to the project
+        ["<c-e>"] = { { "tcd", "picker_explorer" }, mode = { "n", "i" } },
+        ["<c-f>"] = { { "tcd", "picker_files" }, mode = { "n", "i" } },
+        ["<c-g>"] = { { "tcd", "picker_grep" }, mode = { "n", "i" } },
+        ["<c-r>"] = { { "tcd", "picker_recent" }, mode = { "n", "i" } },
+        ["<c-w>"] = { { "tcd" }, mode = { "n", "i" } },
+        ["<c-t>"] = {
+          function(picker)
+            vim.cmd("tabnew")
+            Snacks.notify("New tab opened")
+            picker:close()
+            Snacks.picker.projects()
+          end,
+          mode = { "n", "i" },
+        },
+      },
     },
   },
 }
@@ -2045,6 +2078,12 @@ local M = {}
 Snacks.picker.actions.bufdelete(picker)
 ```
 
+### `Snacks.picker.actions.cd()`
+
+```lua
+Snacks.picker.actions.cd(_, item)
+```
+
 ### `Snacks.picker.actions.close()`
 
 ```lua
@@ -2135,6 +2174,12 @@ Snacks.picker.actions.item_action(picker, item, action)
 Snacks.picker.actions.jump(picker, _, action)
 ```
 
+### `Snacks.picker.actions.lcd()`
+
+```lua
+Snacks.picker.actions.lcd(_, item)
+```
+
 ### `Snacks.picker.actions.list_bottom()`
 
 ```lua
@@ -2194,7 +2239,7 @@ Snacks.picker.actions.list_up(picker)
 Tries to load the session, if it fails, it will open the picker.
 
 ```lua
-Snacks.picker.actions.load_session(picker)
+Snacks.picker.actions.load_session(picker, item)
 ```
 
 ### `Snacks.picker.actions.loclist()`
@@ -2209,6 +2254,30 @@ Snacks.picker.actions.loclist(picker)
 
 ```lua
 Snacks.picker.actions.pick_win(picker, item, action)
+```
+
+### `Snacks.picker.actions.picker_explorer()`
+
+```lua
+Snacks.picker.actions.picker_explorer(_, item)
+```
+
+### `Snacks.picker.actions.picker_files()`
+
+```lua
+Snacks.picker.actions.picker_files(_, item)
+```
+
+### `Snacks.picker.actions.picker_grep()`
+
+```lua
+Snacks.picker.actions.picker_grep(_, item)
+```
+
+### `Snacks.picker.actions.picker_recent()`
+
+```lua
+Snacks.picker.actions.picker_recent(_, item)
 ```
 
 ### `Snacks.picker.actions.preview_scroll_down()`
@@ -2290,6 +2359,12 @@ and moves the cursor to the prev item.
 Snacks.picker.actions.select_and_prev(picker)
 ```
 
+### `Snacks.picker.actions.tcd()`
+
+```lua
+Snacks.picker.actions.tcd(_, item)
+```
+
 ### `Snacks.picker.actions.toggle_focus()`
 
 ```lua
@@ -2331,8 +2406,6 @@ Snacks.picker.actions.toggle_preview(picker)
 ```lua
 Snacks.picker.actions.yank(_, item)
 ```
-
-
 
 ## 📦 `snacks.picker.core.picker`
 
@@ -2557,3 +2630,5 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
+
+

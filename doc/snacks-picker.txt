@@ -14,6 +14,7 @@ Table of Contents                            *snacks-picker-table-of-contents*
 6. Types                                                 |snacks-picker-types|
 7. Module                                               |snacks-picker-module|
   - Snacks.picker()                     |snacks-picker-module-snacks.picker()|
+  - Snacks.picker.get()             |snacks-picker-module-snacks.picker.get()|
   - Snacks.picker.pick()           |snacks-picker-module-snacks.picker.pick()|
   - Snacks.picker.select()       |snacks-picker-module-snacks.picker.select()|
 8. Sources                                             |snacks-picker-sources|
@@ -84,6 +85,7 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - vscode                                      |snacks-picker-layouts-vscode|
 10. snacks.picker.actions                |snacks-picker-snacks.picker.actions|
   - Snacks.picker.actions.bufdelete()|snacks-picker-snacks.picker.actions-snacks.picker.actions.bufdelete()|
+  - Snacks.picker.actions.cd()|snacks-picker-snacks.picker.actions-snacks.picker.actions.cd()|
   - Snacks.picker.actions.close()|snacks-picker-snacks.picker.actions-snacks.picker.actions.close()|
   - Snacks.picker.actions.cmd()|snacks-picker-snacks.picker.actions-snacks.picker.actions.cmd()|
   - Snacks.picker.actions.cycle_win()|snacks-picker-snacks.picker.actions-snacks.picker.actions.cycle_win()|
@@ -106,13 +108,15 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - Snacks.picker.actions.list_scroll_down()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_down()|
   - Snacks.picker.actions.list_scroll_top()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_top()|
   - Snacks.picker.actions.list_scroll_up()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_up()|
-  - Snacks.picker.actions.list_scroll_wheel_down()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_wheel_down()|
-  - Snacks.picker.actions.list_scroll_wheel_up()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_wheel_up()|
   - Snacks.picker.actions.list_top()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_top()|
   - Snacks.picker.actions.list_up()|snacks-picker-snacks.picker.actions-snacks.picker.actions.list_up()|
   - Snacks.picker.actions.load_session()|snacks-picker-snacks.picker.actions-snacks.picker.actions.load_session()|
   - Snacks.picker.actions.loclist()|snacks-picker-snacks.picker.actions-snacks.picker.actions.loclist()|
   - Snacks.picker.actions.pick_win()|snacks-picker-snacks.picker.actions-snacks.picker.actions.pick_win()|
+  - Snacks.picker.actions.picker_explorer()|snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_explorer()|
+  - Snacks.picker.actions.picker_files()|snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_files()|
+  - Snacks.picker.actions.picker_grep()|snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_grep()|
+  - Snacks.picker.actions.picker_recent()|snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_recent()|
   - Snacks.picker.actions.preview_scroll_down()|snacks-picker-snacks.picker.actions-snacks.picker.actions.preview_scroll_down()|
   - Snacks.picker.actions.preview_scroll_left()|snacks-picker-snacks.picker.actions-snacks.picker.actions.preview_scroll_left()|
   - Snacks.picker.actions.preview_scroll_right()|snacks-picker-snacks.picker.actions-snacks.picker.actions.preview_scroll_right()|
@@ -124,17 +128,15 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - Snacks.picker.actions.select_all()|snacks-picker-snacks.picker.actions-snacks.picker.actions.select_all()|
   - Snacks.picker.actions.select_and_next()|snacks-picker-snacks.picker.actions-snacks.picker.actions.select_and_next()|
   - Snacks.picker.actions.select_and_prev()|snacks-picker-snacks.picker.actions-snacks.picker.actions.select_and_prev()|
-  - Snacks.picker.actions.split()|snacks-picker-snacks.picker.actions-snacks.picker.actions.split()|
-  - Snacks.picker.actions.tab()|snacks-picker-snacks.picker.actions-snacks.picker.actions.tab()|
   - Snacks.picker.actions.toggle_focus()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_focus()|
   - Snacks.picker.actions.toggle_help_input()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_help_input()|
   - Snacks.picker.actions.toggle_help_list()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_help_list()|
   - Snacks.picker.actions.toggle_live()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_live()|
   - Snacks.picker.actions.toggle_maximize()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_maximize()|
   - Snacks.picker.actions.toggle_preview()|snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_preview()|
-  - Snacks.picker.actions.vsplit()|snacks-picker-snacks.picker.actions-snacks.picker.actions.vsplit()|
   - Snacks.picker.actions.yank()|snacks-picker-snacks.picker.actions-snacks.picker.actions.yank()|
 11. snacks.picker.core.picker        |snacks-picker-snacks.picker.core.picker|
+  - Snacks.picker.picker.get()|snacks-picker-snacks.picker.core.picker-snacks.picker.picker.get()|
   - picker:action()  |snacks-picker-snacks.picker.core.picker-picker:action()|
   - picker:close()    |snacks-picker-snacks.picker.core.picker-picker:close()|
   - picker:count()    |snacks-picker-snacks.picker.core.picker-picker:count()|
@@ -149,6 +151,7 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - picker:items()    |snacks-picker-snacks.picker.core.picker-picker:items()|
   - picker:iter()      |snacks-picker-snacks.picker.core.picker-picker:iter()|
   - picker:norm()      |snacks-picker-snacks.picker.core.picker-picker:norm()|
+  - picker:on_current_tab()|snacks-picker-snacks.picker.core.picker-picker:on_current_tab()|
   - picker:ref()        |snacks-picker-snacks.picker.core.picker-picker:ref()|
   - picker:resolve()|snacks-picker-snacks.picker.core.picker-picker:resolve()|
   - picker:selected()|snacks-picker-snacks.picker.core.picker-picker:selected()|
@@ -336,6 +339,7 @@ below.
         tagstack = false, -- save the current position in the tagstack
         reuse_win = false, -- reuse an existing window if the buffer is already open
         close = true, -- close the picker when jumping/editing to a location (defaults to true)
+        match = false, -- jump to the first match position. (useful for `lines`)
       },
       toggles = {
         follow = "f",
@@ -348,49 +352,47 @@ below.
         -- input window
         input = {
           keys = {
-            ["<Esc>"] = "close",
-            ["<C-c>"] = { "close", mode = "i" },
             -- to close the picker on ESC instead of going to normal mode,
             -- add the following keymap to your config
             -- ["<Esc>"] = { "close", mode = { "n", "i" } },
-            ["<CR>"] = { "confirm", mode = { "n", "i" } },
-            ["G"] = "list_bottom",
-            ["gg"] = "list_top",
-            ["j"] = "list_down",
-            ["k"] = "list_up",
             ["/"] = "toggle_focus",
-            ["q"] = "close",
-            ["?"] = "toggle_help_input",
+            ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
+            ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
+            ["<C-c>"] = { "close", mode = "i" },
+            ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
+            ["<CR>"] = { "confirm", mode = { "n", "i" } },
+            ["<Down>"] = { "list_down", mode = { "i", "n" } },
+            ["<Esc>"] = "close",
+            ["<S-CR>"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
+            ["<S-Tab>"] = { "select_and_prev", mode = { "i", "n" } },
+            ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
+            ["<Up>"] = { "list_up", mode = { "i", "n" } },
             ["<a-d>"] = { "inspect", mode = { "n", "i" } },
-            ["<c-a>"] = { "select_all", mode = { "n", "i" } },
+            ["<a-f>"] = { "toggle_follow", mode = { "i", "n" } },
+            ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },
+            ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
             ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
             ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
             ["<a-w>"] = { "cycle_win", mode = { "i", "n" } },
-            ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
-            ["<S-CR>"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
-            ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
-            ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
-            ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
-            ["<S-Tab>"] = { "select_and_prev", mode = { "i", "n" } },
-            ["<Down>"] = { "list_down", mode = { "i", "n" } },
-            ["<Up>"] = { "list_up", mode = { "i", "n" } },
-            ["<c-j>"] = { "list_down", mode = { "i", "n" } },
-            ["<c-k>"] = { "list_up", mode = { "i", "n" } },
-            ["<c-n>"] = { "list_down", mode = { "i", "n" } },
-            ["<c-p>"] = { "list_up", mode = { "i", "n" } },
+            ["<c-a>"] = { "select_all", mode = { "n", "i" } },
             ["<c-b>"] = { "preview_scroll_up", mode = { "i", "n" } },
             ["<c-d>"] = { "list_scroll_down", mode = { "i", "n" } },
             ["<c-f>"] = { "preview_scroll_down", mode = { "i", "n" } },
             ["<c-g>"] = { "toggle_live", mode = { "i", "n" } },
-            ["<c-u>"] = { "list_scroll_up", mode = { "i", "n" } },
-            ["<ScrollWheelDown>"] = { "list_scroll_wheel_down", mode = { "i", "n" } },
-            ["<ScrollWheelUp>"] = { "list_scroll_wheel_up", mode = { "i", "n" } },
-            ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
-            ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
+            ["<c-j>"] = { "list_down", mode = { "i", "n" } },
+            ["<c-k>"] = { "list_up", mode = { "i", "n" } },
+            ["<c-n>"] = { "list_down", mode = { "i", "n" } },
+            ["<c-p>"] = { "list_up", mode = { "i", "n" } },
             ["<c-q>"] = { "qflist", mode = { "i", "n" } },
-            ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
-            ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },
-            ["<a-f>"] = { "toggle_follow", mode = { "i", "n" } },
+            ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
+            ["<c-u>"] = { "list_scroll_up", mode = { "i", "n" } },
+            ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
+            ["?"] = "toggle_help_input",
+            ["G"] = "list_bottom",
+            ["gg"] = "list_top",
+            ["j"] = "list_down",
+            ["k"] = "list_up",
+            ["q"] = "close",
           },
           b = {
             minipairs_disable = true,
@@ -399,43 +401,43 @@ below.
         -- result list window
         list = {
           keys = {
+            ["/"] = "toggle_focus",
+            ["<2-LeftMouse>"] = "confirm",
             ["<CR>"] = "confirm",
-            ["gg"] = "list_top",
-            ["G"] = "list_bottom",
-            ["i"] = "focus_input",
-            ["j"] = "list_down",
-            ["k"] = "list_up",
-            ["q"] = "close",
-            ["?"] = "toggle_help_list",
-            ["<Tab>"] = { "select_and_next", mode = { "n", "x" } },
-            ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
             ["<Down>"] = "list_down",
+            ["<Esc>"] = "close",
+            ["<S-CR>"] = { { "pick_win", "jump" } },
+            ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
+            ["<Tab>"] = { "select_and_next", mode = { "n", "x" } },
             ["<Up>"] = "list_up",
             ["<a-d>"] = "inspect",
-            ["<c-d>"] = "list_scroll_down",
-            ["<c-u>"] = "list_scroll_up",
-            ["zt"] = "list_scroll_top",
-            ["zb"] = "list_scroll_bottom",
-            ["zz"] = "list_scroll_center",
-            ["/"] = "toggle_focus",
-            ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
-            ["<ScrollWheelUp>"] = "list_scroll_wheel_up",
+            ["<a-f>"] = "toggle_follow",
+            ["<a-h>"] = "toggle_hidden",
+            ["<a-i>"] = "toggle_ignored",
+            ["<a-m>"] = "toggle_maximize",
+            ["<a-p>"] = "toggle_preview",
+            ["<a-w>"] = "cycle_win",
             ["<c-a>"] = "select_all",
-            ["<a-m>"] = { "toggle_maximize" },
-            ["<a-p>"] = { "toggle_preview" },
-            ["<c-f>"] = "preview_scroll_down",
             ["<c-b>"] = "preview_scroll_up",
-            ["<c-v>"] = "edit_vsplit",
-            ["<c-s>"] = "edit_split",
+            ["<c-d>"] = "list_scroll_down",
+            ["<c-f>"] = "preview_scroll_down",
             ["<c-j>"] = "list_down",
             ["<c-k>"] = "list_up",
             ["<c-n>"] = "list_down",
             ["<c-p>"] = "list_up",
-            ["<a-w>"] = "cycle_win",
-            ["<Esc>"] = "close",
-            ["<a-i>"] = "toggle_ignored",
-            ["<a-h>"] = "toggle_hidden",
-            ["<a-f>"] = "toggle_follow",
+            ["<c-s>"] = "edit_split",
+            ["<c-u>"] = "list_scroll_up",
+            ["<c-v>"] = "edit_vsplit",
+            ["?"] = "toggle_help_list",
+            ["G"] = "list_bottom",
+            ["gg"] = "list_top",
+            ["i"] = "focus_input",
+            ["j"] = "list_down",
+            ["k"] = "list_up",
+            ["q"] = "close",
+            ["zb"] = "list_scroll_bottom",
+            ["zt"] = "list_scroll_top",
+            ["zz"] = "list_scroll_center",
           },
           wo = {
             conceallevel = 2,
@@ -463,9 +465,9 @@ below.
           nowait = "󰓅 "
         },
         tree = {
-          vertical    = "│ ",
-          middle = "├╴",
-          last   = "└╴",
+          vertical = "│ ",
+          middle   = "├╴",
+          last     = "└╴",
         },
         undo = {
           saved   = " ",
@@ -480,7 +482,16 @@ below.
           -- selected = " ",
         },
         git = {
-          commit = "󰜘 ",
+          enabled   = true, -- show git icons
+          commit    = "󰜘 ", -- used by git log
+          staged    = "●", -- staged changes. always overrides the type icons
+          added     = "",
+          deleted   = "",
+          ignored   = " ",
+          modified  = "○",
+          renamed   = "",
+          unmerged  = " ",
+          untracked = "?",
         },
         diagnostics = {
           Error = " ",
@@ -646,7 +657,7 @@ TROUBLE                                       *snacks-picker-examples-trouble*
 
 >lua
     ---@class snacks.picker.jump.Action: snacks.picker.Action
-    ---@field cmd? string
+    ---@field cmd? snacks.picker.EditCmd
 <
 
 >lua
@@ -772,6 +783,16 @@ that shows a preview based on the item data.
 >lua
     ---@type fun(opts: snacks.picker.Config): snacks.Picker
     Snacks.picker()
+<
+
+
+`Snacks.picker.get()`                                    *Snacks.picker.get()*
+
+Get active pickers, optionally filtered by source
+
+>lua
+    ---@param opts? {source?: string}
+    Snacks.picker.get(opts)
 <
 
 
@@ -995,16 +1016,23 @@ EXPLORER                                      *snacks-picker-sources-explorer*
     ---@class snacks.picker.explorer.Config: snacks.picker.files.Config|{}
     ---@field follow_file? boolean follow the file from the current buffer
     ---@field tree? boolean show the file tree (default: true)
+    ---@field git_status? boolean show git status (default: true)
+    ---@field git_status_open? boolean show recursive git status for open directories
     {
       finder = "explorer",
       sort = { fields = { "sort" } },
       tree = true,
+      git_status = true,
+      git_status_open = false,
       supports_live = true,
       follow_file = true,
       focus = "list",
       auto_close = false,
       jump = { close = false },
       layout = { preset = "sidebar", preview = false },
+      -- to show the explorer to the right, add the below to
+      -- your config under `opts.picker.sources.explorer`
+      -- layout = { layout = { position = "right" } },
       formatters = { file = { filename_only = true } },
       matcher = { sort_empty = true },
       config = function(opts)
@@ -1014,14 +1042,24 @@ EXPLORER                                      *snacks-picker-sources-explorer*
         list = {
           keys = {
             ["<BS>"] = "explorer_up",
+            ["l"] = "confirm",
+            ["h"] = "explorer_close", -- close directory
             ["a"] = "explorer_add",
             ["d"] = "explorer_del",
             ["r"] = "explorer_rename",
             ["c"] = "explorer_copy",
             ["m"] = "explorer_move",
+            ["o"] = "explorer_open", -- open with system application
+            ["P"] = "toggle_preview",
             ["y"] = "explorer_yank",
+            ["u"] = "explorer_update",
             ["<c-c>"] = "explorer_cd",
             ["."] = "explorer_focus",
+            ["I"] = "toggle_ignored",
+            ["H"] = "toggle_hidden",
+            ["Z"] = "explorer_close_all",
+            ["]g"] = "explorer_git_next",
+            ["[g"] = "explorer_git_prev",
           },
         },
       },
@@ -1442,6 +1480,7 @@ Search lines in the current buffer
         preview = "main",
         preset = "ivy",
       },
+      jump = { match = true },
       -- allow any window to be used as the main window
       main = { current = true },
       ---@param picker snacks.Picker
@@ -1806,13 +1845,28 @@ Open recent projects
 >lua
     ---@class snacks.picker.projects.Config: snacks.picker.Config
     ---@field filter? snacks.picker.filter.Config
+    ---@field dev? string|string[] top-level directories containing multiple projects (sub-folders that contains a root pattern)
+    ---@field projects? string[] list of project directories
+    ---@field patterns? string[] patterns to detect project root directories
+    ---@field recent? boolean include project directories of recent files
     {
       finder = "recent_projects",
       format = "file",
+      dev = { "~/dev", "~/projects" },
       confirm = "load_session",
+      patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "package.json", "Makefile" },
+      recent = true,
       win = {
-        preview = {
-          minimal = true,
+        preview = { minimal = true },
+        input = {
+          keys = {
+            -- every action will always first change the cwd to the project
+            ["<c-e>"] = { { "cd", "picker_explorer" }, mode = { "n", "i" } },
+            ["<c-f>"] = { { "cd", "picker_files" }, mode = { "n", "i" } },
+            ["<c-g>"] = { { "cd", "picker_grep" }, mode = { "n", "i" } },
+            ["<c-r>"] = { { "cd", "picker_recent" }, mode = { "n", "i" } },
+            ["<c-w>"] = { { "cd" }, mode = { "n", "i" } },
+          },
         },
       },
     }
@@ -1977,12 +2031,21 @@ UNDO                                              *snacks-picker-sources-undo*
 <
 
 >lua
+    ---@class snacks.picker.undo.Config: snacks.picker.Config
+    ---@field diff? vim.diff.Opts
     {
       finder = "vim_undo",
       format = "undo",
       preview = "preview",
       confirm = "item_action",
       win = { preview = { wo = { number = false, relativenumber = false, signcolumn = "no" } } },
+      icons = { tree = { last = "┌╴" } }, -- the tree is upside down
+      diff = {
+        ctxlen = 4,
+        ignore_cr_at_eol = true,
+        ignore_whitespace_change_at_eol = true,
+        indent_heuristic = true,
+      },
     }
 <
 
@@ -2248,6 +2311,13 @@ SNACKS.PICKER.ACTIONS.BUFDELETE()*snacks-picker-snacks.picker.actions-snacks.pic
 <
 
 
+SNACKS.PICKER.ACTIONS.CD()*snacks-picker-snacks.picker.actions-snacks.picker.actions.cd()*
+
+>lua
+    Snacks.picker.actions.cd(_, item)
+<
+
+
 SNACKS.PICKER.ACTIONS.CLOSE()*snacks-picker-snacks.picker.actions-snacks.picker.actions.close()*
 
 >lua
@@ -2314,7 +2384,7 @@ SNACKS.PICKER.ACTIONS.GIT_STASH_APPLY()*snacks-picker-snacks.picker.actions-snac
 SNACKS.PICKER.ACTIONS.HELP()*snacks-picker-snacks.picker.actions-snacks.picker.actions.help()*
 
 >lua
-    Snacks.picker.actions.help(picker)
+    Snacks.picker.actions.help(picker, item, action)
 <
 
 
@@ -2402,20 +2472,6 @@ SNACKS.PICKER.ACTIONS.LIST_SCROLL_UP()*snacks-picker-snacks.picker.actions-snack
 <
 
 
-SNACKS.PICKER.ACTIONS.LIST_SCROLL_WHEEL_DOWN()*snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_wheel_down()*
-
->lua
-    Snacks.picker.actions.list_scroll_wheel_down(picker)
-<
-
-
-SNACKS.PICKER.ACTIONS.LIST_SCROLL_WHEEL_UP()*snacks-picker-snacks.picker.actions-snacks.picker.actions.list_scroll_wheel_up()*
-
->lua
-    Snacks.picker.actions.list_scroll_wheel_up(picker)
-<
-
-
 SNACKS.PICKER.ACTIONS.LIST_TOP()*snacks-picker-snacks.picker.actions-snacks.picker.actions.list_top()*
 
 >lua
@@ -2435,7 +2491,7 @@ SNACKS.PICKER.ACTIONS.LOAD_SESSION()*snacks-picker-snacks.picker.actions-snacks.
 Tries to load the session, if it fails, it will open the picker.
 
 >lua
-    Snacks.picker.actions.load_session(picker)
+    Snacks.picker.actions.load_session(picker, item)
 <
 
 
@@ -2452,6 +2508,34 @@ SNACKS.PICKER.ACTIONS.PICK_WIN()*snacks-picker-snacks.picker.actions-snacks.pick
 
 >lua
     Snacks.picker.actions.pick_win(picker, item, action)
+<
+
+
+SNACKS.PICKER.ACTIONS.PICKER_EXPLORER()*snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_explorer()*
+
+>lua
+    Snacks.picker.actions.picker_explorer(_, item)
+<
+
+
+SNACKS.PICKER.ACTIONS.PICKER_FILES()*snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_files()*
+
+>lua
+    Snacks.picker.actions.picker_files(_, item)
+<
+
+
+SNACKS.PICKER.ACTIONS.PICKER_GREP()*snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_grep()*
+
+>lua
+    Snacks.picker.actions.picker_grep(_, item)
+<
+
+
+SNACKS.PICKER.ACTIONS.PICKER_RECENT()*snacks-picker-snacks.picker.actions-snacks.picker.actions.picker_recent()*
+
+>lua
+    Snacks.picker.actions.picker_recent(_, item)
 <
 
 
@@ -2545,20 +2629,6 @@ item.
 <
 
 
-SNACKS.PICKER.ACTIONS.SPLIT()*snacks-picker-snacks.picker.actions-snacks.picker.actions.split()*
-
->lua
-    Snacks.picker.actions.split()
-<
-
-
-SNACKS.PICKER.ACTIONS.TAB()*snacks-picker-snacks.picker.actions-snacks.picker.actions.tab()*
-
->lua
-    Snacks.picker.actions.tab()
-<
-
-
 SNACKS.PICKER.ACTIONS.TOGGLE_FOCUS()*snacks-picker-snacks.picker.actions-snacks.picker.actions.toggle_focus()*
 
 >lua
@@ -2601,13 +2671,6 @@ SNACKS.PICKER.ACTIONS.TOGGLE_PREVIEW()*snacks-picker-snacks.picker.actions-snack
 <
 
 
-SNACKS.PICKER.ACTIONS.VSPLIT()*snacks-picker-snacks.picker.actions-snacks.picker.actions.vsplit()*
-
->lua
-    Snacks.picker.actions.vsplit()
-<
-
-
 SNACKS.PICKER.ACTIONS.YANK()*snacks-picker-snacks.picker.actions-snacks.picker.actions.yank()*
 
 >lua
@@ -2622,6 +2685,7 @@ SNACKS.PICKER.ACTIONS.YANK()*snacks-picker-snacks.picker.actions-snacks.picker.a
     ---@class snacks.Picker
     ---@field id number
     ---@field opts snacks.picker.Config
+    ---@field init_opts? snacks.picker.Config
     ---@field finder snacks.picker.Finder
     ---@field format snacks.picker.format
     ---@field input snacks.picker.input
@@ -2630,6 +2694,7 @@ SNACKS.PICKER.ACTIONS.YANK()*snacks-picker-snacks.picker.actions-snacks.picker.a
     ---@field list snacks.picker.list
     ---@field matcher snacks.picker.Matcher
     ---@field main number
+    ---@field _main snacks.picker.Main
     ---@field preview snacks.picker.Preview
     ---@field shown? boolean
     ---@field sort snacks.picker.sort
@@ -2640,6 +2705,14 @@ SNACKS.PICKER.ACTIONS.YANK()*snacks-picker-snacks.picker.actions-snacks.picker.a
     ---@field history snacks.picker.History
     ---@field visual? snacks.picker.Visual
     local M = {}
+<
+
+
+SNACKS.PICKER.PICKER.GET()*snacks-picker-snacks.picker.core.picker-snacks.picker.picker.get()*
+
+>lua
+    ---@param opts? {source?: string}
+    Snacks.picker.picker.get(opts)
 <
 
 
@@ -2771,6 +2844,13 @@ mode first, and then`vim.schedule` the callback.
 >lua
     ---@param cb fun()
     picker:norm(cb)
+<
+
+
+PICKER:ON_CURRENT_TAB()*snacks-picker-snacks.picker.core.picker-picker:on_current_tab()*
+
+>lua
+    picker:on_current_tab()
 <
 
 
