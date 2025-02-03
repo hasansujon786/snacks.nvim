@@ -145,6 +145,7 @@ local git_tree_status = {} ---@type table<string, string>
 ---@field on_find? fun()?
 ---@field git_status {file: string, status: string, sort?:string}[]
 ---@field expanded table<string, boolean>
+---@field cache table<string, snacks.picker.explorer.Item[]>
 local State = {}
 State.__index = State
 ---@param picker snacks.Picker
@@ -158,6 +159,7 @@ function State.new(picker)
   self.tick = 0
   self.git_status = {}
   self.expanded = {}
+  self.cache = {}
   local buf = vim.api.nvim_win_get_buf(picker.main)
   local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   if uv.fs_stat(buf_file) then
@@ -171,11 +173,11 @@ function State.new(picker)
     end)
   end)
   picker.list.win:on("TermClose", function()
-    self:update()
+    self:update({ force = true })
   end, { pattern = "*lazygit" })
   picker.list.win:on("BufWritePost", function(_, ev)
     if self:is_visible(ev.file) then
-      self:update()
+      self:update({ force = true })
     end
   end)
   picker.list.win:on("DirChanged", function(_, ev)
@@ -357,9 +359,12 @@ function State:setup(opts, ctx)
   return opts
 end
 
----@param opts? {target?: boolean, on_done?: fun()}
+---@param opts? {target?: boolean, on_done?: fun(), force?: boolean}
 function State:update(opts)
   opts = opts or {}
+  if opts.force then
+    self.cache = {}
+  end
   local picker = self:picker()
   if picker then
     if opts.target ~= false then
@@ -420,7 +425,7 @@ end
 ---@type table<string, snacks.picker.Action.spec>
 M.actions = {
   explorer_update = function(picker)
-    M.get_state(picker):update()
+    M.get_state(picker):update({ force = true })
   end,
   explorer_up = function(picker)
     M.get_state(picker):up()
@@ -571,7 +576,7 @@ M.actions = {
       return
     end
     local what = #paths == 1 and vim.fn.fnamemodify(paths[1], ":p:~:.") or #paths .. " files"
-    M.confirm("Delete " .. what .. "?", function(_, idx)
+    M.confirm("Delete " .. what .. "?", function()
       for _, path in ipairs(paths) do
         local ok, err = pcall(vim.fn.delete, path, "rf")
         if not ok then
@@ -637,21 +642,25 @@ function M.explorer(opts, ctx)
   local tick = state.tick
   opts.notify = false
   local expanded = {} ---@type table<string, boolean>
+  local use_cache = not state.all
   for _, dir in ipairs(opts.dirs or {}) do
     expanded[dir] = true
+    use_cache = use_cache and state.cache[dir] ~= nil
   end
-  -- vim.notify(table.concat(opts.dirs or {}, "\n"), "info")
+
+  if not use_cache then
+    state.cache = {}
+  end
 
   ---@param path string
   local function is_open(path)
     return state.all or expanded[path]
   end
 
-  local files = require("snacks.picker.source.files").files(opts, ctx)
-  local git = Git.status(opts, ctx)
-
-  local dirs = {} ---@type table<string, snacks.picker.explorer.Item>
-  local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>
+  ---@param item snacks.picker.explorer.Item
+  local function add_git_status(item)
+    item.status = (opts.git_status_open or not item.open) and git_tree_status[item.file or ""] or nil
+  end
 
   ---@type snacks.picker.explorer.Item
   local root = {
@@ -662,14 +671,32 @@ function M.explorer(opts, ctx)
     sort = "",
     internal = true,
   }
+
+  if use_cache then
+    local ret = { root } ---@type snacks.picker.explorer.Item[]
+    for _, dir in ipairs(opts.dirs or {}) do
+      for _, item in ipairs(state.cache[dir]) do
+        item.open = is_open(item.file)
+        add_git_status(item)
+        table.insert(ret, item)
+      end
+    end
+    if state.on_find then
+      state.on_find()
+      state.on_find = nil
+    end
+    return ret
+  end
+
+  local files = require("snacks.picker.source.files").files(opts, ctx)
+  local git = Git.status(opts, ctx)
+
+  local dirs = {} ---@type table<string, snacks.picker.explorer.Item>
+  local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>
+
   local cwd = state.cwd
   dirs[cwd] = root
   state.git_status = {}
-
-  ---@param item snacks.picker.explorer.Item
-  local function add_git_status(item)
-    item.status = (opts.git_status_open or not item.open) and git_tree_status[item.file or ""] or nil
-  end
 
   ---@async
   return function(cb)
@@ -684,6 +711,9 @@ function M.explorer(opts, ctx)
       local dirname, basename = item.file:match("(.*)/(.*)")
       dirname, basename = dirname or "", basename or item.file
       local parent = dirs[dirname] ~= item and dirs[dirname] or root
+
+      state.cache[dirname] = state.cache[dirname] or {}
+      table.insert(state.cache[dirname], item)
 
       -- hierarchical sorting
       if item.dir then
@@ -707,6 +737,7 @@ function M.explorer(opts, ctx)
       -- add to picker
       cb(item)
     end
+    -- ctx.async:sleep(1000)
 
     -- get files and directories
     files(function(item)

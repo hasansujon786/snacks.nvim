@@ -1,5 +1,7 @@
 ---@module 'luassert'
 
+vim.g.mapleader = " "
+
 describe("util.normkey", function()
   local normkey = require("snacks.util").normkey
 
@@ -19,6 +21,14 @@ describe("util.normkey", function()
     ["<c-down>"] = "<C-Down>",
     ["<scrollwheelUP>"] = "<ScrollWheelUp>",
     ["<c-scrollwheelUP>"] = "<C-ScrollWheelUp>",
+    ["<Space>"] = "<Space>",
+    ["<space>"] = "<Space>",
+    ["<space><space>"] = "<Space><Space>",
+    ["<leader>"] = "<Space>",
+    ["<leader> "] = "<Space><Space>",
+    ["<leader><leader>"] = "<Space><Space>",
+    ["<p"] = "<p",
+    ["<lt>p"] = "<p",
   }
 
   for input, expected in pairs(tests) do
