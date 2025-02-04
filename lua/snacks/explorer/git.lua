@@ -56,6 +56,7 @@ function M.update(cwd, opts)
       "-uall",
       "--porcelain=v1",
       "--ignored=matching",
+      "-z",
     },
   }, function()
     stdout:close()
@@ -71,7 +72,7 @@ function M.update(cwd, opts)
       return
     end
     local ret = {} ---@type snacks.explorer.git.Status[]
-    for _, line in ipairs(vim.split(output, "\r?\n")) do
+    for _, line in ipairs(vim.split(output, "\0")) do
       if line ~= "" then
         local status, file = line:sub(1, 2), line:sub(4)
         ret[#ret + 1] = {
@@ -82,7 +83,7 @@ function M.update(cwd, opts)
     end
     M._update(cwd, ret)
     if opts and opts.on_update then
-      opts.on_update()
+      vim.schedule(opts.on_update)
     end
   end
 
@@ -150,7 +151,7 @@ function M.next(cwd, path, up)
   local next ---@type snacks.picker.explorer.Node?
   local found = false
   Tree:walk(root, function(node)
-    local want = node.type ~= "directory" and node.status and not node.ignored
+    local want = not node.dir and node.status and not node.ignored
     if node.path == path then
       found = true
     end

@@ -34,7 +34,11 @@ function State.new(picker)
   local self = setmetatable({}, State)
 
   local opts = picker.opts --[[@as snacks.picker.explorer.Config]]
-  local ref = picker:ref()
+  local r = picker:ref()
+  local function ref()
+    local v = r.value
+    return v and not v.closed and v or nil
+  end
 
   local buf = vim.api.nvim_win_get_buf(picker.main)
   local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
@@ -58,11 +62,10 @@ function State.new(picker)
 
   picker.list.win:on("BufWritePost", function(_, ev)
     local p = ref()
-    if not p then
-      return true
+    if p then
+      Tree:refresh(ev.file)
+      Actions.update(p)
     end
-    Tree:refresh(ev.file)
-    Actions.update(p)
   end)
 
   picker.list.win:on("DirChanged", function(_, ev)
@@ -81,7 +84,7 @@ function State.new(picker)
           return
         end
         local p = ref()
-        if not p or p:is_focused() or not p:on_current_tab() then
+        if not p or p:is_focused() or not p:on_current_tab() or p.closed then
           return
         end
         local win = vim.api.nvim_get_current_win()
@@ -160,6 +163,21 @@ function M.setup(opts)
           end
         end
       end,
+      on_done = function()
+        if not searching then
+          return
+        end
+        local picker = ref.value
+        if not picker or picker.closed then
+          return
+        end
+        for item, idx in picker:iter() do
+          if not item.dir then
+            picker.list:view(idx)
+            return
+          end
+        end
+      end,
     },
     formatters = {
       file = {
@@ -189,6 +207,10 @@ function M.explorer(opts, ctx)
   if opts.git_status then
     require("snacks.explorer.git").update(ctx.filter.cwd, {
       on_update = function()
+        if ctx.picker.closed then
+          return
+        end
+        ctx.picker.list:set_target()
         ctx.picker:find()
       end,
     })
@@ -201,21 +223,27 @@ function M.explorer(opts, ctx)
     end
     local items = {} ---@type table<string, snacks.picker.explorer.Item>
     local top = Tree:find(ctx.filter.cwd)
+    local last = {} ---@type table<snacks.picker.explorer.Node, snacks.picker.explorer.Item>
     Tree:get(ctx.filter.cwd, function(node)
       local item = {
         file = node.path,
-        dir = node.type == "directory",
+        dir = node.dir,
         open = node.open,
         text = node.path,
         parent = node.parent and items[node.parent.path] or nil,
         hidden = node.hidden,
         ignored = node.ignored,
-        status = (node.type ~= "directory" or not node.open or opts.git_status_open) and node.status or nil,
-        last = node.last,
+        status = (not node.dir or not node.open or opts.git_status_open) and node.status or nil,
+        last = true,
         type = node.type,
       }
+      if last[node.parent] then
+        last[node.parent].last = false
+      end
+      last[node.parent] = item
       if top == node then
         item.hidden = false
+        item.ignored = false
       end
       items[node.path] = item
       cb(item)
@@ -258,21 +286,6 @@ function M.search(opts, ctx)
   ---@async
   return function(cb)
     cb(root)
-    -- focus the first non-internal item
-    ctx.picker.matcher.task:on(
-      "done",
-      vim.schedule_wrap(function()
-        if ctx.picker.closed then
-          return
-        end
-        for item, idx in ctx.picker:iter() do
-          if not item.internal then
-            ctx.picker.list:view(idx)
-            return
-          end
-        end
-      end)
-    )
 
     ---@param item snacks.picker.explorer.Item
     local function add(item)
@@ -289,9 +302,10 @@ function M.search(opts, ctx)
       if basename:sub(1, 1) == "." then
         item.hidden = true
       end
+      item.text = item.text:sub(1, #opts.cwd) == opts.cwd and item.text:sub(#opts.cwd + 2) or item.text
       local node = Tree:find(item.file)
       if node then
-        item.status = (node.type ~= "directory" or opts.git_status_open) and node.status or nil
+        item.status = (not node.dir or opts.git_status_open) and node.status or nil
       end
 
       if opts.tree then

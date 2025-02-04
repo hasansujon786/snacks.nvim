@@ -59,7 +59,7 @@ M.explorer = {
   -- your config under `opts.picker.sources.explorer`
   -- layout = { layout = { position = "right" } },
   formatters = { file = { filename_only = true } },
-  matcher = { sort_empty = false },
+  matcher = { sort_empty = false, fuzzy = false },
   config = function(opts)
     return require("snacks.picker.source.explorer").setup(opts)
   end,

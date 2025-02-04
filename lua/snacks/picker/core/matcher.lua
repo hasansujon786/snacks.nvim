@@ -7,6 +7,7 @@ local Async = require("snacks.picker.util.async")
 ---@class snacks.picker.matcher.Config
 ---@field regex? boolean used internally for positions of sources that use regex
 ---@field on_match? fun(matcher: snacks.picker.Matcher, item: snacks.picker.Item)
+---@field on_done? fun(matcher: snacks.picker.Matcher)
 
 ---@class snacks.picker.Matcher
 ---@field opts snacks.picker.matcher.Config
@@ -91,6 +92,9 @@ function M:run(picker)
   if not (self.sorting or picker.finder.task:running()) then
     picker.list.items = picker.finder.items
     picker:update({ force = true })
+    if self.opts.on_done then
+      self.opts.on_done(self)
+    end
     return
   end
 
@@ -157,6 +161,11 @@ function M:run(picker)
     until idx >= #picker.finder.items and not picker.finder.task:running()
 
     picker:update({ force = true })
+    if self.opts.on_done then
+      vim.schedule(function()
+        self.opts.on_done(self)
+      end)
+    end
   end)
 end
 

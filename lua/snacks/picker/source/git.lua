@@ -106,6 +106,7 @@ function M.status(opts, ctx)
     "status",
     "-uall",
     "--porcelain=v1",
+    "-z",
   }
   if opts.ignored then
     table.insert(args, "--ignored=matching")
@@ -116,6 +117,7 @@ function M.status(opts, ctx)
   return require("snacks.picker.source.proc").proc({
     opts,
     {
+      sep = "\0",
       cwd = cwd,
       cmd = "git",
       args = args,
