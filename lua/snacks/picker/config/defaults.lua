@@ -99,6 +99,7 @@ local M = {}
 ---@field main? snacks.picker.main.Config main editor window config
 ---@field on_change? fun(picker:snacks.Picker, item?:snacks.picker.Item) called when the cursor changes
 ---@field on_show? fun(picker:snacks.Picker) called when the picker is shown
+---@field on_close? fun(picker:snacks.Picker) called when the picker is closed
 ---@field jump? snacks.picker.jump.Config|{}
 --- Other
 ---@field config? fun(opts:snacks.picker.Config):snacks.picker.Config? custom config function
@@ -376,6 +377,8 @@ local defaults = {
   debug = {
     scores = false, -- show scores in the list
     leaks = false, -- show when pickers don't get garbage collected
+    explorer = false, -- show explorer debug info
+    files = false, -- show file debug info
   },
 }
 

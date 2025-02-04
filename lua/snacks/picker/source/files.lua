@@ -148,6 +148,9 @@ function M.files(opts, ctx)
   if not cmd then
     return function() end
   end
+  if opts.debug.files then
+    Snacks.notify(cmd .. " " .. table.concat(args or {}, " "))
+  end
   return require("snacks.picker.source.proc").proc({
     opts,
     {

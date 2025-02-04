@@ -83,6 +83,7 @@ function M.have_tool(tools)
 
   local all = {} ---@type string[]
   local found = false
+  local version_ok = false
   for _, tool in ipairs(tools) do
     if tool.enabled ~= false then
       local tool_version = tool.version and vim.version.parse(tool.version)
@@ -93,9 +94,10 @@ function M.have_tool(tools)
           local version = vim.fn.system(cmd .. " --version") or ""
           version = vim.trim(vim.split(version, "\n")[1])
           if tool_version and tool_version > vim.version.parse(version) then
-            M.warn("'" .. cmd .. "' `" .. version .. "` is too old, expected `" .. tool.version .. "`")
+            M.error("'" .. cmd .. "' `" .. version .. "` is too old, expected `" .. tool.version .. "`")
           else
             M.ok("'" .. cmd .. "' `" .. version .. "`")
+            version_ok = true
           end
           found = true
         end
@@ -103,7 +105,7 @@ function M.have_tool(tools)
     end
   end
   if found then
-    return true
+    return true, version_ok
   end
   all = vim.tbl_map(function()
     return "'" .. tostring(_) .. "'"

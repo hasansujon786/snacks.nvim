@@ -16,21 +16,32 @@ function M.health()
   Snacks.health.has_lang("regex")
 
   Snacks.health.have_tool("git")
+
   local have_rg = Snacks.health.have_tool("rg")
-  local have_fd = Snacks.health.have_tool({
+  if not have_rg then
+    Snacks.health.error("'rg' is required for `Snacks.picker.grep()`")
+  else
+    Snacks.health.ok("`Snacks.picker.grep()` is available")
+  end
+
+  local have_fd, version_fd = Snacks.health.have_tool({
     { cmd = { "fd", "fdfind" }, version = "v8.4" },
+  })
+  local have_find = Snacks.health.have_tool({
     { cmd = "find", enabled = jit.os:find("Windows") == nil },
   })
+  if have_rg or have_fd or have_find then
+    Snacks.health.ok("`Snacks.picker.files()` is available")
+  else
+    Snacks.health.error("'rg', 'fd' or 'find' is required for `Snacks.picker.files()`")
+  end
 
-  if not have_rg then
-    Snacks.health.warn("'rg' is required for `Snacks.picker.grep()`")
+  if not have_fd or not version_fd then
+    Snacks.health.error("'fd' `v8.4` is required for `Snacks.picker.explorer()`")
+  else
+    Snacks.health.ok("`Snacks.picker.explorer()` is available")
   end
-  if not have_rg and not have_fd then
-    Snacks.health.warn("'rg' or 'fd' is required for `Snacks.picker.files()`")
-  end
-  if not have_fd then
-    Snacks.health.warn("'fd' is required for `Snacks.picker.explorer()`")
-  end
+
   local ok = pcall(require, "snacks.picker.util.db")
   if ok then
     Snacks.health.ok("`SQLite3` is available")

@@ -6,6 +6,7 @@ local Async = require("snacks.picker.util.async")
 
 ---@class snacks.picker.matcher.Config
 ---@field regex? boolean used internally for positions of sources that use regex
+---@field on_match? fun(matcher: snacks.picker.Matcher, item: snacks.picker.Item)
 
 ---@class snacks.picker.Matcher
 ---@field opts snacks.picker.matcher.Config
@@ -326,6 +327,9 @@ function M:update(item)
       then
         score = score + BONUS_CWD
       end
+    end
+    if self.opts.on_match then
+      self.opts.on_match(self, item)
     end
   end
   item.match_tick, item.score, item.match_topk = self.tick, score, nil
