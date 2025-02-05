@@ -52,7 +52,7 @@ local M = {}
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
 ---@field fullscreen? boolean open in fullscreen
 ---@field cycle? boolean cycle through the list
----@field preview? boolean|"main" show preview window in the picker or the main window
+---@field preview? boolean|"main"|{enabled?:boolean, main?:boolean} show preview window in the picker or the main window
 ---@field preset? string|fun(source:string):string
 
 ---@class snacks.picker.win.Config

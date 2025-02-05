@@ -90,8 +90,13 @@ function M.jump(picker, _, action)
 
       -- use an existing window if possible
       if cmd == "buffer" and #items == 1 and picker.opts.jump.reuse_win and buf ~= current_buf then
-        win = vim.fn.win_findbuf(buf)[1] or win
-        vim.api.nvim_set_current_win(win)
+        for _, w in ipairs(vim.fn.win_findbuf(buf)) do
+          if vim.api.nvim_win_get_config(w).relative == "" then
+            win = w
+            vim.api.nvim_set_current_win(win)
+            break
+          end
+        end
       end
 
       -- open the first buffer
