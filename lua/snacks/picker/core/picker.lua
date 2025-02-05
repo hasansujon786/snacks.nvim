@@ -174,7 +174,9 @@ function M.new(opts)
   self.resolved_layout = layout
   self.list = require("snacks.picker.core.list").new(self)
   self.input = require("snacks.picker.core.input").new(self)
-  self.preview = require("snacks.picker.core.preview").new(self.opts, self:preview_opts().main and self.main or nil)
+  local preview_opts = self:preview_opts()
+  local preview_main = preview_opts.main and self.main or nil
+  self.preview = require("snacks.picker.core.preview").new(self.opts, preview_main)
 
   self.title = self.opts.title or Snacks.picker.util.title(self.opts.source or "search")
 
@@ -333,7 +335,7 @@ function M:init_layout(layout)
     end
   end, { buf = true, nested = true })
 
-  self.preview:update(preview_main and self.main or nil)
+  self.preview:update(preview_main and not preview_hidden and self.main or nil)
   -- apply box highlight groups
   local boxwhl = Snacks.picker.highlight.winhl("SnacksPickerBox")
   for _, win in pairs(self.layout.box_wins) do

@@ -4,9 +4,6 @@ local Tree = require("snacks.explorer.tree")
 
 local M = {}
 
----@class snacks.picker
----@field explorer fun(opts?: snacks.picker.explorer.Config|{}): snacks.Picker
-
 ---@type table<snacks.Picker, snacks.picker.explorer.State>
 M._state = setmetatable({}, { __mode = "k" })
 local uv = vim.uv or vim.loop
@@ -40,6 +37,8 @@ function State.new(picker)
     return v and not v.closed and v or nil
   end
 
+  Tree:refresh(picker:cwd())
+
   local buf = vim.api.nvim_win_get_buf(picker.main)
   local buf_file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   if uv.fs_stat(buf_file) then
@@ -51,14 +50,6 @@ function State.new(picker)
       require("snacks.explorer.watch").abort()
     end
   end
-
-  picker.list.win:on("TermClose", function()
-    local p = ref()
-    if p then
-      Tree:refresh(p:cwd())
-      Actions.update(p)
-    end
-  end, { pattern = "*lazygit" })
 
   picker.list.win:on("BufWritePost", function(_, ev)
     local p = ref()

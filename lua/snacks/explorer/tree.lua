@@ -115,6 +115,7 @@ function Tree:close(path)
   local dir = self:dir(path)
   local node = self:find(dir)
   node.open = false
+  node.expanded = false -- clear expanded state
 end
 
 ---@param node snacks.picker.explorer.Node
@@ -220,6 +221,9 @@ end
 ---@param opts? {hidden?: boolean, ignored?: boolean}
 function Tree:is_dirty(cwd, opts)
   opts = opts or {}
+  if require("snacks.explorer.git").is_dirty(cwd) then
+    return true
+  end
   local dirty = false
   self:get(cwd, function(n)
     if n.dir and n.open and not n.expanded then

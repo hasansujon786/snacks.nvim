@@ -4,16 +4,6 @@ local uv = vim.uv or vim.loop
 
 local commit_pat = ("[a-z0-9]"):rep(7)
 
----@class snacks.picker
----@field git_files fun(opts?: snacks.picker.git.files.Config): snacks.Picker
----@field git_log fun(opts?: snacks.picker.git.log.Config): snacks.Picker
----@field git_log_file fun(opts?: snacks.picker.git.log.Config): snacks.Picker
----@field git_log_line fun(opts?: snacks.picker.git.log.Config): snacks.Picker
----@field git_status fun(opts?: snacks.picker.Config): snacks.Picker
----@field git_diff fun(opts?: snacks.picker.Config): snacks.Picker
----@field git_branches fun(opts?: snacks.picker.Config): snacks.Picker
----@field git_stash fun(opts?: snacks.picker.Config): snacks.Picker
-
 ---@param opts snacks.picker.git.files.Config
 ---@type snacks.picker.finder
 function M.files(opts, ctx)

@@ -7,14 +7,6 @@ local M = {}
 
 local islist = vim.islist or vim.tbl_islist
 
----@class snacks.picker
----@field lsp_definitions? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
----@field lsp_implementations? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
----@field lsp_declarations? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
----@field lsp_type_definitions? fun(opts?: snacks.picker.lsp.Config):snacks.Picker
----@field lsp_references? fun(opts?: snacks.picker.lsp.references.Config):snacks.Picker
----@field lsp_symbols? fun(opts?: snacks.picker.lsp.symbols.Config):snacks.Picker
-
 ---@alias lsp.Symbol lsp.SymbolInformation|lsp.DocumentSymbol
 ---@alias lsp.Loc lsp.Location|lsp.LocationLink
 

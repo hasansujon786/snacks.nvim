@@ -1,9 +1,5 @@
 local M = {}
 
----@class snacks.picker
----@field files fun(opts?: snacks.picker.files.Config|{}): snacks.Picker
----@field zoxide fun(opts?: snacks.picker.Config|{}): snacks.Picker
-
 local uv = vim.uv or vim.loop
 
 ---@type {cmd:string[], args:string[], enabled?:boolean, available?:boolean|string}[]
