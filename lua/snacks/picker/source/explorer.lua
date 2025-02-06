@@ -106,7 +106,7 @@ function State:setup(ctx)
   if opts.watch then
     require("snacks.explorer.watch").watch(ctx.filter.cwd)
   end
-  return #ctx.filter.pattern > 0
+  return not ctx.filter:is_empty()
 end
 
 ---@param opts snacks.picker.explorer.Config
@@ -123,7 +123,7 @@ function M.setup(opts)
       ---@param filter snacks.picker.Filter
       transform = function(picker, filter)
         ref = picker:ref()
-        local s = #filter.pattern > 0
+        local s = not filter:is_empty()
         if searching ~= s then
           searching = s
           filter.meta.searching = searching
@@ -146,6 +146,7 @@ function M.setup(opts)
             if parent.score == 0 or parent.match_tick ~= matcher.tick then
               parent.score = 1
               parent.match_tick = matcher.tick
+              parent.match_topk = nil
               picker.list:add(parent)
             else
               break
@@ -294,7 +295,7 @@ function M.search(opts, ctx)
         item.hidden = true
       end
       item.text = item.text:sub(1, #opts.cwd) == opts.cwd and item.text:sub(#opts.cwd + 2) or item.text
-      local node = Tree:find(item.file)
+      local node = Tree:node(item.file)
       if node then
         item.status = (not node.dir or opts.git_status_open) and node.status or nil
       end
@@ -333,7 +334,9 @@ function M.search(opts, ctx)
 
       -- Add parents when needed
       for dir in Snacks.picker.util.parents(item.file, opts.cwd) do
-        if not dirs[dir] then
+        if dirs[dir] then
+          break
+        else
           dirs[dir] = {
             text = dir,
             file = dir,
