@@ -196,7 +196,7 @@ function M.colorschemes()
   if package.loaded.lazy then
     rtp = rtp .. "," .. table.concat(require("lazy.core.util").get_unloaded_rtp(""), ",")
   end
-  local files = vim.fn.globpath(rtp, "colors/*", true, true) ---@type string[]
+  local files = vim.fn.globpath(rtp, "colors/*", false, true) ---@type string[]
   for _, file in ipairs(files) do
     local name = vim.fn.fnamemodify(file, ":t:r")
     local ext = vim.fn.fnamemodify(file, ":e")

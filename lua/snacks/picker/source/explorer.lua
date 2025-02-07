@@ -46,8 +46,12 @@ function State.new(picker)
   end
 
   if opts.watch then
-    picker.opts.on_close = function()
+    local on_close = picker.opts.on_close
+    picker.opts.on_close = function(p)
       require("snacks.explorer.watch").abort()
+      if on_close then
+        on_close(p)
+      end
     end
   end
 

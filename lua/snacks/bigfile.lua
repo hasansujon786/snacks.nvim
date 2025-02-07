@@ -40,7 +40,13 @@ function M.setup()
           if not path or not buf or vim.bo[buf].filetype == "bigfile" then
             return
           end
+          if path ~= vim.api.nvim_buf_get_name(buf) then
+            return
+          end
           local size = vim.fn.getfsize(path)
+          if size <= 0 then
+            return
+          end
           if size > opts.size then
             return "bigfile"
           end
