@@ -32,6 +32,49 @@ function M.files(opts, ctx)
   }, ctx)
 end
 
+---@param opts snacks.picker.git.grep.Config
+---@type snacks.picker.finder
+function M.grep(opts, ctx)
+  if opts.need_search ~= false and ctx.filter.search == "" then
+    return function() end
+  end
+  local args = { "-c", "core.quotepath=false", "grep", "--line-number", "--column", "--no-color", "-I" }
+  if opts.untracked then
+    table.insert(args, "--untracked")
+  elseif opts.submodules then
+    table.insert(args, "--recurse-submodules")
+  end
+  table.insert(args, ctx.filter.search)
+  if not opts.cwd then
+    opts.cwd = Snacks.git.get_root() or uv.cwd() or "."
+    ctx.picker:set_cwd(opts.cwd)
+  end
+  local cwd = vim.fs.normalize(opts.cwd) or nil
+  return require("snacks.picker.source.proc").proc({
+    opts,
+    {
+      cmd = "git",
+      args = args,
+      notify = false,
+      ---@param item snacks.picker.finder.Item
+      transform = function(item)
+        item.cwd = cwd
+        local file, line, col, text = item.text:match("^(.+):(%d+):(%d+):(.*)$")
+        if not file then
+          if not item.text:match("WARNING") then
+            Snacks.notify.error("invalid grep output:\n" .. item.text)
+          end
+          return false
+        else
+          item.line = text
+          item.file = file
+          item.pos = { tonumber(line), tonumber(col) - 1 }
+        end
+      end,
+    },
+  }, ctx)
+end
+
 ---@param opts snacks.picker.git.log.Config
 ---@type snacks.picker.finder
 function M.log(opts, ctx)

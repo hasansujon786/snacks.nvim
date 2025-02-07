@@ -78,7 +78,8 @@ function M.open(cmd, opts)
     position = cmd and "float" or "bottom",
   }, opts.win, { show = false })
   opts = vim.deepcopy(opts)
-  opts.win.wo.winbar = opts.win.wo.winbar or (opts.win.position == "float" and "" or (id .. ": %{b:term_title}"))
+  opts.win.wo.winbar = opts.win.wo.winbar
+    or (opts.win.position == "float" and "" or (id .. ": %{get(b:, 'term_title', '')}"))
 
   if opts.override then
     return opts.override(cmd, opts)
@@ -133,6 +134,12 @@ function M.open(cmd, opts)
     terminal:close()
   end)
 
+  terminal:on("BufWipeout", function()
+    vim.schedule(function()
+      terminal:close()
+    end)
+  end, { buf = true })
+
   terminal:show()
   vim.api.nvim_buf_call(terminal.buf, function()
     local term_opts = {
@@ -160,10 +167,21 @@ function M.get(cmd, opts)
   local id = vim.inspect({ cmd = cmd, cwd = opts.cwd, env = opts.env, count = vim.v.count1 })
   local created = false
   if not (terminals[id] and terminals[id]:buf_valid()) and (opts.create ~= false) then
-    terminals[id] = M.open(cmd, opts)
+    local ret = M.open(cmd, opts)
+    ret:on("BufWipeout", function()
+      terminals[id] = nil
+    end, { buf = true })
+    terminals[id] = ret
     created = true
   end
   return terminals[id], created
+end
+
+---@return snacks.win[]
+function M.list()
+  return vim.tbl_filter(function(t)
+    return t:buf_valid()
+  end, terminals)
 end
 
 --- Toggle a terminal window.

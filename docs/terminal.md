@@ -171,6 +171,13 @@ The terminal id is based on the `cmd`, `cwd`, `env` and `vim.v.count1` options.
 Snacks.terminal.get(cmd, opts)
 ```
 
+### `Snacks.terminal.list()`
+
+```lua
+---@return snacks.win[]
+Snacks.terminal.list()
+```
+
 ### `Snacks.terminal.open()`
 
 Open a new terminal window.

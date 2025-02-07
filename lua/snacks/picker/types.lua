@@ -14,6 +14,7 @@
 ---@field git_branches fun(opts?: snacks.picker.Config|{}): snacks.Picker
 ---@field git_diff fun(opts?: snacks.picker.Config|{}): snacks.Picker
 ---@field git_files fun(opts?: snacks.picker.git.files.Config|{}): snacks.Picker
+---@field git_grep fun(opts?: snacks.picker.git.grep.Config|{}): snacks.Picker
 ---@field git_log fun(opts?: snacks.picker.git.log.Config|{}): snacks.Picker
 ---@field git_log_file fun(opts?: snacks.picker.git.log.Config|{}): snacks.Picker
 ---@field git_log_line fun(opts?: snacks.picker.git.log.Config|{}): snacks.Picker

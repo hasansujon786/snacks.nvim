@@ -71,6 +71,15 @@ function State.new(picker)
     end
   end)
 
+  picker.list.win:on("DiagnosticChanged", function(_, ev)
+    local p = ref()
+    if p then
+      require("snacks.explorer.diagnostics").update(p:cwd())
+      p.list:set_target()
+      p:find()
+    end
+  end)
+
   -- schedule initial follow
   if opts.follow_file then
     picker.list.win:on({ "WinEnter", "BufEnter" }, function(_, ev)
@@ -202,6 +211,7 @@ function M.explorer(opts, ctx)
 
   if opts.git_status then
     require("snacks.explorer.git").update(ctx.filter.cwd, {
+      untracked = opts.git_untracked,
       on_update = function()
         if ctx.picker.closed then
           return
@@ -210,6 +220,10 @@ function M.explorer(opts, ctx)
         ctx.picker:find()
       end,
     })
+  end
+
+  if opts.diagnostics then
+    require("snacks.explorer.diagnostics").update(ctx.filter.cwd)
   end
 
   return function(cb)
@@ -221,17 +235,24 @@ function M.explorer(opts, ctx)
     local top = Tree:find(ctx.filter.cwd)
     local last = {} ---@type table<snacks.picker.explorer.Node, snacks.picker.explorer.Item>
     Tree:get(ctx.filter.cwd, function(node)
+      local parent = node.parent and items[node.parent.path] or nil
+      local status = node.status
+      if not status and parent and parent.dir_status then
+        status = parent.dir_status
+      end
       local item = {
         file = node.path,
         dir = node.dir,
         open = node.open,
+        dir_status = node.dir_status or parent and parent.dir_status,
         text = node.path,
-        parent = node.parent and items[node.parent.path] or nil,
+        parent = parent,
         hidden = node.hidden,
         ignored = node.ignored,
-        status = (not node.dir or not node.open or opts.git_status_open) and node.status or nil,
+        status = (not node.dir or not node.open or opts.git_status_open) and status or nil,
         last = true,
         type = node.type,
+        severity = (not node.dir or not node.open or opts.diagnostics_open) and node.severity or nil,
       }
       if last[node.parent] then
         last[node.parent].last = false
