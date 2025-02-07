@@ -259,7 +259,6 @@ function M.search(opts, ctx)
     "d", -- include directories
     "--path-separator", -- same everywhere
     "/",
-    "--follow", -- always needed to make sure we see symlinked dirs as dirs
   }
   opts.dirs = { ctx.filter.cwd }
   ctx.picker.list:set_target()
@@ -295,12 +294,12 @@ function M.search(opts, ctx)
       else
         item.sort = parent.sort .. "#" .. basename .. " "
       end
-      if basename:sub(1, 1) == "." then
-        item.hidden = true
-      end
+      item.hidden = basename:sub(1, 1) == "."
       item.text = item.text:sub(1, #opts.cwd) == opts.cwd and item.text:sub(#opts.cwd + 2) or item.text
       local node = Tree:node(item.file)
       if node then
+        item.dir = node.dir
+        item.type = node.type
         item.status = (not node.dir or opts.git_status_open) and node.status or nil
       end
 

@@ -101,6 +101,8 @@ function M.projects(opts, ctx)
       end
     end
 
+    vim.tbl_map(add, opts.projects or {})
+
     if not proc then
       return
     end
