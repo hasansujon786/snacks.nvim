@@ -8,6 +8,10 @@ local M = {}
 ---@class snacks.picker.layout.Action: snacks.picker.Action
 ---@field layout? snacks.picker.layout.Config|string
 
+---@class snacks.picker.yank.Action: snacks.picker.Action
+---@field reg? string
+---@field field? string
+
 ---@enum (key) snacks.picker.EditCmd
 local edit_cmd = {
   edit = "buffer",
@@ -422,9 +426,10 @@ function M.loclist(picker)
 end
 
 function M.yank(picker, item, action)
+  ---@cast action snacks.picker.yank.Action
   if item then
     local reg = action.reg or "+"
-    local value = item.data or item.text
+    local value = item[action.field] or item.data or item.text
     vim.fn.setreg(reg, value)
     local buf = item.buf or vim.api.nvim_win_get_buf(picker.main)
     local ft = vim.bo[buf].filetype

@@ -583,6 +583,12 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
+---@class snacks.picker.yank.Action: snacks.picker.Action
+---@field reg? string
+---@field field? string
+```
+
+```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -1952,6 +1958,37 @@ Not meant to be used directly.
 }
 ```
 
+### `treesitter`
+
+```vim
+:lua Snacks.picker.treesitter(opts?)
+```
+
+```lua
+---@class snacks.picker.treesitter.Config: snacks.picker.Config
+---@field filter table<string, string[]|boolean>? symbol kind filter
+{
+  finder = "treesitter_symbols",
+  format = "lsp_symbol",
+  filter = {
+    default = {
+      "Class",
+      "Enum",
+      "Field",
+      "Function",
+      "Method",
+      "Module",
+      "Namespace",
+      "Struct",
+      "Trait",
+    },
+    -- set to `true` to include all symbols
+    markdown = true,
+    help = true,
+  },
+}
+```
+
 ### `undo`
 
 ```vim
@@ -1970,9 +2007,14 @@ Not meant to be used directly.
     preview = { wo = { number = false, relativenumber = false, signcolumn = "no" } },
     input = {
       keys = {
-        ["<c-y>"] = { "yank", mode = { "n", "i" } },
+        ["<c-y>"] = { "yank_add", mode = { "n", "i" } },
+        ["<c-s-y>"] = { "yank_del", mode = { "n", "i" } },
       },
     },
+  },
+  actions = {
+    yank_add = { action = "yank", field = "added_lines" },
+    yank_del = { action = "yank", field = "removed_lines" },
   },
   icons = { tree = { last = "┌╴" } }, -- the tree is upside down
   diff = {

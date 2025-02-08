@@ -363,17 +363,16 @@ function M.undo(opts, ctx)
 
     local diff = vim.diff(table.concat(before, "\n") .. "\n", table.concat(after, "\n") .. "\n", opts.diff) --[[@as string]]
     local changes = {} ---@type string[]
-    local added, removed = 0, 0
     local added_lines = {} ---@type string[]
+    local removed_lines = {} ---@type string[]
 
     for _, line in ipairs(vim.split(diff, "\n")) do
       if line:sub(1, 1) == "+" then
-        added = added + 1
         changes[#changes + 1] = line:sub(2)
         added_lines[#added_lines + 1] = line:sub(2)
       elseif line:sub(1, 1) == "-" then
-        removed = removed + 1
         changes[#changes + 1] = line:sub(2)
+        removed_lines[#removed_lines + 1] = line:sub(2)
       end
     end
     diff = Snacks.picker.util.tpl(
@@ -382,8 +381,10 @@ function M.undo(opts, ctx)
     )
     item.text = table.concat(changes, " ")
     item.data = table.concat(added_lines, "\n")
-    item.added = added
-    item.removed = removed
+    item.added_lines = table.concat(added_lines, "\n")
+    item.removed_lines = table.concat(removed_lines, "\n")
+    item.added = #added_lines
+    item.removed = #removed_lines
     item.preview = {
       text = diff,
       ft = "diff",
