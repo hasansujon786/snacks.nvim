@@ -82,11 +82,13 @@ function M.update(cwd, opts)
     local ret = {} ---@type snacks.explorer.git.Status[]
     for _, line in ipairs(vim.split(output, "\0")) do
       if line ~= "" then
-        local status, file = line:sub(1, 2), line:sub(4)
-        ret[#ret + 1] = {
-          status = status,
-          file = root .. "/" .. file,
-        }
+        local status, file = line:match("^(..) (.+)$")
+        if status then
+          ret[#ret + 1] = {
+            status = status,
+            file = root .. "/" .. file,
+          }
+        end
       end
     end
     M._update(cwd, ret)

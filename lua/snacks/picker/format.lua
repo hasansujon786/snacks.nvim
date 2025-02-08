@@ -541,6 +541,16 @@ function M.git_status(item, picker)
   local hl = hls[s] or "SnacksPickerGitStatus"
   ret[#ret + 1] = { a(item.status, 2, { align = "right" }), hl }
   ret[#ret + 1] = { " " }
+  if item.rename then
+    local file = item.file
+    item.file = item.rename
+    item._path = nil
+    vim.list_extend(ret, M.filename(item, picker))
+    item.file = file
+    item._path = nil
+    ret[#ret + 1] = { "-> ", "SnacksPickerDelim" }
+    ret[#ret + 1] = { " " }
+  end
   vim.list_extend(ret, M.filename(item, picker))
   return ret
 end

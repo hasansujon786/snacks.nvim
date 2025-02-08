@@ -975,7 +975,7 @@ Neovim commands
         ["y"] = "explorer_yank",
         ["u"] = "explorer_update",
         ["<c-c>"] = "tcd",
-        ["<c-f>"] = "picker_grep",
+        ["<leader>/"] = "picker_grep",
         ["<c-t>"] = "terminal",
         ["."] = "explorer_focus",
         ["I"] = "toggle_ignored",
