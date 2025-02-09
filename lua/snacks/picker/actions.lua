@@ -477,11 +477,7 @@ function M.cmd(picker, item)
   picker:close()
   if item and item.cmd then
     vim.schedule(function()
-      if item.command and (item.command.nargs ~= "0") then
-        vim.api.nvim_input(":" .. item.cmd .. " ")
-      else
-        vim.cmd(item.cmd)
-      end
+      vim.api.nvim_input(":" .. item.cmd)
     end)
   end
 end

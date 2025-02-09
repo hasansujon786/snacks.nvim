@@ -109,6 +109,7 @@ Snacks.picker.pick({source = "files", ...})
 ---@field jump? snacks.picker.jump.Config|{}
 --- Other
 ---@field config? fun(opts:snacks.picker.Config):snacks.picker.Config? custom config function
+---@field db? snacks.picker.db.Config|{}
 ---@field debug? snacks.picker.debug|{}
 {
   prompt = " ",
@@ -396,6 +397,13 @@ Snacks.picker.pick({source = "files", ...})
       Value         = " ",
       Variable      = "󰀫 ",
     },
+  },
+  ---@class snacks.picker.db.Config
+  db = {
+    -- path to the sqlite3 library
+    -- If not set, it will try to load the library by name.
+    -- On Windows it will download the library from the internet.
+    sqlite3_path = nil, ---@type string?
   },
   ---@class snacks.picker.debug
   debug = {
