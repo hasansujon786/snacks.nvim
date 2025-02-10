@@ -93,7 +93,7 @@ function M.file(ctx)
       return
     end
 
-    if Snacks.image.supports(path) then
+    if Snacks.image.supports_file(path) then
       return M.image(ctx)
     end
 

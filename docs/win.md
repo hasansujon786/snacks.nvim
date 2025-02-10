@@ -349,6 +349,12 @@ win:map()
 win:on(event, cb, opts)
 ```
 
+### `win:on_current_tab()`
+
+```lua
+win:on_current_tab()
+```
+
 ### `win:on_resize()`
 
 ```lua

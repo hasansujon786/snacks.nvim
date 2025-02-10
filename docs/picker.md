@@ -661,8 +661,10 @@ It's a previewer that shows a preview based on the item data.
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
 ---@field fullscreen? boolean open in fullscreen
 ---@field cycle? boolean cycle through the list
----@field preview? boolean|"main"|{enabled?:boolean, main?:boolean} show preview window in the picker or the main window
+---@field preview? "main" show preview window in the picker or the main window
 ---@field preset? string|fun(source:string):string
+---@field hidden? ("input"|"preview"|"list")[] don't show the given windows when opening the picker. (only "input" and "preview" make sense)
+---@field auto_hide? ("input"|"preview"|"list")[] hide the given windows when not focused (only "input" makes real sense)
 ```
 
 ```lua
@@ -720,10 +722,11 @@ Snacks.picker()
 
 ### `Snacks.picker.get()`
 
-Get active pickers, optionally filtered by source
+Get active pickers, optionally filtered by source,
+or the current tab
 
 ```lua
----@param opts? {source?: string}
+---@param opts? {source?: string, tab?: boolean} tab defaults to true
 Snacks.picker.get(opts)
 ```
 
@@ -2541,7 +2544,7 @@ Snacks.picker.actions.preview_scroll_up(picker)
 ### `Snacks.picker.actions.put()`
 
 ```lua
-Snacks.picker.actions.put(picker, item)
+Snacks.picker.actions.put(picker, item, action)
 ```
 
 ### `Snacks.picker.actions.qflist()`
@@ -2623,6 +2626,12 @@ Snacks.picker.actions.toggle_help_input(picker)
 Snacks.picker.actions.toggle_help_list(picker)
 ```
 
+### `Snacks.picker.actions.toggle_input()`
+
+```lua
+Snacks.picker.actions.toggle_input(picker)
+```
+
 ### `Snacks.picker.actions.toggle_live()`
 
 ```lua
@@ -2680,7 +2689,7 @@ local M = {}
 ### `Snacks.picker.picker.get()`
 
 ```lua
----@param opts? {source?: string}
+---@param opts? {source?: string, tab?: boolean}
 Snacks.picker.picker.get(opts)
 ```
 
@@ -2716,6 +2725,13 @@ Get the current item at the cursor
 ```lua
 ---@param opts? {resolve?: boolean} default is `true`
 picker:current(opts)
+```
+
+### `picker:current_win()`
+
+```lua
+---@return string? name, snacks.win? win
+picker:current_win()
 ```
 
 ### `picker:cwd()`
@@ -2758,6 +2774,17 @@ based on the current pattern and search string.
 ```lua
 ---@param opts? { on_done?: fun(), refresh?: boolean }
 picker:find(opts)
+```
+
+### `picker:focus()`
+
+Focuses the given or configured window.
+Falls back to the first available window if the window is hidden.
+
+```lua
+---@param win? "input"|"list"|"preview"
+---@param opts? {show?: boolean} when enable is true, the window will be shown if hidden
+picker:focus(win, opts)
 ```
 
 ### `picker:hist()`
@@ -2868,11 +2895,14 @@ otherwise throttle the preview.
 picker:show_preview()
 ```
 
-### `picker:toggle_preview()`
+### `picker:toggle()`
+
+Toggle the given window and optionally focus
 
 ```lua
----@param enable? boolean
-picker:toggle_preview(enable)
+---@param win "input"|"list"|"preview"
+---@param opts? {enable?: boolean, focus?: boolean|string}
+picker:toggle(win, opts)
 ```
 
 ### `picker:word()`

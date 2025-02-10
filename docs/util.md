@@ -76,6 +76,13 @@ Get an icon from `mini.icons` or `nvim-web-devicons`.
 Snacks.util.icon(name, cat)
 ```
 
+### `Snacks.util.is_float()`
+
+```lua
+---@param win? number
+Snacks.util.is_float(win)
+```
+
 ### `Snacks.util.is_transparent()`
 
 Check if the colorscheme is transparent.

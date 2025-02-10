@@ -354,4 +354,9 @@ function M.normkey(key)
   return key
 end
 
+---@param win? number
+function M.is_float(win)
+  return vim.api.nvim_win_get_config(win or 0).relative ~= ""
+end
+
 return M

@@ -6,7 +6,7 @@
 ---@field preview snacks.picker.preview
 ---@field state table<string, any>
 ---@field main? number
----@field win_opts {main: snacks.win.Config, layout: snacks.win.Config, win: snacks.win.Config}
+---@field win_opts {main: snacks.win.Config|{}, layout: snacks.win.Config|{}, win: snacks.win.Config|{}}
 ---@field winhl string
 ---@field title? string
 ---@field split_layout? boolean
@@ -25,9 +25,9 @@ M.__index = M
 local ns = vim.api.nvim_create_namespace("snacks.picker.preview")
 local ns_loc = vim.api.nvim_create_namespace("snacks.picker.preview.loc")
 
----@param opts snacks.picker.Config
----@param main? number
-function M.new(opts, main)
+---@param picker snacks.Picker
+function M.new(picker)
+  local opts = picker.opts
   local self = setmetatable({}, M)
   self.opts = opts.previewers
   self.winhl = Snacks.picker.highlight.winhl("SnacksPickerPreview", { CursorLine = "Visual" })
@@ -66,11 +66,10 @@ function M.new(opts, main)
     },
     layout = {
       backdrop = win_opts.backdrop == true,
-      relative = "win",
     },
   }
   self.win = Snacks.win(win_opts)
-  self:update(main)
+  self:update(picker)
   self.state = {}
 
   self.win:on("WinClosed", function()
@@ -87,11 +86,17 @@ function M:close()
   self.win_opts = { main = {}, layout = {}, win = {} }
 end
 
----@param main? number
-function M:update(main)
+---@param picker snacks.Picker
+function M:update(picker)
+  local main = picker.resolved_layout.preview == "main" and picker.main or nil
   self.main = main
   self.win_opts.main.win = main
   self.win.opts = vim.tbl_deep_extend("force", self.win.opts, main and self.win_opts.main or self.win_opts.layout)
+  if not main then
+    self.win.opts.relative = nil
+    self.win.opts.win = nil
+    self.win.layout = nil
+  end
   local winhl = self.winhl
   if main then
     winhl = (vim.wo[main].winhighlight .. ",Normal:Normal," .. "CursorLine:SnacksPickerPreviewCursorLine"):gsub(
@@ -100,9 +105,6 @@ function M:update(main)
     )
   end
   self.win.opts.wo.winhighlight = winhl
-  if main then
-    self.win:update()
-  end
 end
 
 --- refresh the preview after layout change

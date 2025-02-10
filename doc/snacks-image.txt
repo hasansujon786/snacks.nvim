@@ -7,16 +7,21 @@ Table of Contents                             *snacks-image-table-of-contents*
 2. Config                                                |snacks-image-config|
 3. Types                                                  |snacks-image-types|
 4. Module                                                |snacks-image-module|
+  - Snacks.image.dim()                |snacks-image-module-snacks.image.dim()|
   - Snacks.image.new()                |snacks-image-module-snacks.image.new()|
   - Snacks.image.supports()      |snacks-image-module-snacks.image.supports()|
+  - Snacks.image.supports_file()|snacks-image-module-snacks.image.supports_file()|
+  - Snacks.image.supports_terminal()|snacks-image-module-snacks.image.supports_terminal()|
+  - image:close()                          |snacks-image-module-image:close()|
   - image:convert()                      |snacks-image-module-image:convert()|
   - image:create()                        |snacks-image-module-image:create()|
-  - image:dim()                              |snacks-image-module-image:dim()|
+  - image:grid_size()                  |snacks-image-module-image:grid_size()|
   - image:hide()                            |snacks-image-module-image:hide()|
   - image:ready()                          |snacks-image-module-image:ready()|
   - image:render()                        |snacks-image-module-image:render()|
   - image:request()                      |snacks-image-module-image:request()|
   - image:update()                        |snacks-image-module-image:update()|
+  - image:wins()                            |snacks-image-module-image:wins()|
 5. Links                                                  |snacks-image-links|
 Image viewer using the Kitty Graphics Protocol
 <https://sw.kovidgoyal.net/kitty/graphics-protocol/>.
@@ -67,7 +72,21 @@ to the supported formats (all except PNG).
 >lua
     ---@class snacks.image.Config
     ---@field file? string
-    {}
+    ---@field wo? vim.wo|{} options for windows showing the image
+    {
+      force = false, -- try displaying the image, even if the terminal does not support it
+      wo = {
+        wrap = false,
+        number = false,
+        relativenumber = false,
+        cursorcolumn = false,
+        signcolumn = "no",
+        foldcolumn = "0",
+        list = false,
+        spell = false,
+        statuscolumn = "",
+      },
+    }
 <
 
 
@@ -83,14 +102,25 @@ to the supported formats (all except PNG).
 4. Module                                                *snacks-image-module*
 
 >lua
-    ---@class snacks.Image
+    ---@class snacks.image
     ---@field id number
     ---@field buf number
-    ---@field wins table<number, snacks.image.Dim>
     ---@field opts snacks.image.Config
     ---@field file string
+    ---@field augroup number
     ---@field _convert uv.uv_process_t?
     Snacks.image = {}
+<
+
+
+`Snacks.image.dim()`                                      *Snacks.image.dim()*
+
+Get the dimensions of a PNG file
+
+>lua
+    ---@param file string
+    ---@return number width, number height
+    Snacks.image.dim(file)
 <
 
 
@@ -105,16 +135,46 @@ to the supported formats (all except PNG).
 
 `Snacks.image.supports()`                            *Snacks.image.supports()*
 
+Check if the file format is supported and the terminal supports the kitty
+graphics protocol
+
 >lua
     ---@param file string
     Snacks.image.supports(file)
 <
 
 
+`Snacks.image.supports_file()`                  *Snacks.image.supports_file()*
+
+Check if the file format is supported
+
+>lua
+    ---@param file string
+    Snacks.image.supports_file(file)
+<
+
+
+`Snacks.image.supports_terminal()`                  *Snacks.image.supports_terminal()*
+
+Check if the terminal supports the kitty graphics protocol
+
+>lua
+    Snacks.image.supports_terminal()
+<
+
+
+IMAGE:CLOSE()                              *snacks-image-module-image:close()*
+
+>lua
+    image:close()
+<
+
+
 IMAGE:CONVERT()                          *snacks-image-module-image:convert()*
 
 >lua
-    image:convert()
+    ---@param file string
+    image:convert(file)
 <
 
 
@@ -125,20 +185,17 @@ IMAGE:CREATE()                            *snacks-image-module-image:create()*
 <
 
 
-IMAGE:DIM()                                  *snacks-image-module-image:dim()*
+IMAGE:GRID_SIZE()                      *snacks-image-module-image:grid_size()*
 
 >lua
-    ---@param win number
-    ---@return snacks.image.Dim
-    image:dim(win)
+    image:grid_size()
 <
 
 
 IMAGE:HIDE()                                *snacks-image-module-image:hide()*
 
 >lua
-    ---@param win? number
-    image:hide(win)
+    image:hide()
 <
 
 
@@ -151,9 +208,12 @@ IMAGE:READY()                              *snacks-image-module-image:ready()*
 
 IMAGE:RENDER()                            *snacks-image-module-image:render()*
 
+Renders the unicode placeholder grid in the buffer
+
 >lua
-    ---@param win number
-    image:render(win)
+    ---@param width number
+    ---@param height number
+    image:render(width, height)
 <
 
 
@@ -169,6 +229,14 @@ IMAGE:UPDATE()                            *snacks-image-module-image:update()*
 
 >lua
     image:update()
+<
+
+
+IMAGE:WINS()                                *snacks-image-module-image:wins()*
+
+>lua
+    ---@return number[]
+    image:wins()
 <
 
 ==============================================================================

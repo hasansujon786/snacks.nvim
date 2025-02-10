@@ -43,7 +43,7 @@ function M.setup(event)
             callback = function()
               local p = ref()
               if p then
-                p:_focus()
+                p:focus()
               end
             end,
           })

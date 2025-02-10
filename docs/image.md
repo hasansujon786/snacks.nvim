@@ -48,7 +48,21 @@ to the supported formats (all except PNG).
 ```lua
 ---@class snacks.image.Config
 ---@field file? string
-{}
+---@field wo? vim.wo|{} options for windows showing the image
+{
+  force = false, -- try displaying the image, even if the terminal does not support it
+  wo = {
+    wrap = false,
+    number = false,
+    relativenumber = false,
+    cursorcolumn = false,
+    signcolumn = "no",
+    foldcolumn = "0",
+    list = false,
+    spell = false,
+    statuscolumn = "",
+  },
+}
 ```
 
 ## 📚 Types
@@ -60,14 +74,24 @@ to the supported formats (all except PNG).
 ## 📦 Module
 
 ```lua
----@class snacks.Image
+---@class snacks.image
 ---@field id number
 ---@field buf number
----@field wins table<number, snacks.image.Dim>
 ---@field opts snacks.image.Config
 ---@field file string
+---@field augroup number
 ---@field _convert uv.uv_process_t?
 Snacks.image = {}
+```
+
+### `Snacks.image.dim()`
+
+Get the dimensions of a PNG file
+
+```lua
+---@param file string
+---@return number width, number height
+Snacks.image.dim(file)
 ```
 
 ### `Snacks.image.new()`
@@ -80,9 +104,34 @@ Snacks.image.new(buf, opts)
 
 ### `Snacks.image.supports()`
 
+Check if the file format is supported and the terminal supports the kitty graphics protocol
+
 ```lua
 ---@param file string
 Snacks.image.supports(file)
+```
+
+### `Snacks.image.supports_file()`
+
+Check if the file format is supported
+
+```lua
+---@param file string
+Snacks.image.supports_file(file)
+```
+
+### `Snacks.image.supports_terminal()`
+
+Check if the terminal supports the kitty graphics protocol
+
+```lua
+Snacks.image.supports_terminal()
+```
+
+### `image:close()`
+
+```lua
+image:close()
 ```
 
 ### `image:convert()`
@@ -137,4 +186,11 @@ image:request(opts)
 
 ```lua
 image:update()
+```
+
+### `image:wins()`
+
+```lua
+---@return number[]
+image:wins()
 ```

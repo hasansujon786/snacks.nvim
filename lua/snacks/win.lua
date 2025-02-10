@@ -355,7 +355,7 @@ end
 function M:toggle_help(opts)
   opts = opts or {}
   local col_width, key_width = opts.col_width or 30, opts.key_width or 10
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local buf = vim.api.nvim_win_get_buf(win)
     if vim.bo[buf].filetype == "snacks_win_help" then
       vim.api.nvim_win_close(win, true)
@@ -668,11 +668,13 @@ function M:open_win()
   local opts = self:win_opts()
   if position == "float" then
     self.win = vim.api.nvim_open_win(self.buf, enter, opts)
+  elseif position == "current" then
+    self.win = vim.api.nvim_get_current_win()
   else
     local parent = self.opts.win or 0
     local vertical = position == "left" or position == "right"
     if parent == 0 then
-      for _, win in ipairs(vim.api.nvim_list_wins()) do
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
         if
           vim.w[win].snacks_win
           and vim.w[win].snacks_win.relative == relative
@@ -716,7 +718,7 @@ function M:equalize()
     return vim.w[win].snacks_win
       and vim.w[win].snacks_win.relative == self.opts.relative
       and vim.w[win].snacks_win.position == self.opts.position
-  end, vim.api.nvim_list_wins())
+  end, vim.api.nvim_tabpage_list_wins(0))
   if #all <= 1 then
     return
   end
@@ -740,6 +742,10 @@ function M:update()
       vim.api.nvim_win_set_config(self.win, opts)
     end
   end
+end
+
+function M:on_current_tab()
+  return self:win_valid() and vim.api.nvim_get_current_tabpage() == vim.api.nvim_win_get_tabpage(self.win)
 end
 
 function M:show()
@@ -802,6 +808,10 @@ function M:show()
         return true
       end
 
+      if not self:on_current_tab() then
+        return
+      end
+
       local buf = vim.api.nvim_win_get_buf(self.win)
 
       -- same buffer
@@ -820,7 +830,7 @@ function M:show()
       -- another buffer was opened in this window
       -- find another window to swap with
       local main ---@type number?
-      for _, win in ipairs(vim.api.nvim_list_wins()) do
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
         local win_buf = vim.api.nvim_win_get_buf(win)
         local is_float = vim.api.nvim_win_get_config(win).zindex ~= nil
         if win ~= self.win and not is_float then

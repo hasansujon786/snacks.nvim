@@ -193,6 +193,14 @@ function M.preview(opts)
   return preview
 end
 
+---@param opts snacks.picker.Config
+function M.sort(opts)
+  local sort = opts.sort or require("snacks.picker.sort").default()
+  sort = type(sort) == "table" and require("snacks.picker.sort").default(sort) or sort
+  ---@cast sort snacks.picker.sort
+  return sort
+end
+
 --- Resolve the layout configuration
 ---@param opts snacks.picker.Config|string
 function M.layout(opts)
@@ -204,25 +212,44 @@ function M.layout(opts)
   local layout = M.resolve(opts.layout or {}, opts.source)
   layout = type(layout) == "string" and { preset = layout } or layout
   ---@cast layout snacks.picker.layout.Config
-  if layout.layout and layout.layout[1] then
-    return layout
-  end
 
-  -- Resolve the preset
-  local layouts = opts.layouts or M.get().layouts or {}
-  local done = {} ---@type table<string, boolean>
-  local todo = { layout } ---@type snacks.picker.layout.Config[]
-  while true do
-    local preset = M.resolve(todo[1].preset or "custom", opts.source)
-    if not preset or done[preset] or not layouts[preset] then
-      break
+  -- only resolve presets when the layout has no layout
+  if not (layout.layout and layout.layout[1]) then
+    -- Resolve the preset
+    local layouts = opts.layouts or M.get().layouts or {}
+    local done = {} ---@type table<string, boolean>
+    local todo = { layout } ---@type snacks.picker.layout.Config[]
+    while true do
+      local preset = M.resolve(todo[1].preset or "custom", opts.source)
+      if not preset or done[preset] or not layouts[preset] then
+        break
+      end
+      done[preset] = true
+      table.insert(todo, 1, vim.deepcopy(layouts[preset]))
     end
-    done[preset] = true
-    table.insert(todo, 1, vim.deepcopy(layouts[preset]))
+
+    -- Merge and return the layout
+    layout = Snacks.config.merge(unpack(todo)) --[[@as snacks.picker.layout.Config]]
   end
 
-  -- Merge and return the layout
-  return Snacks.config.merge(unpack(todo))
+  -- Fix deprecated layout options
+  layout.hidden = layout.hidden or {}
+  if layout.preview == false then
+    table.insert(layout.hidden, "preview")
+    layout.preview = nil
+  elseif type(layout.preview) == "table" then
+    ---@cast layout snacks.picker.layout.Config|{preview: {enabled: boolean, main: boolean}}
+    if layout.preview.enabled == false then
+      table.insert(layout.hidden, "preview")
+    end
+    if layout.preview.main then
+      layout.preview = "main"
+    else
+      layout.preview = nil
+    end
+  end
+
+  return layout
 end
 
 ---@generic T

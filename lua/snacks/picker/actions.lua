@@ -175,7 +175,7 @@ function M.layout(picker, _, action)
   if (layout.layout.position or "float") ~= "float" then
     picker.opts.auto_close = false
     picker.opts.jump.close = false
-    picker:toggle_preview(false)
+    picker:toggle("preview", { enable = false })
     picker.list.win:focus()
   end
 end
@@ -190,7 +190,11 @@ function M.toggle_maximize(picker)
 end
 
 function M.toggle_preview(picker)
-  picker:toggle_preview()
+  picker:toggle("preview")
+end
+
+function M.toggle_input(picker)
+  picker:toggle("input", { focus = true })
 end
 
 function M.picker_grep(_, item)
@@ -428,7 +432,7 @@ end
 function M.yank(picker, item, action)
   ---@cast action snacks.picker.yank.Action
   if item then
-    local reg = action.reg or "+"
+    local reg = action.reg or vim.v.register
     local value = item[action.field] or item.data or item.text
     vim.fn.setreg(reg, value)
     local buf = item.buf or vim.api.nvim_win_get_buf(picker.main)
@@ -438,10 +442,12 @@ function M.yank(picker, item, action)
 end
 M.copy = M.yank
 
-function M.put(picker, item)
+function M.put(picker, item, action)
+  ---@cast action snacks.picker.yank.Action
   picker:close()
   if item then
-    vim.api.nvim_put({ item.data or item.text }, "c", true, true)
+    local value = item[action.field] or item.data or item.text
+    vim.api.nvim_put({ value }, "", true, true)
   end
 end
 
@@ -519,6 +525,14 @@ function M.help(picker, item, action)
   ---@cast action snacks.picker.jump.Action
   if item then
     picker:close()
+    local file = Snacks.picker.util.path(item) or ""
+    if package.loaded.lazy then
+      local plugin = file:match("/([^/]+)/doc/")
+      if plugin then
+        require("lazy").load({ plugins = { plugin } })
+      end
+    end
+
     local cmd = "help " .. item.text
     if action.cmd == "vsplit" then
       cmd = "vert " .. cmd
@@ -577,9 +591,9 @@ end
 
 function M.toggle_focus(picker)
   if vim.api.nvim_get_current_win() == picker.input.win.win then
-    picker.list.win:focus()
+    picker:focus("list", { show = true })
   else
-    picker.input.win:focus()
+    picker:focus("input", { show = true })
   end
 end
 
@@ -601,15 +615,15 @@ function M.cycle_win(picker)
 end
 
 function M.focus_input(picker)
-  picker.input.win:focus()
+  picker:focus("input", { show = true })
 end
 
 function M.focus_list(picker)
-  picker.list.win:focus()
+  picker:focus("list", { show = true })
 end
 
 function M.focus_preview(picker)
-  picker.preview.win:focus()
+  picker:focus("preview", { show = true })
 end
 
 function M.item_action(picker, item, action)

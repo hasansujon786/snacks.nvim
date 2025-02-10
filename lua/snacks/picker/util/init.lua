@@ -376,7 +376,7 @@ function M.pick_win(opts)
   local overlays = {} ---@type snacks.win[]
   local chars = "asdfghjkl"
   local wins = {} ---@type number[]
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local buf = vim.api.nvim_win_get_buf(win)
     local keep = (opts.float or vim.api.nvim_win_get_config(win).relative == "")
       and (not opts.filter or opts.filter(win, buf))

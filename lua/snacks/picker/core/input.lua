@@ -21,7 +21,6 @@ function M.new(picker)
     show = false,
     enter = false,
     height = 1,
-    text = picker.opts.live and self.filter.search or self.filter.pattern,
     ft = "regex",
     on_buf = function(win)
       -- HACK: this is needed to prevent Neovim from stopping insert mode,
@@ -32,6 +31,8 @@ function M.new(picker)
       end
       vim.fn.prompt_setprompt(win.buf, "")
       vim.bo[win.buf].modified = false
+      local text = picker.opts.live and self.filter.search or self.filter.pattern
+      vim.api.nvim_buf_set_lines(win.buf, 0, -1, false, { text })
     end,
     on_win = function()
       self:highlights()

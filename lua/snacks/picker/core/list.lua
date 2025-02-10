@@ -195,6 +195,7 @@ function M:on_show()
   Snacks.util.wo(self.win.win, { scrolloff = 0 })
   self.dirty = true
   self:update_cursorline()
+  self:update({ force = true })
 end
 
 function M:count()
@@ -553,6 +554,7 @@ function M:render()
     end
   else
     self:move(0, false, false)
+    self:scroll(0, false, false)
   end
 
   local redraw = false

@@ -52,8 +52,10 @@ local M = {}
 ---@field reverse? boolean when true, the list will be reversed (bottom-up)
 ---@field fullscreen? boolean open in fullscreen
 ---@field cycle? boolean cycle through the list
----@field preview? boolean|"main"|{enabled?:boolean, main?:boolean} show preview window in the picker or the main window
+---@field preview? "main" show preview window in the picker or the main window
 ---@field preset? string|fun(source:string):string
+---@field hidden? ("input"|"preview"|"list")[] don't show the given windows when opening the picker. (only "input" and "preview" make sense)
+---@field auto_hide? ("input"|"preview"|"list")[] hide the given windows when not focused (only "input" makes real sense)
 
 ---@class snacks.picker.win.Config
 ---@field input? snacks.win.Config|{} input window config
