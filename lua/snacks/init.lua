@@ -157,14 +157,25 @@ function M.setup(opts)
     load("UIEnter")
   end
 
+  local group = vim.api.nvim_create_augroup("snacks", { clear = true })
   vim.api.nvim_create_autocmd(vim.tbl_keys(events), {
-    group = vim.api.nvim_create_augroup("snacks", { clear = true }),
+    group = group,
     once = true,
     nested = true,
     callback = function(ev)
       load(ev.event, ev)
     end,
   })
+
+  if M.config.image.enabled then
+    vim.api.nvim_create_autocmd("BufReadCmd", {
+      pattern = "*.png,*.jpg,*.jpeg,*.gif,*.bmp",
+      group = group,
+      callback = function(e)
+        require("snacks.image").new(e.buf)
+      end,
+    })
+  end
 
   if M.config.statuscolumn.enabled then
     vim.o.statuscolumn = [[%!v:lua.require'snacks.statuscolumn'.get()]]

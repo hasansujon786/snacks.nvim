@@ -37,6 +37,16 @@ Snacks.util.bo(buf, bo)
 Snacks.util.color(group, prop)
 ```
 
+### `Snacks.util.debounce()`
+
+```lua
+---@generic T
+---@param fn T
+---@param opts? {ms?:number}
+---@return T
+Snacks.util.debounce(fn, opts)
+```
+
 ### `Snacks.util.file_decode()`
 
 Decodes a file name to a string.

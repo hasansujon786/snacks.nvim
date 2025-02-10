@@ -35,6 +35,13 @@ function M.directory(ctx)
 end
 
 ---@param ctx snacks.picker.preview.ctx
+function M.image(ctx)
+  local buf = ctx.preview:scratch()
+  ctx.preview:set_title(ctx.item.title or vim.fn.fnamemodify(ctx.item.file, ":t"))
+  Snacks.image.new(buf, { file = Snacks.picker.util.path(ctx.item) })
+end
+
+---@param ctx snacks.picker.preview.ctx
 function M.none(ctx)
   ctx.preview:reset()
   ctx.preview:notify("no preview available", "warn")
@@ -85,6 +92,11 @@ function M.file(ctx)
       ctx.preview:notify("Item has no `file`", "error")
       return
     end
+
+    if Snacks.image.supports(path) then
+      return M.image(ctx)
+    end
+
     -- re-use existing preview when path is the same
     if path ~= Snacks.picker.util.path(ctx.prev) then
       ctx.preview:reset()

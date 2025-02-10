@@ -280,6 +280,17 @@ function M.throttle(fn, opts)
   end
 end
 
+---@generic T
+---@param fn T
+---@param opts? {ms?:number}
+---@return T
+function M.debounce(fn, opts)
+  local timer, ms = assert(uv.new_timer()), opts and opts.ms or 20
+  return function()
+    timer:start(ms, 0, vim.schedule_wrap(fn))
+  end
+end
+
 ---@param key string
 function M.normkey(key)
   if key_cache[key] then

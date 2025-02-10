@@ -46,7 +46,11 @@ FEATURES                                    *snacks.nvim-snacks.nvim-features*
                    commit, or repo in a browser          
                    (e.g. GitHub, GitLab, Bitbucket)      
 
-  indent           Indent guides and scopes              
+  image            Image viewer using Kitty Graphics     
+                   Protocol, supported by kitty,         
+                   weztermn and ghostty                  
+
+  indent           Indentguides and scopes               
 
   input            Better vim.ui.input                   
 
@@ -172,6 +176,7 @@ Default Options ~
     ---@field dim? snacks.dim.Config
     ---@field explorer? snacks.explorer.Config
     ---@field gitbrowse? snacks.gitbrowse.Config
+    ---@field image? snacks.image.Config
     ---@field indent? snacks.indent.Config
     ---@field input? snacks.input.Config
     ---@field layout? snacks.layout.Config
