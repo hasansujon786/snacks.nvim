@@ -169,7 +169,7 @@ function M.setup(opts)
 
   if M.config.image.enabled then
     vim.api.nvim_create_autocmd("BufReadCmd", {
-      pattern = "*.png,*.jpg,*.jpeg,*.gif,*.bmp",
+      pattern = "*.png,*.jpg,*.jpeg,*.gif,*.bmp,*.webp",
       group = group,
       callback = function(e)
         require("snacks.image").new(e.buf)

@@ -88,7 +88,8 @@ Snacks.image.supports(file)
 ### `image:convert()`
 
 ```lua
-image:convert()
+---@param file string
+image:convert(file)
 ```
 
 ### `image:create()`
@@ -97,19 +98,16 @@ image:convert()
 image:create()
 ```
 
-### `image:dim()`
+### `image:grid_size()`
 
 ```lua
----@param win number
----@return snacks.image.Dim
-image:dim(win)
+image:grid_size()
 ```
 
 ### `image:hide()`
 
 ```lua
----@param win? number
-image:hide(win)
+image:hide()
 ```
 
 ### `image:ready()`
@@ -120,9 +118,12 @@ image:ready()
 
 ### `image:render()`
 
+Renders the unicode placeholder grid in the buffer
+
 ```lua
----@param win number
-image:render(win)
+---@param width number
+---@param height number
+image:render(width, height)
 ```
 
 ### `image:request()`

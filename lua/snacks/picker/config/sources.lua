@@ -193,6 +193,7 @@ M.diagnostics_buffer = {
 ---@field follow? boolean follow symlinks
 ---@field exclude? string[] exclude patterns
 ---@field args? string[] additional arguments
+---@field ft? string|string[] file extension(s)
 ---@field rtp? boolean search in runtimepath
 M.files = {
   finder = "files",
