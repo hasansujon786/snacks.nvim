@@ -51,7 +51,7 @@ local diacritics = vim.split(
   ","
 )
 local supported_formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp" }
-local supported_terminals = { "kitty", "wezterm", "ghostty", "konsole" }
+local supported_terminals = { "kitty", "ghostty", "konsole" }
 
 ---@private
 function M.setup_mux()
@@ -339,8 +339,11 @@ function M.supports_terminal()
     end, supported_terminals)
     return false, "terminal not supported. Use one of:\n  - " .. table.concat(terms, "\n  - ")
   end
-  if os.getenv("ZELLIJ") and term ~= "wezterm" then
-    return false, "only `wezterm` is supported in `Zellij`"
+  -- if os.getenv("ZELLIJ") and term ~= "wezterm" then
+  --   return false, "only `wezterm` is supported in `Zellij`"
+  -- end
+  if os.getenv("ZELLIJ") then
+    return false, "`Zellij` does not support passthrough for the kitty graphics protocol"
   end
   return true
 end

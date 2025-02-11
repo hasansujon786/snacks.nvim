@@ -33,6 +33,7 @@ function M.new(picker)
       vim.bo[win.buf].modified = false
       local text = picker.opts.live and self.filter.search or self.filter.pattern
       vim.api.nvim_buf_set_lines(win.buf, 0, -1, false, { text })
+      vim.bo[win.buf].modified = false
     end,
     on_win = function()
       self:highlights()
