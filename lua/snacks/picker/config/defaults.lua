@@ -346,6 +346,12 @@ local defaults = {
       Hint  = " ",
       Info  = " ",
     },
+    lsp = {
+      unavailable = "",
+      enabled = " ",
+      disabled = " ",
+      attached = "󰖩 "
+    },
     kinds = {
       Array         = " ",
       Boolean       = "󰨙 ",

@@ -169,7 +169,7 @@ end
 
 ---@param opts snacks.picker.Config
 function M.format(opts)
-  local ret = type(opts.format) == "string" and Snacks.picker.format[opts.format]
+  local ret = type(opts.format) == "string" and (Snacks.picker.format[opts.format] or M.field(opts.format))
     or opts.format
     or Snacks.picker.format.file
   ---@cast ret snacks.picker.format
@@ -188,7 +188,7 @@ end
 ---@param opts snacks.picker.Config
 function M.preview(opts)
   local preview = opts.preview or Snacks.picker.preview.file
-  preview = type(preview) == "string" and Snacks.picker.preview[preview] or preview
+  preview = type(preview) == "string" and (Snacks.picker.preview[preview] or M.field(preview)) or preview
   ---@cast preview snacks.picker.preview
   return preview
 end
@@ -280,14 +280,23 @@ function M.finder(finder)
     return require("snacks.picker.core.finder").multi(finders)
   end
   ---@cast finder string
-  local mod, fn = finder:match("^(.-)_(.+)$")
-  if not (mod and fn) then
-    mod, fn = finder, finder
+  return M.field(finder) or nop
+end
+
+--- Resolves a module field
+---@param spec string
+function M.field(spec)
+  local parts = vim.split(spec, ".", { plain = true })
+  local name, field = parts[#parts]:match("^(.-)[_#](.+)$")
+  if name and field then
+    parts[#parts] = name
+  else
+    field = parts[#parts]
   end
   local ok, ret = pcall(function()
-    return require("snacks.picker.source." .. mod)[fn]
+    return require("snacks.picker.source." .. table.concat(parts, "."))[field]
   end)
-  return ok and ret or nop
+  return ok and ret or nil
 end
 
 local did_setup = false

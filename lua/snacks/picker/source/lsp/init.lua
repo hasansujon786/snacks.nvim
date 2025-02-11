@@ -356,12 +356,14 @@ function M.symbols(opts, ctx)
       })
 
       -- Fix sorting
-      table.sort(items, function(a, b)
-        if a.pos[1] == b.pos[1] then
-          return a.pos[2] < b.pos[2]
-        end
-        return a.pos[1] < b.pos[1]
-      end)
+      if not opts.workspace then
+        table.sort(items, function(a, b)
+          if a.pos[1] == b.pos[1] then
+            return a.pos[2] < b.pos[2]
+          end
+          return a.pos[1] < b.pos[1]
+        end)
+      end
 
       -- fix last
       local last = {} ---@type table<snacks.picker.finder.Item, snacks.picker.finder.Item>

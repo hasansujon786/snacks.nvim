@@ -476,6 +476,19 @@ M.loclist = {
 ---@field unique_lines? boolean include only locations with unique lines
 ---@field filter? snacks.picker.filter.Config
 
+---@class snacks.picker.lsp.config.Config: snacks.picker.Config
+---@field installed? boolean only show installed servers
+---@field configured? boolean only show configured servers (setup with lspconfig)
+---@field attached? boolean|number only show attached servers. When `number`, show only servers attached to that buffer (can be 0)
+M.lsp_config = {
+  finder = "lsp.config#find",
+  format = "lsp.config#format",
+  preview = "lsp.config#preview",
+  confirm = "close",
+  sort = { fields = { "score:desc", "attached_buf", "attached", "enabled", "installed", "name" } },
+  matcher = { sort_empty = true },
+}
+
 -- LSP declarations
 ---@type snacks.picker.lsp.Config
 M.lsp_declarations = {

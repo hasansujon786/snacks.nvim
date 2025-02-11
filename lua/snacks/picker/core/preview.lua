@@ -343,6 +343,7 @@ end
 
 ---@param lines string[]
 function M:set_lines(lines)
+  lines = vim.split(table.concat(lines, "\n"), "\n", { plain = true })
   vim.bo[self.win.buf].modifiable = true
   vim.api.nvim_buf_set_lines(self.win.buf, 0, -1, false, lines)
   vim.bo[self.win.buf].modifiable = false

@@ -349,6 +349,12 @@ Snacks.picker.pick({source = "files", ...})
       Hint  = " ",
       Info  = " ",
     },
+    lsp = {
+      unavailable = "",
+      enabled = " ",
+      disabled = " ",
+      attached = "󰖩 "
+    },
     kinds = {
       Array         = " ",
       Boolean       = "󰨙 ",
@@ -1456,6 +1462,27 @@ Loclist
   finder = "qf",
   format = "file",
   qf_win = 0,
+}
+```
+
+### `lsp_config`
+
+```vim
+:lua Snacks.picker.lsp_config(opts?)
+```
+
+```lua
+---@class snacks.picker.lsp.config.Config: snacks.picker.Config
+---@field installed? boolean only show installed servers
+---@field configured? boolean only show configured servers (setup with lspconfig)
+---@field attached? boolean|number only show attached servers. When `number`, show only servers attached to that buffer (can be 0)
+{
+  finder = "lsp.config#find",
+  format = "lsp.config#format",
+  preview = "lsp.config#preview",
+  confirm = "close",
+  sort = { fields = { "score:desc", "attached_buf", "attached", "enabled", "installed", "name" } },
+  matcher = { sort_empty = true },
 }
 ```
 

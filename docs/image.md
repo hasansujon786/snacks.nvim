@@ -65,12 +65,6 @@ to the supported formats (all except PNG).
 }
 ```
 
-## 📚 Types
-
-```lua
----@alias snacks.image.Dim {col: number, row: number, width: number, height: number}
-```
-
 ## 📦 Module
 
 ```lua
@@ -175,11 +169,24 @@ Renders the unicode placeholder grid in the buffer
 image:render(width, height)
 ```
 
+### `image:render_fallback()`
+
+```lua
+image:render_fallback()
+```
+
 ### `image:request()`
 
 ```lua
 ---@param opts table<string, string|number>|{data?: string}
 image:request(opts)
+```
+
+### `image:set_cursor()`
+
+```lua
+---@param pos {[1]: number, [2]: number}
+image:set_cursor(pos)
 ```
 
 ### `image:update()`

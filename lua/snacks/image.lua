@@ -39,8 +39,6 @@ local defaults = {
 local uv = vim.uv or vim.loop
 local ns = vim.api.nvim_create_namespace("snacks.image")
 
----@alias snacks.image.Dim {col: number, row: number, width: number, height: number}
-
 local NVIM_ID_BITS = 10
 local images = {} ---@type table<number, snacks.image>
 local id = 30
@@ -51,7 +49,8 @@ local diacritics = vim.split(
   ","
 )
 local supported_formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp" }
-local supported_terminals = { "kitty", "ghostty", "konsole" }
+local supported_terminals = { "kitty", "ghostty", "konsole", "wezterm" }
+local supports_unicode_placeholder = not (os.getenv("TERM") or ""):find("wezterm")
 
 ---@private
 function M.setup_mux()
@@ -224,12 +223,46 @@ function M:hide()
   self:request({ a = "d", i = self.id })
 end
 
+---@param pos {[1]: number, [2]: number}
+function M:set_cursor(pos)
+  io.stdout:write("\27[" .. pos[1] .. ";" .. pos[2] .. "H")
+end
+
+function M:render_fallback()
+  self:hide()
+  local w, h = M.dim(self.file)
+  h = h * 0.5 -- adjust for cell height
+  for _, win in ipairs(self:wins()) do
+    local border = setmetatable({ opts = vim.api.nvim_win_get_config(win) }, { __index = Snacks.win }):border_size()
+    local width = vim.api.nvim_win_get_width(win) - border.left - border.right
+    local height = vim.api.nvim_win_get_height(win) - border.top - border.bottom
+    local scale = math.min(width / w, height / h)
+    width, height = math.floor(w * scale), math.floor(h * scale)
+    vim.api.nvim_win_call(win, function()
+      vim.fn.winrestview({ topline = 1, lnum = 1, col = 0, leftcol = 0 })
+      local pos = vim.api.nvim_win_get_position(win)
+      self:set_cursor({ pos[1] + 1 + border.left, pos[2] + 1 + border.top })
+      self:request({
+        a = "p",
+        i = self.id,
+        p = win,
+        C = 1,
+        c = math.floor(width + 0.5),
+        r = math.floor(height + 0.5),
+      })
+    end)
+  end
+end
+
 function M:update()
   if not self:ready() then
     return
   end
   for _, win in ipairs(self:wins()) do
     Snacks.util.wo(win, self.opts.wo or {})
+  end
+  if not supports_unicode_placeholder then
+    return self:render_fallback()
   end
   local width, height = self:grid_size()
   self:render(width, height)
@@ -325,12 +358,16 @@ function M.supports_terminal()
   if opts.force then
     return true
   end
-  local TERM = os.getenv("TERM") or ""
   local term ---@type string?
-  for _, t in ipairs(supported_terminals) do
-    if TERM:find(t) then
-      term = t
-      break
+  if os.getenv("WEZTERM_PANE") then
+    term = "wezterm"
+  else
+    local TERM = os.getenv("TERM") or ""
+    for _, t in ipairs(supported_terminals) do
+      if TERM:find(t) then
+        term = t
+        break
+      end
     end
   end
   if not term then
@@ -339,9 +376,6 @@ function M.supports_terminal()
     end, supported_terminals)
     return false, "terminal not supported. Use one of:\n  - " .. table.concat(terms, "\n  - ")
   end
-  -- if os.getenv("ZELLIJ") and term ~= "wezterm" then
-  --   return false, "only `wezterm` is supported in `Zellij`"
-  -- end
   if os.getenv("ZELLIJ") then
     return false, "`Zellij` does not support passthrough for the kitty graphics protocol"
   end

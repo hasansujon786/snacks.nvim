@@ -79,6 +79,9 @@ function M.file(ctx)
   -- used by some LSP servers that load buffers with custom URIs
   if ctx.item.buf and vim.uri_from_bufnr(ctx.item.buf):sub(1, 4) ~= "file" then
     vim.fn.bufload(ctx.item.buf)
+  elseif ctx.item.file and ctx.item.file:find("^%w+://") then
+    ctx.item.buf = vim.fn.bufadd(ctx.item.file)
+    vim.fn.bufload(ctx.item.buf)
   end
 
   if ctx.item.buf and vim.api.nvim_buf_is_loaded(ctx.item.buf) then

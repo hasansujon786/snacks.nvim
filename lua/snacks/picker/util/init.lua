@@ -531,4 +531,30 @@ function M.modeline(buf)
   end
 end
 
+--- Gets the list of binaries in the PATH.
+--- This won't check if the binary is executable.
+--- On Windows, additional extensions are checked.
+function M.get_bins()
+  local is_win = jit.os:find("Windows")
+  local path = vim.split(os.getenv("PATH") or "", is_win and ";" or ":", { plain = true })
+  local bins = {} ---@type table<string, string>
+  for _, p in ipairs(path) do
+    p = vim.fs.normalize(p)
+    for file, t in vim.fs.dir(p) do
+      if t ~= "directory" then
+        local fpath = p .. "/" .. file
+        local base, ext = file:match("^(.*)%.(%a+)$")
+        if is_win then
+          if base and ext and vim.tbl_contains({ "exe", "bat", "com", "cmd" }, ext) then
+            bins[base] = bins[base] or fpath
+          end
+        else
+          bins[file] = bins[file] or fpath
+        end
+      end
+    end
+  end
+  return bins
+end
+
 return M
