@@ -264,7 +264,7 @@ function M.explorer(opts, ctx)
       end
       items[node.path] = item
       cb(item)
-    end, { hidden = opts.hidden, ignored = opts.ignored })
+    end, { hidden = opts.hidden, ignored = opts.ignored, exclude = opts.exclude, include = opts.include })
   end
 end
 

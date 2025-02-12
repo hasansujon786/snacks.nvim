@@ -46,6 +46,8 @@ M.buffers = {
 ---@field diagnostics? boolean show diagnostics
 ---@field diagnostics_open? boolean show recursive diagnostics for open directories
 ---@field watch? boolean watch for file changes
+---@field exclude? string[] exclude glob patterns
+---@field include? string[] include glob patterns. These take precedence over `exclude`, `ignored` and `hidden`
 M.explorer = {
   finder = "explorer",
   sort = { fields = { "sort" } },
@@ -378,6 +380,7 @@ M.highlights = {
   finder = "vim_highlights",
   format = "hl",
   preview = "preview",
+  confirm = "close",
 }
 
 ---@class snacks.picker.icons.Config: snacks.picker.Config
@@ -627,6 +630,7 @@ M.notifications = {
   format = "notification",
   preview = "preview",
   formatters = { severity = { level = true } },
+  confirm = "close",
 }
 
 -- List all available sources

@@ -139,8 +139,13 @@ function M.new(picker)
     end
   end)
 
+  local focused = false
   self.win:on({ "WinEnter", "WinLeave" }, function()
-    self:update_cursorline()
+    local f = vim.api.nvim_get_current_win() == self.win.win
+    if focused ~= f then
+      focused = f
+      self:update_cursorline()
+    end
   end)
 
   return self
@@ -533,15 +538,12 @@ end
 
 function M:update_cursorline()
   if self.win:win_valid() then
-    ---@type vim.wo|{}
-    local wo = {
+    Snacks.util.wo(self.win.win, {
       cursorline = self:count() > 0,
-      winhighlight = self.win.opts.wo.winhighlight:gsub(
-        "CursorLine:.*CursorLine",
-        "CursorLine:" .. (self.picker:is_focused() and "SnacksPickerListCursorLine" or "CursorLine")
-      ),
-    }
-    Snacks.util.wo(self.win.win, wo)
+      winhighlight = Snacks.util.winhl(vim.wo[self.win.win].winhighlight, {
+        CursorLine = self.picker:is_focused() and "SnacksPickerListCursorLine" or "CursorLine",
+      }),
+    })
   end
 end
 

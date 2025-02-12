@@ -1,4 +1,4 @@
-*snacks.nvim.txt*           For Neovim           Last change: 2025 February 11
+*snacks.nvim.txt*           For Neovim           Last change: 2025 February 12
 
 ==============================================================================
 Table of Contents                              *snacks.nvim-table-of-contents*
@@ -47,8 +47,8 @@ FEATURES                                    *snacks.nvim-snacks.nvim-features*
                    (e.g. GitHub, GitLab, Bitbucket)      
 
   image            Image viewer using Kitty Graphics     
-                   Protocol, supported by kitty,         
-                   weztermn and ghostty                  
+                   Protocol, supported by kitty, wezterm 
+                   and ghostty                           
 
   indent           Indentguides and scopes               
 

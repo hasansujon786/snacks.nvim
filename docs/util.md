@@ -189,12 +189,22 @@ Get a buffer or global variable.
 Snacks.util.var(buf, name, default)
 ```
 
+### `Snacks.util.winhl()`
+
+Merges vim.wo.winhighlight options.
+Option values can be a string or a dictionary.
+
+```lua
+---@param ... string|table<string, string>
+Snacks.util.winhl(...)
+```
+
 ### `Snacks.util.wo()`
 
 Set window-local options.
 
 ```lua
 ---@param win number
----@param wo vim.wo|{}
+---@param wo vim.wo|{}|{winhighlight: string|table<string, string>}
 Snacks.util.wo(win, wo)
 ```

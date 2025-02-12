@@ -167,6 +167,7 @@ Snacks.picker.pick({source = "files", ...})
   previewers = {
     git = {
       native = false, -- use native (terminal) or Neovim for previewing git diffs and commits
+      args = {}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
     },
     file = {
       max_size = 1024 * 1024, -- 1MB
@@ -410,6 +411,7 @@ Snacks.picker.pick({source = "files", ...})
     explorer = false, -- show explorer debug info
     files = false, -- show file debug info
     grep = false, -- show file debug info
+    proc = false, -- show proc debug info
     extmarks = false, -- show extmarks errors
   },
 }
@@ -941,6 +943,8 @@ Neovim commands
 ---@field diagnostics? boolean show diagnostics
 ---@field diagnostics_open? boolean show recursive diagnostics for open directories
 ---@field watch? boolean watch for file changes
+---@field exclude? string[] exclude glob patterns
+---@field include? string[] include glob patterns. These take precedence over `exclude`, `ignored` and `hidden`
 {
   finder = "explorer",
   sort = { fields = { "sort" } },
@@ -1320,6 +1324,7 @@ Neovim help tags
   finder = "vim_highlights",
   format = "hl",
   preview = "preview",
+  confirm = "close",
 }
 ```
 
@@ -1709,6 +1714,7 @@ vim.tbl_extend("force", {}, M.lsp_symbols, {
   format = "notification",
   preview = "preview",
   formatters = { severity = { level = true } },
+  confirm = "close",
 }
 ```
 

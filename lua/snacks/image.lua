@@ -9,15 +9,60 @@ local M = {}
 M.__index = M
 
 M.meta = {
-  desc = "Image viewer using Kitty Graphics Protocol, supported by `kitty`, `weztermn` and `ghostty`",
+  desc = "Image viewer using Kitty Graphics Protocol, supported by `kitty`, `wezterm` and `ghostty`",
   needs_setup = true,
 }
 
-local write = function(data)
-  io.stdout:write(data)
-end
+---@class snacks.image.Env
+---@field name string
+---@field env table<string, string|true>
+---@field supported? boolean default: false
+---@field placeholders? boolean default: false
+---@field setup? fun(): boolean?
+---@field transform? fun(data: string): string
+---@field detected? boolean
 
-local mux = false
+---@type snacks.image.Env[]
+local environments = {
+  {
+    name = "kitty",
+    env = { TERM = "kitty", KITTY_PID = true },
+    supported = true,
+    placeholders = true,
+  },
+  {
+    name = "ghostty",
+    env = { TERM = "ghostty", GHOSTTY_BIN_DIR = true },
+    supported = true,
+    placeholders = true,
+  },
+  {
+    name = "wezterm",
+    env = { TERM = "wezterm", WEZTERM_PANE = true, WEZTERM_EXECUTABLE = true, WEZTERM_CONFIG_FILE = true },
+    supported = true,
+    placeholders = false,
+  },
+  {
+    name = "tmux",
+    env = { TERM = "tmux", TMUX = true },
+    setup = function()
+      local ok, out = pcall(vim.fn.system, { "tmux", "set", "-p", "allow-passthrough", "on" })
+      if not ok or vim.v.shell_error ~= 0 then
+        Snacks.notify.error(
+          { "Failed to enable `allow-passthrough` for `tmux`:", out },
+          { title = "Image", once = true }
+        )
+        return false
+      end
+    end,
+    transform = function(data)
+      return ("\027Ptmux;" .. data:gsub("\027", "\027\027")) .. "\027\\"
+    end,
+  },
+  { name = "zellij", env = { TERM = "zellij", ZELLIJ = true }, supported = false, placeholders = false },
+}
+
+M._env = nil ---@type snacks.image.Env?
 
 ---@class snacks.image.Config
 ---@field file? string
@@ -49,26 +94,43 @@ local diacritics = vim.split(
   ","
 )
 local supported_formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp" }
-local supported_terminals = { "kitty", "ghostty", "konsole", "wezterm" }
-local supports_unicode_placeholder = not (os.getenv("TERM") or ""):find("wezterm")
 
----@private
-function M.setup_mux()
-  if mux then
-    return
+function M.env()
+  if M._env then
+    return M._env
   end
-  mux = true
-  -- enable tmux passthrough and wrap the data in tmux escape sequences
-  if os.getenv("TMUX") then
-    local ok, out = pcall(vim.fn.system, { "tmux", "set", "-p", "allow-passthrough", "on" })
-    if not ok or vim.v.shell_error ~= 0 then
-      Snacks.notify.error({ "Failed to enable `allow-passthrough` for `tmux`:", out }, { title = "Image" })
+  M._env = {
+    name = "",
+    env = {},
+  }
+  if not vim.base64 then
+    M._env.supported = false
+    return M._env
+  end
+  for _, e in ipairs(environments) do
+    for k, v in pairs(e.env) do
+      local val = os.getenv(k)
+      if val and (v == true or val:find(v)) then
+        e.detected = true
+        break
+      end
     end
-    write = function(data)
-      data = string.format("\027Ptmux;%s\027\\", data:gsub("\027", "\027\027"))
-      io.stdout:write(data)
+    if e.detected then
+      M._env.name = M._env.name .. "/" .. e.name
+      if e.supported ~= nil then
+        M._env.supported = e.supported
+      end
+      if e.placeholders ~= nil then
+        M._env.placeholders = e.placeholders
+      end
+      M._env.transform = e.transform
+      if e.setup then
+        e.setup()
+      end
     end
   end
+  M._env.name = M._env.name:gsub("^/", "")
+  return M._env
 end
 
 ---@param buf number
@@ -96,7 +158,6 @@ function M.new(buf, opts)
     vim.bo[buf].modified = false
     return
   end
-  M.setup_mux()
 
   local self = setmetatable({}, M)
   images[buf] = self
@@ -261,7 +322,7 @@ function M:update()
   for _, win in ipairs(self:wins()) do
     Snacks.util.wo(win, self.opts.wo or {})
   end
-  if not supports_unicode_placeholder then
+  if not M.env().placeholders then
     return self:render_fallback()
   end
   local width, height = self:grid_size()
@@ -335,9 +396,14 @@ function M:request(opts)
   msg = { table.concat(msg, ",") }
   if opts.data then
     msg[#msg + 1] = ";"
-    msg[#msg + 1] = vim.base64.encode(opts.data)
+    msg[#msg + 1] = vim.base64.encode(tostring(opts.data))
   end
-  write("\27_G" .. table.concat(msg) .. "\27\\")
+  local data = "\27_G" .. table.concat(msg) .. "\27\\"
+  local env = M.env()
+  if env.transform then
+    data = env.transform(data)
+  end
+  io.stdout:write(data)
 end
 
 --- Check if the file format is supported
@@ -355,31 +421,7 @@ end
 -- Check if the terminal supports the kitty graphics protocol
 function M.supports_terminal()
   local opts = Snacks.config.get("image", defaults)
-  if opts.force then
-    return true
-  end
-  local term ---@type string?
-  if os.getenv("WEZTERM_PANE") then
-    term = "wezterm"
-  else
-    local TERM = os.getenv("TERM") or ""
-    for _, t in ipairs(supported_terminals) do
-      if TERM:find(t) then
-        term = t
-        break
-      end
-    end
-  end
-  if not term then
-    local terms = vim.tbl_map(function(t)
-      return "`" .. t .. "`"
-    end, supported_terminals)
-    return false, "terminal not supported. Use one of:\n  - " .. table.concat(terms, "\n  - ")
-  end
-  if os.getenv("ZELLIJ") then
-    return false, "`Zellij` does not support passthrough for the kitty graphics protocol"
-  end
-  return true
+  return M.env().supported or opts.force or false
 end
 
 --- Get the dimensions of a PNG file
@@ -404,15 +446,28 @@ end
 ---@private
 function M.health()
   local opts = Snacks.config.get("image", defaults)
-  local ok, err = M.supports_terminal()
-  if ok then
-    Snacks.health.ok("your terminal supports the kitty graphics protocol")
-  elseif err then
-    if opts.force then
-      Snacks.health.ok("image viewer is enabled with `opts.force = true`")
-    else
-      Snacks.health.warn(err)
+  local env = M.env()
+  for _, e in ipairs(environments) do
+    if e.detected then
+      if e.supported == false then
+        Snacks.health.error("`" .. e.name .. "` is not supported")
+      else
+        Snacks.health.ok("`" .. e.name .. "` is supported")
+        if e.placeholders == false then
+          Snacks.health.warn("`" .. e.name .. "` does not support placeholders. Fallback rendering will be used")
+        elseif e.placeholders == true then
+          Snacks.health.ok("`" .. e.name .. "` supports unicode placeholders")
+        end
+      end
     end
+  end
+  if env.supported then
+    Snacks.health.ok("your terminal supports the kitty graphics protocol")
+  elseif opts.force then
+    Snacks.health.warn("image viewer is enabled with `opts.force = true`. Use at your own risk")
+  else
+    Snacks.health.error("your terminal does not support the kitty graphics protocol")
+    Snacks.health.info("supported terminals: `kitty`, `wezterm`, `ghostty`")
   end
 end
 

@@ -1191,10 +1191,12 @@ function M:dim(parent)
   ret.height = size(self.opts.height, parent.height, border.top + border.bottom)
   ret.height = math.max(ret.height, self.opts.min_height or 0, 1)
   ret.height = math.min(ret.height, self.opts.max_height or ret.height, parent.height)
+  ret.height = math.max(ret.height, 1)
 
   ret.width = size(self.opts.width, parent.width, border.left + border.right)
   ret.width = math.max(ret.width, self.opts.min_width or 0, 1)
   ret.width = math.min(ret.width, self.opts.max_width or ret.width, parent.width)
+  ret.width = math.max(ret.width, 1)
 
   ret.row = pos(self.opts.row, ret.height, parent.height, border.top, border.bottom)
   ret.col = pos(self.opts.col, ret.width, parent.width, border.left, border.right)

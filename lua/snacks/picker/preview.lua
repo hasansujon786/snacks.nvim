@@ -277,12 +277,18 @@ function M.git_show(ctx)
 end
 
 ---@param ctx snacks.picker.preview.ctx
+local function git(ctx, ...)
+  local ret = { "git", "-c", "delta." .. vim.o.background .. "=true" }
+  vim.list_extend(ret, ctx.picker.opts.previewers.git.args or {})
+  vim.list_extend(ret, { ... })
+  return ret
+end
+
+---@param ctx snacks.picker.preview.ctx
 function M.git_log(ctx)
   local native = ctx.picker.opts.previewers.git.native
-  local cmd = {
-    "git",
-    "-c",
-    "delta." .. vim.o.background .. "=true",
+  local cmd = git(
+    ctx,
     "log",
     "--pretty=format:%h %s (%ch)",
     "--abbrev-commit",
@@ -291,8 +297,8 @@ function M.git_log(ctx)
     "--color=never",
     "--no-show-signature",
     "--no-patch",
-    ctx.item.commit,
-  }
+    ctx.item.commit
+  )
   if not native then
     table.insert(cmd, 2, "--no-pager")
   end
@@ -321,13 +327,7 @@ end
 ---@param ctx snacks.picker.preview.ctx
 function M.git_diff(ctx)
   local native = ctx.picker.opts.previewers.git.native
-  local cmd = {
-    "git",
-    "-c",
-    "delta." .. vim.o.background .. "=true",
-    "diff",
-    "HEAD",
-  }
+  local cmd = git(ctx, "diff", "HEAD")
   if ctx.item.file then
     vim.list_extend(cmd, { "--", ctx.item.file })
   end
@@ -340,15 +340,7 @@ end
 ---@param ctx snacks.picker.preview.ctx
 function M.git_stash(ctx)
   local native = ctx.picker.opts.previewers.git.native
-  local cmd = {
-    "git",
-    "-c",
-    "delta." .. vim.o.background .. "=true",
-    "stash",
-    "show",
-    "--patch",
-    ctx.item.stash,
-  }
+  local cmd = git(ctx, "stash", "show", "--patch", ctx.item.stash)
   if not native then
     table.insert(cmd, 2, "--no-pager")
   end

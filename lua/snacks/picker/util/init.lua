@@ -557,4 +557,54 @@ function M.get_bins()
   return bins
 end
 
+---@param glob string
+function M.glob2pattern(glob)
+  local pattern = ""
+  local i = 1
+  while i <= #glob do
+    local c = glob:sub(i, i)
+    if c == "*" then
+      if i + 1 <= #glob and glob:sub(i + 1, i + 1) == "*" then -- '**'
+        pattern = pattern .. ".*"
+        i = i + 2
+      else -- '*'
+        pattern = pattern .. "[^/]*"
+        i = i + 1
+      end
+    elseif c == "?" then
+      pattern = pattern .. "[^/]" -- Match exactly one non-'/' character
+      i = i + 1
+    else
+      c = c:match("^[%^%$%(%)%%%.%[%]%+%-]$") and "%" .. c or c
+      pattern = pattern .. c
+      i = i + 1
+    end
+  end
+  pattern = pattern .. "$"
+  pattern = pattern
+    :gsub("^" .. vim.pesc("[^/]*"), "")
+    :gsub("^" .. vim.pesc(".*"), "")
+    :gsub(vim.pesc("[^/]*$") .. "$", "")
+    :gsub(vim.pesc(".*$") .. "$", "")
+  return pattern
+end
+
+---@param globs string[]
+---@return fun(file: string): boolean
+function M.globber(globs)
+  local patterns = {} ---@type string[]
+  for _, glob in ipairs(globs) do
+    table.insert(patterns, M.glob2pattern(glob))
+  end
+  ---@param file string
+  return function(file)
+    for _, pattern in ipairs(patterns) do
+      if file:find(pattern) then
+        return true
+      end
+    end
+    return false
+  end
+end
+
 return M

@@ -41,14 +41,23 @@ end
 function M.color(group, prop)
   prop = prop or "fg"
   local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
-  return hl[prop] and string.format("#%06x", hl[prop])
+  return hl[prop] and string.format("#%06x", hl[prop]) or nil
 end
 
 --- Set window-local options.
 ---@param win number
----@param wo vim.wo|{}
+---@param wo vim.wo|{}|{winhighlight: string|table<string, string>}
 function M.wo(win, wo)
   for k, v in pairs(wo or {}) do
+    if k == "winhighlight" and type(v) == "table" then
+      local parts = {} ---@type string[]
+      for kk, vv in pairs(v) do
+        if vv ~= "" then
+          parts[#parts + 1] = ("%s:%s"):format(kk, vv)
+        end
+      end
+      v = table.concat(parts, ",")
+    end
     vim.api.nvim_set_option_value(k, v, { scope = "local", win = win })
   end
 end
@@ -60,6 +69,29 @@ function M.bo(buf, bo)
   for k, v in pairs(bo or {}) do
     vim.api.nvim_set_option_value(k, v, { buf = buf })
   end
+end
+
+--- Merges vim.wo.winhighlight options.
+--- Option values can be a string or a dictionary.
+---@param ... string|table<string, string>
+function M.winhl(...)
+  local ret = {} ---@type table<string, string>[]
+  for i = 1, select("#", ...) do
+    local winhl = select(i, ...)
+    if type(winhl) == "string" then
+      winhl = vim.trim(winhl)
+      local parts = winhl == "" and {} or vim.split(winhl, ",")
+      winhl = {}
+      for _, p in ipairs(parts) do
+        local k, v = p:match("^%s*(.-):(.-)%s*$")
+        if k and v then
+          winhl[k] = v
+        end
+      end
+    end
+    ret[#ret + 1] = winhl
+  end
+  return Snacks.config.merge(unpack(ret))
 end
 
 --- Get an icon from `mini.icons` or `nvim-web-devicons`.

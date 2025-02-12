@@ -163,6 +163,7 @@ local defaults = {
   previewers = {
     git = {
       native = false, -- use native (terminal) or Neovim for previewing git diffs and commits
+      args = {}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
     },
     file = {
       max_size = 1024 * 1024, -- 1MB
@@ -407,6 +408,7 @@ local defaults = {
     explorer = false, -- show explorer debug info
     files = false, -- show file debug info
     grep = false, -- show file debug info
+    proc = false, -- show proc debug info
     extmarks = false, -- show extmarks errors
   },
 }

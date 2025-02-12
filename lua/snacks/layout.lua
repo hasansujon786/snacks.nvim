@@ -57,7 +57,7 @@ function M.new(opts)
       end
     end
   end
-  self.opts.layout.zindex = zindex
+  self.opts.layout.zindex = zindex + 2
 
   -- wrap the split layout in a vertical box
   -- this is needed since a simple split window can't have borders/titles
@@ -86,18 +86,9 @@ function M.new(opts)
       local has_border = box.border and box.border ~= "" and box.border ~= "none"
       local is_root = box.id == 1
       if is_root or has_border then
-        local backdrop = box.backdrop
-        if backdrop == nil then
-          backdrop = 60
-        end
-        if is_root and backdrop then
-          backdrop = type(backdrop) == "number" and { blend = backdrop } or backdrop
-          backdrop = backdrop == true and {} or backdrop
-          ---@cast backdrop snacks.win.Backdrop
-          backdrop.win = backdrop.win or {}
-          backdrop.win.zindex = 20
-        else
-          backdrop = false
+        local backdrop = false
+        if is_root then
+          backdrop = nil
         end
         self.box_wins[box.id] = Snacks.win(Snacks.win.resolve(box, {
           relative = is_root and (box.relative or "editor") or "win",
@@ -471,8 +462,8 @@ function M:update_win(win, parent)
     w.opts.win = nil
   end
   -- adjust max width / height
-  w.opts.max_width = math.min(parent.width, w.opts.max_width or parent.width)
-  w.opts.max_height = math.min(parent.height, w.opts.max_height or parent.height)
+  w.opts.max_width = math.max(math.min(parent.width, w.opts.max_width or parent.width), 1)
+  w.opts.max_height = math.max(math.min(parent.height, w.opts.max_height or parent.height), 1)
   -- resolve width / height relative to parent box
   local dim = w:dim(parent)
   w.opts.width, w.opts.height = dim.width, dim.height

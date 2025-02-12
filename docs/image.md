@@ -65,6 +65,19 @@ to the supported formats (all except PNG).
 }
 ```
 
+## 📚 Types
+
+```lua
+---@class snacks.image.Env
+---@field name string
+---@field env table<string, string|true>
+---@field supported? boolean default: false
+---@field placeholders? boolean default: false
+---@field setup? fun(): boolean?
+---@field transform? fun(data: string): string
+---@field detected? boolean
+```
+
 ## 📦 Module
 
 ```lua
@@ -86,6 +99,12 @@ Get the dimensions of a PNG file
 ---@param file string
 ---@return number width, number height
 Snacks.image.dim(file)
+```
+
+### `Snacks.image.env()`
+
+```lua
+Snacks.image.env()
 ```
 
 ### `Snacks.image.new()`
