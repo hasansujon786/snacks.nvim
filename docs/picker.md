@@ -2004,9 +2004,11 @@ Not meant to be used directly.
 ```lua
 ---@class snacks.picker.treesitter.Config: snacks.picker.Config
 ---@field filter table<string, string[]|boolean>? symbol kind filter
+---@field tree? boolean show symbol tree
 {
   finder = "treesitter_symbols",
   format = "lsp_symbol",
+  tree = true,
   filter = {
     default = {
       "Class",

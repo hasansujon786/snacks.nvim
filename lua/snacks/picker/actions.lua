@@ -136,8 +136,8 @@ function M.jump(picker, _, action)
   end
 
   if current_empty and vim.api.nvim_buf_is_valid(current_buf) then
-    local w = vim.fn.bufwinid(current_buf)
-    if w == -1 then
+    local w = vim.fn.win_findbuf(current_buf)
+    if #w == 0 then
       vim.api.nvim_buf_delete(current_buf, { force = true })
     end
   end

@@ -445,6 +445,9 @@ end
 
 ---@private
 function M.health()
+  if not Snacks.health.have_tool("magick") then
+    Snacks.health.error("`magick` is required to convert images. Only PNG files will be displayed.")
+  end
   local opts = Snacks.config.get("image", defaults)
   local env = M.env()
   for _, e in ipairs(environments) do
