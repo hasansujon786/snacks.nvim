@@ -3,7 +3,7 @@
 ==============================================================================
 Table of Contents                            *snacks-picker-table-of-contents*
 
-1. Features                                           |snacks-picker-features|
+1. Featuress                                         |snacks-picker-featuress|
 2. Usage                                                 |snacks-picker-usage|
 3. Setup                                                 |snacks-picker-setup|
 4. Config                                               |snacks-picker-config|
@@ -49,6 +49,7 @@ Table of Contents                            *snacks-picker-table-of-contents*
   - lazy                                          |snacks-picker-sources-lazy|
   - lines                                        |snacks-picker-sources-lines|
   - loclist                                    |snacks-picker-sources-loclist|
+  - lsp_config                              |snacks-picker-sources-lsp_config|
   - lsp_declarations                  |snacks-picker-sources-lsp_declarations|
   - lsp_definitions                    |snacks-picker-sources-lsp_definitions|
   - lsp_implementations            |snacks-picker-sources-lsp_implementations|
@@ -182,7 +183,7 @@ Snacks now comes with a modern fuzzy-finder to navigate the Neovim universe.
 
 
 ==============================================================================
-1. Features                                           *snacks-picker-features*
+1. Featuress                                         *snacks-picker-featuress*
 
 - over 40 built-in sources <https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#-sources>
 - Fast and powerful fuzzy matching engine that supports the fzf <https://junegunn.github.io/fzf/search-syntax/> search syntax
@@ -346,6 +347,7 @@ below.
       previewers = {
         git = {
           native = false, -- use native (terminal) or Neovim for previewing git diffs and commits
+          args = {}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
         },
         file = {
           max_size = 1024 * 1024, -- 1MB
@@ -408,14 +410,10 @@ below.
             ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
             ["<c-u>"] = { "list_scroll_up", mode = { "i", "n" } },
             ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
-            ["<c-z>h"] = { "layout_left", mode = { "i", "n" } },
-            ["<c-z><c-h>"] = { "layout_left", mode = { "i", "n" } },
-            ["<c-z>j"] = { "layout_bottom", mode = { "i", "n" } },
-            ["<c-z><c-j>"] = { "layout_bottom", mode = { "i", "n" } },
-            ["<c-z>k"] = { "layout_top", mode = { "i", "n" } },
-            ["<c-z><c-k>"] = { "layout_top", mode = { "i", "n" } },
-            ["<c-z>l"] = { "layout_right", mode = { "i", "n" } },
-            ["<c-z><c-l>"] = { "layout_right", mode = { "i", "n" } },
+            ["<c-w>H"] = "layout_left",
+            ["<c-w>J"] = "layout_bottom",
+            ["<c-w>K"] = "layout_top",
+            ["<c-w>L"] = "layout_right",
             ["?"] = "toggle_help_input",
             ["G"] = "list_bottom",
             ["gg"] = "list_top",
@@ -457,14 +455,10 @@ below.
             ["<c-s>"] = "edit_split",
             ["<c-u>"] = "list_scroll_up",
             ["<c-v>"] = "edit_vsplit",
-            ["<c-z>h"] = { "layout_left", mode = { "i", "n" } },
-            ["<c-z><c-h>"] = { "layout_left", mode = { "i", "n" } },
-            ["<c-z>j"] = { "layout_bottom", mode = { "i", "n" } },
-            ["<c-z><c-j>"] = { "layout_bottom", mode = { "i", "n" } },
-            ["<c-z>k"] = { "layout_top", mode = { "i", "n" } },
-            ["<c-z><c-k>"] = { "layout_top", mode = { "i", "n" } },
-            ["<c-z>l"] = { "layout_right", mode = { "i", "n" } },
-            ["<c-z><c-l>"] = { "layout_right", mode = { "i", "n" } },
+            ["<c-w>H"] = "layout_left",
+            ["<c-w>J"] = "layout_bottom",
+            ["<c-w>K"] = "layout_top",
+            ["<c-w>L"] = "layout_right",
             ["?"] = "toggle_help_list",
             ["G"] = "list_bottom",
             ["gg"] = "list_top",
@@ -536,6 +530,12 @@ below.
           Hint  = " ",
           Info  = " ",
         },
+        lsp = {
+          unavailable = "",
+          enabled = " ",
+          disabled = " ",
+          attached = "󰖩 "
+        },
         kinds = {
           Array         = " ",
           Boolean       = "󰨙 ",
@@ -591,6 +591,7 @@ below.
         explorer = false, -- show explorer debug info
         files = false, -- show file debug info
         grep = false, -- show file debug info
+        proc = false, -- show proc debug info
         extmarks = false, -- show extmarks errors
       },
     }
@@ -781,6 +782,7 @@ TROUBLE                                       *snacks-picker-examples-trouble*
     ---@class snacks.picker.yank.Action: snacks.picker.Action
     ---@field reg? string
     ---@field field? string
+    ---@field notify? boolean
 <
 
 >lua
@@ -1147,6 +1149,8 @@ EXPLORER                                      *snacks-picker-sources-explorer*
     ---@field diagnostics? boolean show diagnostics
     ---@field diagnostics_open? boolean show recursive diagnostics for open directories
     ---@field watch? boolean watch for file changes
+    ---@field exclude? string[] exclude glob patterns
+    ---@field include? string[] include glob patterns. These take precedence over `exclude`, `ignored` and `hidden`
     {
       finder = "explorer",
       sort = { fields = { "sort" } },
@@ -1541,6 +1545,7 @@ HIGHLIGHTS                                  *snacks-picker-sources-highlights*
       finder = "vim_highlights",
       format = "hl",
       preview = "preview",
+      confirm = "close",
     }
 <
 
@@ -1689,6 +1694,28 @@ Loclist
       finder = "qf",
       format = "file",
       qf_win = 0,
+    }
+<
+
+
+LSP_CONFIG                                  *snacks-picker-sources-lsp_config*
+
+>vim
+    :lua Snacks.picker.lsp_config(opts?)
+<
+
+>lua
+    ---@class snacks.picker.lsp.config.Config: snacks.picker.Config
+    ---@field installed? boolean only show installed servers
+    ---@field configured? boolean only show configured servers (setup with lspconfig)
+    ---@field attached? boolean|number only show attached servers. When `number`, show only servers attached to that buffer (can be 0)
+    {
+      finder = "lsp.config#find",
+      format = "lsp.config#format",
+      preview = "lsp.config#preview",
+      confirm = "close",
+      sort = { fields = { "score:desc", "attached_buf", "attached", "enabled", "installed", "name" } },
+      matcher = { sort_empty = true },
     }
 <
 
@@ -1925,6 +1952,7 @@ NOTIFICATIONS                            *snacks-picker-sources-notifications*
       format = "notification",
       preview = "preview",
       formatters = { severity = { level = true } },
+      confirm = "close",
     }
 <
 
@@ -2228,9 +2256,11 @@ TREESITTER                                  *snacks-picker-sources-treesitter*
 >lua
     ---@class snacks.picker.treesitter.Config: snacks.picker.Config
     ---@field filter table<string, string[]|boolean>? symbol kind filter
+    ---@field tree? boolean show symbol tree
     {
       finder = "treesitter_symbols",
       format = "lsp_symbol",
+      tree = true,
       filter = {
         default = {
           "Class",
@@ -2851,7 +2881,7 @@ SNACKS.PICKER.ACTIONS.PREVIEW_SCROLL_UP()*snacks-picker-snacks.picker.actions-sn
 SNACKS.PICKER.ACTIONS.PUT()*snacks-picker-snacks.picker.actions-snacks.picker.actions.put()*
 
 >lua
-    Snacks.picker.actions.put(picker, item)
+    Snacks.picker.actions.put(picker, item, action)
 <
 
 
@@ -3268,8 +3298,7 @@ Get the word under the cursor or the current visual selection
 2. *image*: https://github.com/user-attachments/assets/3203aec4-7d75-4bca-b3d5-18d931277e4e
 3. *image*: https://github.com/user-attachments/assets/e09d25f8-8559-441c-a0f7-576d2aa57097
 4. *image*: https://github.com/user-attachments/assets/291dcf63-0c1d-4e9a-97cb-dd5503660e6f
-5. *image*: https://github.com/user-attachments/assets/1aba5737-a650-4a00-94f8-033b7d8d21ba
-6. *image*: https://github.com/user-attachments/assets/976e0ed8-eb80-43e1-93ac-4683136c0a3c
+5. *image*: https://github.com/user-attachments/assets/976e0ed8-eb80-43e1-93ac-4683136c0a3c
 
 Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
 

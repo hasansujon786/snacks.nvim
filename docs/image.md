@@ -47,10 +47,25 @@ to the supported formats (all except PNG).
 
 ```lua
 ---@class snacks.image.Config
----@field file? string
 ---@field wo? vim.wo|{} options for windows showing the image
+---@field bo? vim.bo|{} options for the image buffer
+---@field formats? string[]
+--- Resolves a reference to an image with src in a file (currently markdown only).
+--- Return the absolute path or url to the image.
+--- When `nil`, the path is resolved relative to the file.
+---@field resolve? fun(file: string, src: string): string?
 {
+  formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff", "heic", "avif", "mp4", "mov", "avi", "mkv", "webm" },
   force = false, -- try displaying the image, even if the terminal does not support it
+  markdown = {
+    -- enable image viewer for markdown files
+    -- if your env doesn't support unicode placeholders, this will be disabled
+    enabled = true,
+    max_width = 80,
+    max_height = 40,
+  },
+  -- window options applied to windows displaying image buffers
+  -- an image buffer is a buffer with `filetype=image`
   wo = {
     wrap = false,
     number = false,
@@ -68,6 +83,12 @@ to the supported formats (all except PNG).
 ## 📚 Types
 
 ```lua
+---@alias snacks.image.Size {width: number, height: number}
+---@alias snacks.image.Pos {[1]: number, [2]: number}
+---@alias snacks.image.Loc snacks.image.Pos|snacks.image.Size|{zindex?: number}
+```
+
+```lua
 ---@class snacks.image.Env
 ---@field name string
 ---@field env table<string, string|true>
@@ -78,17 +99,43 @@ to the supported formats (all except PNG).
 ---@field detected? boolean
 ```
 
+```lua
+---@class snacks.image.Opts
+---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
+---@field width? number
+---@field min_width? number
+---@field max_width? number
+---@field height? number
+---@field min_height? number
+---@field max_height? number
+```
+
 ## 📦 Module
 
 ```lua
 ---@class snacks.image
 ---@field id number
+---@field ns number
 ---@field buf number
----@field opts snacks.image.Config
+---@field opts snacks.image.Opts
 ---@field file string
+---@field src string
 ---@field augroup number
+---@field closed? boolean
+---@field _loc? snacks.image.Loc
+---@field _state? snacks.image.State
 ---@field _convert uv.uv_process_t?
+---@field inline? boolean render the image inline in the buffer
+---@field extmark_id? number
 Snacks.image = {}
+```
+
+### `Snacks.image.attach()`
+
+```lua
+---@param buf number
+---@param opts? snacks.image.Opts|{src?: string}
+Snacks.image.attach(buf, opts)
 ```
 
 ### `Snacks.image.dim()`
@@ -107,12 +154,26 @@ Snacks.image.dim(file)
 Snacks.image.env()
 ```
 
+### `Snacks.image.markdown()`
+
+```lua
+---@param buf? number
+Snacks.image.markdown(buf)
+```
+
 ### `Snacks.image.new()`
 
 ```lua
 ---@param buf number
----@param opts? snacks.image.Config
-Snacks.image.new(buf, opts)
+---@param opts? snacks.image.Opts
+Snacks.image.new(buf, src, opts)
+```
+
+### `Snacks.image.request()`
+
+```lua
+---@param opts table<string, string|number>|{data?: string}
+Snacks.image.request(opts)
 ```
 
 ### `Snacks.image.supports()`
@@ -156,14 +217,16 @@ image:convert(file)
 
 ### `image:create()`
 
+create the image
+
 ```lua
 image:create()
 ```
 
-### `image:grid_size()`
+### `image:debug()`
 
 ```lua
-image:grid_size()
+image:debug(...)
 ```
 
 ### `image:hide()`
@@ -178,27 +241,20 @@ image:hide()
 image:ready()
 ```
 
-### `image:render()`
+### `image:render_fallback()`
+
+```lua
+---@param state snacks.image.State
+image:render_fallback(state)
+```
+
+### `image:render_grid()`
 
 Renders the unicode placeholder grid in the buffer
 
 ```lua
----@param width number
----@param height number
-image:render(width, height)
-```
-
-### `image:render_fallback()`
-
-```lua
-image:render_fallback()
-```
-
-### `image:request()`
-
-```lua
----@param opts table<string, string|number>|{data?: string}
-image:request(opts)
+---@param loc snacks.image.Loc
+image:render_grid(loc)
 ```
 
 ### `image:set_cursor()`
@@ -206,6 +262,12 @@ image:request(opts)
 ```lua
 ---@param pos {[1]: number, [2]: number}
 image:set_cursor(pos)
+```
+
+### `image:state()`
+
+```lua
+image:state()
 ```
 
 ### `image:update()`

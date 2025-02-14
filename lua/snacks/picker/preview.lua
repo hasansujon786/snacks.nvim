@@ -38,7 +38,7 @@ end
 function M.image(ctx)
   local buf = ctx.preview:scratch()
   ctx.preview:set_title(ctx.item.title or vim.fn.fnamemodify(ctx.item.file, ":t"))
-  Snacks.image.new(buf, { file = Snacks.picker.util.path(ctx.item) })
+  Snacks.image.attach(buf, { src = Snacks.picker.util.path(ctx.item) })
 end
 
 ---@param ctx snacks.picker.preview.ctx
