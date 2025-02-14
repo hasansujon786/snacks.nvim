@@ -240,6 +240,7 @@ function D:init()
   vim.o.ei = "all"
   Snacks.util.wo(self.win, Snacks.config.styles.dashboard.wo)
   Snacks.util.bo(self.buf, Snacks.config.styles.dashboard.bo)
+  vim.b[self.buf].snacks_main = true
   vim.o.ei = ""
   if self:is_float() then
     vim.keymap.set("n", "<esc>", "<cmd>bd<cr>", { silent = true, buffer = self.buf })

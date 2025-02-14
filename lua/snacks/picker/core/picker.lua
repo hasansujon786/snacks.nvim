@@ -507,7 +507,7 @@ function M:show()
   end
   self.shown = true
   self.layout:show()
-  if self.opts.focus ~= false then
+  if self.opts.focus ~= false and self.opts.enter ~= false then
     self:focus()
   end
   if self.opts.on_show then
