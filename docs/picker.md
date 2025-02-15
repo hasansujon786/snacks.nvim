@@ -1,4 +1,4 @@
-# 🍿 pie
+# 🍿 picker
 
 Snacks now comes with a modern fuzzy-finder to navigate the Neovim universe.
 
@@ -6,9 +6,10 @@ Snacks now comes with a modern fuzzy-finder to navigate the Neovim universe.
 ![image](https://github.com/user-attachments/assets/3203aec4-7d75-4bca-b3d5-18d931277e4e)
 ![image](https://github.com/user-attachments/assets/e09d25f8-8559-441c-a0f7-576d2aa57097)
 ![image](https://github.com/user-attachments/assets/291dcf63-0c1d-4e9a-97cb-dd5503660e6f)
+![image](https://github.com/user-attachments/assets/1aba5737-a650-4a00-94f8-033b7d8d21ba)
 ![image](https://github.com/user-attachments/assets/976e0ed8-eb80-43e1-93ac-4683136c0a3c)
 
-## ✨ Featuress
+## ✨ Features
 
 - 🔎 over 40 [built-in sources](https://github.com/folke/snacks.nvim/blob/main/docs/picker.md#-sources)
 - 🚀 Fast and powerful fuzzy matching engine that supports the [fzf](https://junegunn.github.io/fzf/search-syntax/) search syntax
@@ -229,6 +230,7 @@ Snacks.picker.pick({source = "files", ...})
         ["<c-p>"] = { "list_up", mode = { "i", "n" } },
         ["<c-q>"] = { "qflist", mode = { "i", "n" } },
         ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
+        ["<c-t>"] = { "tab", mode = { "n", "i" } },
         ["<c-u>"] = { "list_scroll_up", mode = { "i", "n" } },
         ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
         ["<c-w>H"] = "layout_left",
@@ -273,7 +275,9 @@ Snacks.picker.pick({source = "files", ...})
         ["<c-k>"] = "list_up",
         ["<c-n>"] = "list_down",
         ["<c-p>"] = "list_up",
+        ["<c-q>"] = "qflist",
         ["<c-s>"] = "edit_split",
+        ["<c-t>"] = "tab",
         ["<c-u>"] = "list_scroll_up",
         ["<c-v>"] = "edit_vsplit",
         ["<c-w>H"] = "layout_left",

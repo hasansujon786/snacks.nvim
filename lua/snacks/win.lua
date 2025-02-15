@@ -802,6 +802,7 @@ function M:show()
   -- swap buffers when opening a new buffer in the same window
   vim.api.nvim_create_autocmd("BufWinEnter", {
     group = self.augroup,
+    nested = true,
     callback = function()
       -- window closes, so delete the autocmd
       if not self:win_valid() then
@@ -834,7 +835,7 @@ function M:show()
         local win_buf = vim.api.nvim_win_get_buf(win)
         local is_float = vim.api.nvim_win_get_config(win).zindex ~= nil
         if win ~= self.win and not is_float then
-          if vim.bo[win_buf].buftype == "" then
+          if vim.bo[win_buf].buftype == "" or vim.b[win_buf].snacks_main or vim.w[win].snacks_main then
             main = win
             break
           end
@@ -852,7 +853,9 @@ function M:show()
         vim.schedule(function()
           vim.cmd.stopinsert()
           vim.cmd("sbuffer " .. buf)
-          vim.api.nvim_win_close(self.win, true)
+          if self.win and vim.api.nvim_win_is_valid(self.win) then
+            vim.api.nvim_win_close(self.win, true)
+          end
         end)
       end
     end,

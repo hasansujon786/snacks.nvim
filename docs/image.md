@@ -47,6 +47,7 @@ to the supported formats (all except PNG).
 
 ```lua
 ---@class snacks.image.Config
+---@field enabled? boolean enable image viewer
 ---@field wo? vim.wo|{} options for windows showing the image
 ---@field bo? vim.bo|{} options for the image buffer
 ---@field formats? string[]
@@ -61,6 +62,8 @@ to the supported formats (all except PNG).
     -- enable image viewer for markdown files
     -- if your env doesn't support unicode placeholders, this will be disabled
     enabled = true,
+    inline = true, -- render the image inline in the buffer (takes precedence over `opts.float` on supported terminals)
+    float = true, -- render the image in a floating window
     max_width = 80,
     max_height = 40,
   },
@@ -77,6 +80,26 @@ to the supported formats (all except PNG).
     spell = false,
     statuscolumn = "",
   },
+  env = {},
+}
+```
+
+## 🎨 Styles
+
+Check the [styles](https://github.com/folke/snacks.nvim/blob/main/docs/styles.md)
+docs for more information on how to customize these styles
+
+### `snacks_image`
+
+```lua
+{
+  relative = "cursor",
+  border = "rounded",
+  focusable = false,
+  backdrop = false,
+  row = 1,
+  col = 1,
+  -- width/height are automatically set by the image size unless specified below
 }
 ```
 
@@ -97,38 +120,24 @@ to the supported formats (all except PNG).
 ---@field setup? fun(): boolean?
 ---@field transform? fun(data: string): string
 ---@field detected? boolean
+---@field remote? boolean this is a remote client, so full transfer of the image data is required
 ```
 
 ```lua
 ---@class snacks.image.Opts
 ---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
+---@field inline? boolean render the image inline in the buffer
 ---@field width? number
 ---@field min_width? number
 ---@field max_width? number
 ---@field height? number
 ---@field min_height? number
 ---@field max_height? number
+---@field on_update? fun(placement: snacks.image.Placement)
+---@field on_update_pre? fun(placement: snacks.image.Placement)
 ```
 
 ## 📦 Module
-
-```lua
----@class snacks.image
----@field id number
----@field ns number
----@field buf number
----@field opts snacks.image.Opts
----@field file string
----@field src string
----@field augroup number
----@field closed? boolean
----@field _loc? snacks.image.Loc
----@field _state? snacks.image.State
----@field _convert uv.uv_process_t?
----@field inline? boolean render the image inline in the buffer
----@field extmark_id? number
-Snacks.image = {}
-```
 
 ### `Snacks.image.attach()`
 
@@ -161,19 +170,18 @@ Snacks.image.env()
 Snacks.image.markdown(buf)
 ```
 
-### `Snacks.image.new()`
-
-```lua
----@param buf number
----@param opts? snacks.image.Opts
-Snacks.image.new(buf, src, opts)
-```
-
 ### `Snacks.image.request()`
 
 ```lua
 ---@param opts table<string, string|number>|{data?: string}
 Snacks.image.request(opts)
+```
+
+### `Snacks.image.set_cursor()`
+
+```lua
+---@param pos {[1]: number, [2]: number}
+Snacks.image.set_cursor(pos)
 ```
 
 ### `Snacks.image.supports()`
@@ -200,85 +208,4 @@ Check if the terminal supports the kitty graphics protocol
 
 ```lua
 Snacks.image.supports_terminal()
-```
-
-### `image:close()`
-
-```lua
-image:close()
-```
-
-### `image:convert()`
-
-```lua
----@param file string
-image:convert(file)
-```
-
-### `image:create()`
-
-create the image
-
-```lua
-image:create()
-```
-
-### `image:debug()`
-
-```lua
-image:debug(...)
-```
-
-### `image:hide()`
-
-```lua
-image:hide()
-```
-
-### `image:ready()`
-
-```lua
-image:ready()
-```
-
-### `image:render_fallback()`
-
-```lua
----@param state snacks.image.State
-image:render_fallback(state)
-```
-
-### `image:render_grid()`
-
-Renders the unicode placeholder grid in the buffer
-
-```lua
----@param loc snacks.image.Loc
-image:render_grid(loc)
-```
-
-### `image:set_cursor()`
-
-```lua
----@param pos {[1]: number, [2]: number}
-image:set_cursor(pos)
-```
-
-### `image:state()`
-
-```lua
-image:state()
-```
-
-### `image:update()`
-
-```lua
-image:update()
-```
-
-### `image:wins()`
-
-```lua
----@return number[]
-image:wins()
 ```

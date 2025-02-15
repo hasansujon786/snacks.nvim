@@ -494,6 +494,9 @@ M._throttled_preview = M._show_preview
 -- Show the preview. Show instantly when no item is yet in the preview,
 -- otherwise throttle the preview.
 function M:show_preview()
+  if self.closed then
+    return
+  end
   if not self.preview.item then
     return self:_show_preview()
   end

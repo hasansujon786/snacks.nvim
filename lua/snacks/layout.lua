@@ -438,8 +438,7 @@ function M:update_win(win, parent)
   w.enabled = true
   assert(w, ("win %s not part of layout"):format(win.win))
   -- add win opts from layout
-  w.opts = vim.tbl_extend(
-    "force",
+  w.opts = Snacks.config.merge(
     vim.deepcopy(self.win_opts[win.win] or {}),
     {
       width = 0,
@@ -452,7 +451,7 @@ function M:update_win(win, parent)
       win = self.root.win,
       backdrop = false,
       resize = false,
-      zindex = self.root.opts.zindex + win.depth,
+      zindex = (self.opts.layout.zindex or 50) + win.depth + 1,
       w = { snacks_layout = true },
     }
   )

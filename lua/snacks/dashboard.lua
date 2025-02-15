@@ -255,7 +255,7 @@ function D:init()
       end
     end,
   })
-  vim.api.nvim_create_autocmd("BufWipeout", {
+  vim.api.nvim_create_autocmd({ "BufWipeout", "BufDelete" }, {
     buffer = self.buf,
     callback = function()
       self.fire("Closed")
@@ -697,6 +697,9 @@ function D:keys()
 end
 
 function D:update()
+  if not (self.buf and vim.api.nvim_buf_is_valid(self.buf)) then
+    return
+  end
   self.fire("UpdatePre")
   self._size = self:size()
 

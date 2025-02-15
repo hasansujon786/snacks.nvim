@@ -128,6 +128,7 @@ function Toggle:_wk(keys, mode)
     {
       keys,
       mode = mode,
+      real = true,
       icon = function()
         local key = self:get() and "enabled" or "disabled"
         return {

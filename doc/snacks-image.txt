@@ -5,30 +5,20 @@ Table of Contents                             *snacks-image-table-of-contents*
 
 1. Setup                                                  |snacks-image-setup|
 2. Config                                                |snacks-image-config|
-3. Types                                                  |snacks-image-types|
-4. Module                                                |snacks-image-module|
+3. Styles                                                |snacks-image-styles|
+  - snacks_image                            |snacks-image-styles-snacks_image|
+4. Types                                                  |snacks-image-types|
+5. Module                                                |snacks-image-module|
   - Snacks.image.attach()          |snacks-image-module-snacks.image.attach()|
   - Snacks.image.dim()                |snacks-image-module-snacks.image.dim()|
   - Snacks.image.env()                |snacks-image-module-snacks.image.env()|
   - Snacks.image.markdown()      |snacks-image-module-snacks.image.markdown()|
-  - Snacks.image.new()                |snacks-image-module-snacks.image.new()|
   - Snacks.image.request()        |snacks-image-module-snacks.image.request()|
+  - Snacks.image.set_cursor()  |snacks-image-module-snacks.image.set_cursor()|
   - Snacks.image.supports()      |snacks-image-module-snacks.image.supports()|
   - Snacks.image.supports_file()|snacks-image-module-snacks.image.supports_file()|
   - Snacks.image.supports_terminal()|snacks-image-module-snacks.image.supports_terminal()|
-  - image:close()                          |snacks-image-module-image:close()|
-  - image:convert()                      |snacks-image-module-image:convert()|
-  - image:create()                        |snacks-image-module-image:create()|
-  - image:debug()                          |snacks-image-module-image:debug()|
-  - image:hide()                            |snacks-image-module-image:hide()|
-  - image:ready()                          |snacks-image-module-image:ready()|
-  - image:render_fallback()      |snacks-image-module-image:render_fallback()|
-  - image:render_grid()              |snacks-image-module-image:render_grid()|
-  - image:set_cursor()                |snacks-image-module-image:set_cursor()|
-  - image:state()                          |snacks-image-module-image:state()|
-  - image:update()                        |snacks-image-module-image:update()|
-  - image:wins()                            |snacks-image-module-image:wins()|
-5. Links                                                  |snacks-image-links|
+6. Links                                                  |snacks-image-links|
 Image viewer using the Kitty Graphics Protocol
 <https://sw.kovidgoyal.net/kitty/graphics-protocol/>.
 
@@ -77,6 +67,7 @@ to the supported formats (all except PNG).
 
 >lua
     ---@class snacks.image.Config
+    ---@field enabled? boolean enable image viewer
     ---@field wo? vim.wo|{} options for windows showing the image
     ---@field bo? vim.bo|{} options for the image buffer
     ---@field formats? string[]
@@ -91,6 +82,8 @@ to the supported formats (all except PNG).
         -- enable image viewer for markdown files
         -- if your env doesn't support unicode placeholders, this will be disabled
         enabled = true,
+        inline = true, -- render the image inline in the buffer (takes precedence over `opts.float` on supported terminals)
+        float = true, -- render the image in a floating window
         max_width = 80,
         max_height = 40,
       },
@@ -107,12 +100,36 @@ to the supported formats (all except PNG).
         spell = false,
         statuscolumn = "",
       },
+      env = {},
     }
 <
 
 
 ==============================================================================
-3. Types                                                  *snacks-image-types*
+3. Styles                                                *snacks-image-styles*
+
+Check the styles
+<https://github.com/folke/snacks.nvim/blob/main/docs/styles.md> docs for more
+information on how to customize these styles
+
+
+SNACKS_IMAGE                                *snacks-image-styles-snacks_image*
+
+>lua
+    {
+      relative = "cursor",
+      border = "rounded",
+      focusable = false,
+      backdrop = false,
+      row = 1,
+      col = 1,
+      -- width/height are automatically set by the image size unless specified below
+    }
+<
+
+
+==============================================================================
+4. Types                                                  *snacks-image-types*
 
 >lua
     ---@alias snacks.image.Size {width: number, height: number}
@@ -129,40 +146,26 @@ to the supported formats (all except PNG).
     ---@field setup? fun(): boolean?
     ---@field transform? fun(data: string): string
     ---@field detected? boolean
+    ---@field remote? boolean this is a remote client, so full transfer of the image data is required
 <
 
 >lua
     ---@class snacks.image.Opts
     ---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
+    ---@field inline? boolean render the image inline in the buffer
     ---@field width? number
     ---@field min_width? number
     ---@field max_width? number
     ---@field height? number
     ---@field min_height? number
     ---@field max_height? number
+    ---@field on_update? fun(placement: snacks.image.Placement)
+    ---@field on_update_pre? fun(placement: snacks.image.Placement)
 <
 
 
 ==============================================================================
-4. Module                                                *snacks-image-module*
-
->lua
-    ---@class snacks.image
-    ---@field id number
-    ---@field ns number
-    ---@field buf number
-    ---@field opts snacks.image.Opts
-    ---@field file string
-    ---@field src string
-    ---@field augroup number
-    ---@field closed? boolean
-    ---@field _loc? snacks.image.Loc
-    ---@field _state? snacks.image.State
-    ---@field _convert uv.uv_process_t?
-    ---@field inline? boolean render the image inline in the buffer
-    ---@field extmark_id? number
-    Snacks.image = {}
-<
+5. Module                                                *snacks-image-module*
 
 
 `Snacks.image.attach()`                                *Snacks.image.attach()*
@@ -200,20 +203,19 @@ Get the dimensions of a PNG file
 <
 
 
-`Snacks.image.new()`                                      *Snacks.image.new()*
-
->lua
-    ---@param buf number
-    ---@param opts? snacks.image.Opts
-    Snacks.image.new(buf, src, opts)
-<
-
-
 `Snacks.image.request()`                              *Snacks.image.request()*
 
 >lua
     ---@param opts table<string, string|number>|{data?: string}
     Snacks.image.request(opts)
+<
+
+
+`Snacks.image.set_cursor()`                        *Snacks.image.set_cursor()*
+
+>lua
+    ---@param pos {[1]: number, [2]: number}
+    Snacks.image.set_cursor(pos)
 <
 
 
@@ -246,101 +248,8 @@ Check if the terminal supports the kitty graphics protocol
     Snacks.image.supports_terminal()
 <
 
-
-IMAGE:CLOSE()                              *snacks-image-module-image:close()*
-
->lua
-    image:close()
-<
-
-
-IMAGE:CONVERT()                          *snacks-image-module-image:convert()*
-
->lua
-    ---@param file string
-    image:convert(file)
-<
-
-
-IMAGE:CREATE()                            *snacks-image-module-image:create()*
-
-create the image
-
->lua
-    image:create()
-<
-
-
-IMAGE:DEBUG()                              *snacks-image-module-image:debug()*
-
->lua
-    image:debug(...)
-<
-
-
-IMAGE:HIDE()                                *snacks-image-module-image:hide()*
-
->lua
-    image:hide()
-<
-
-
-IMAGE:READY()                              *snacks-image-module-image:ready()*
-
->lua
-    image:ready()
-<
-
-
-IMAGE:RENDER_FALLBACK()          *snacks-image-module-image:render_fallback()*
-
->lua
-    ---@param state snacks.image.State
-    image:render_fallback(state)
-<
-
-
-IMAGE:RENDER_GRID()                  *snacks-image-module-image:render_grid()*
-
-Renders the unicode placeholder grid in the buffer
-
->lua
-    ---@param loc snacks.image.Loc
-    image:render_grid(loc)
-<
-
-
-IMAGE:SET_CURSOR()                    *snacks-image-module-image:set_cursor()*
-
->lua
-    ---@param pos {[1]: number, [2]: number}
-    image:set_cursor(pos)
-<
-
-
-IMAGE:STATE()                              *snacks-image-module-image:state()*
-
->lua
-    image:state()
-<
-
-
-IMAGE:UPDATE()                            *snacks-image-module-image:update()*
-
->lua
-    image:update()
-<
-
-
-IMAGE:WINS()                                *snacks-image-module-image:wins()*
-
->lua
-    ---@return number[]
-    image:wins()
-<
-
 ==============================================================================
-5. Links                                                  *snacks-image-links*
+6. Links                                                  *snacks-image-links*
 
 1. *Image*: https://github.com/user-attachments/assets/4e8a686c-bf41-4989-9d74-1641ecf2835f
 
