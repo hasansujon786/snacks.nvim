@@ -176,6 +176,12 @@ function M.cmd(cmd, ctx, opts)
   local line ---@type string?
   local l = 0
 
+  if ctx.picker.opts.debug.proc then
+    local args = vim.deepcopy(cmd)
+    table.remove(args, 1)
+    require("snacks.picker.source.proc").debug({ cmd = cmd[1], args = args, cwd = ctx.item.cwd })
+  end
+
   ---@param text string
   local function add_line(text)
     l = l + 1
@@ -266,9 +272,11 @@ function M.git_show(ctx)
     "show",
     ctx.item.commit,
   }
-  if ctx.item.file then
+  local pathspec = ctx.item.files or ctx.item.file
+  pathspec = type(pathspec) == "table" and pathspec or { pathspec }
+  if #pathspec > 0 then
     cmd[#cmd + 1] = "--"
-    cmd[#cmd + 1] = ctx.item.file
+    vim.list_extend(cmd, pathspec)
   end
   if not native then
     table.insert(cmd, 2, "--no-pager")
