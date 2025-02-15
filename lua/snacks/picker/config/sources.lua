@@ -87,7 +87,8 @@ M.explorer = {
         ["m"] = "explorer_move",
         ["o"] = "explorer_open", -- open with system application
         ["P"] = "toggle_preview",
-        ["y"] = "explorer_yank",
+        ["y"] = { "explorer_yank", mode = { "n", "x" } },
+        ["p"] = "explorer_paste",
         ["u"] = "explorer_update",
         ["<c-c>"] = "tcd",
         ["<leader>/"] = "picker_grep",

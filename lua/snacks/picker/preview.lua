@@ -23,10 +23,13 @@ function M.directory(ctx)
     return a.file < b.file
   end)
   for i, item in ipairs(ls) do
-    local cat = item.type == "directory" and "directory" or "file"
-    local hl = item.type == "directory" and "Directory" or nil
+    local is_dir = item.type == "directory"
+    local cat = is_dir and "directory" or "file"
+    local hl = is_dir and "Directory" or nil
     local path = item.file
-    local icon, icon_hl = Snacks.util.icon(path, cat)
+    local icon, icon_hl = Snacks.util.icon(path, cat, {
+      fallback = ctx.picker.opts.icons.files,
+    })
     local line = { { icon .. " ", icon_hl }, { path, hl } }
     vim.api.nvim_buf_set_extmark(ctx.buf, ns, i - 1, 0, {
       virt_text = line,
@@ -38,7 +41,7 @@ end
 function M.image(ctx)
   local buf = ctx.preview:scratch()
   ctx.preview:set_title(ctx.item.title or vim.fn.fnamemodify(ctx.item.file, ":t"))
-  Snacks.image.attach(buf, { src = Snacks.picker.util.path(ctx.item) })
+  Snacks.image.buf.attach(buf, { src = Snacks.picker.util.path(ctx.item) })
 end
 
 ---@param ctx snacks.picker.preview.ctx
