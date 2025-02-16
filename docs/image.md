@@ -84,7 +84,6 @@ In case of issues, make sure to run `:checkhealth snacks`.
     -- a treesitter parser must be available for the enabled languages.
     -- supported language injections: markdown, html
     enabled = true,
-    lang = { "markdown", "html", "norg", "tsx", "javascript", "css", "vue", "angular" },
     -- render the image inline in the buffer
     -- if your env doesn't support unicode placeholders, this will be disabled
     -- takes precedence over `opts.float` on supported terminals
@@ -185,6 +184,13 @@ Show the image at the cursor in a floating window
 
 ```lua
 Snacks.image.hover()
+```
+
+### `Snacks.image.langs()`
+
+```lua
+---@return string[]
+Snacks.image.langs()
 ```
 
 ### `Snacks.image.supports()`
