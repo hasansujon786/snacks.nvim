@@ -80,6 +80,7 @@ M._queries = {
 }
 
 local hover ---@type snacks.image.Hover?
+local uv = vim.uv or vim.loop
 
 function M.queries()
   local ret = {} ---@type snacks.image.Query[]
@@ -105,8 +106,13 @@ function M.resolve(buf, src)
   end
   if not src:find("^%w%w+://") then
     if src:find("^%.") or src:find("^%w") then
-      local dir = vim.fs.dirname(file)
-      src = dir .. "/" .. src
+      for _, dir in ipairs({ vim.fs.dirname(file), uv.cwd() }) do
+        local path = dir .. "/" .. src
+        if vim.fn.filereadable(path) == 1 then
+          src = path
+          break
+        end
+      end
     end
     src = vim.fs.normalize(src)
   end
@@ -215,6 +221,11 @@ function M.hover()
     buf = current_buf,
     img = Snacks.image.placement.new(win.buf, img.src, o),
   }
+  vim.api.nvim_create_autocmd({ "BufWritePost", "CursorMoved", "ModeChanged", "BufLeave" }, {
+    buffer = current_buf,
+    once = true,
+    callback = M.hover,
+  })
 end
 
 ---@param buf number
@@ -223,7 +234,11 @@ function M.inline(buf)
   return function()
     local found = {} ---@type table<string, boolean>
     for _, i in ipairs(M.find(buf)) do
-      local img = imgs[i.id]
+      local img = imgs[i.id] ---@type snacks.image.Placement?
+      if img and img.img.src ~= i.src then
+        img:close()
+        img = nil
+      end
 
       if not img then
         img = Snacks.image.placement.new(
@@ -273,7 +288,7 @@ function M.attach(buf)
       callback = vim.schedule_wrap(update),
     })
   else
-    vim.api.nvim_create_autocmd({ "BufWritePost", "CursorMoved", "ModeChanged", "BufLeave" }, {
+    vim.api.nvim_create_autocmd({ "CursorMoved" }, {
       group = group,
       buffer = buf,
       callback = vim.schedule_wrap(update),

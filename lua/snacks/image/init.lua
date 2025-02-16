@@ -107,7 +107,7 @@ local did_setup = false
 --- Check if the file format is supported
 ---@param file string
 function M.supports_file(file)
-  return vim.tbl_contains(M.config.formats or {}, vim.fn.fnamemodify(file, ":e"))
+  return vim.tbl_contains(M.config.formats or {}, vim.fn.fnamemodify(file, ":e"):lower())
 end
 
 --- Check if the file format is supported and the terminal supports the kitty graphics protocol

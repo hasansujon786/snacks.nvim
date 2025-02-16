@@ -68,7 +68,7 @@ function M:convert()
     src = vim.uri_to_fname(src)
   end
   -- convert urls and non-png files to png
-  if not src:find("^https?://") and src:find("%.png$") then
+  if not src:find("^https?://") and src:lower():find("%.png$") then
     return src
   end
   if not src:find("^%w%w+://") then
