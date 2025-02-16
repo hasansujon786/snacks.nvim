@@ -9,13 +9,25 @@ local M = {}
 ---@class snacks.image.Query
 ---@field setup fun():vim.treesitter.Query
 ---@field query? vim.treesitter.Query|false
----@field transform? fun(buf:number, anchor: TSNode, image: TSNode): string
+---@field transform? fun(buf:number, src:string, anchor: TSNode, image: TSNode): string
 
 ---@type table<string, {setup:(fun():vim.treesitter.Query), query?:vim.treesitter.Query|false}>
 M._queries = {
   markdown = {
     setup = function()
-      return vim.treesitter.query.parse("markdown_inline", [[(image (link_destination) @image) @anchor]])
+      return vim.treesitter.query.parse(
+        "markdown_inline",
+        [[
+          (image 
+            [
+              (link_destination) @image
+              (image_description (shortcut_link (link_text) @image))
+            ]) @anchor
+        ]]
+      )
+    end,
+    transform = function(_, src)
+      return src:gsub("|.*", ""):gsub("^<", ""):gsub(">$", "")
     end,
   },
   html = {
@@ -37,6 +49,58 @@ M._queries = {
             (attribute
               (attribute_name) @attr_name (#eq? @attr_name "src")
               (quoted_attribute_value (attribute_value) @image)
+            )
+          ) @anchor
+        ]]
+      )
+    end,
+  },
+  tsx = {
+    setup = function()
+      return vim.treesitter.query.parse(
+        "tsx",
+        [[
+          (jsx_element
+            (jsx_opening_element
+              (identifier) @tag (#eq? @tag "img")
+              (jsx_attribute
+                (property_identifier) @attr_name (#eq? @attr_name "src")
+                (string (string_fragment) @image)
+              )
+            )
+          ) @anchor
+
+          (jsx_self_closing_element
+            (identifier) @tag (#eq? @tag "img")
+            (jsx_attribute
+              (property_identifier) @attr_name (#eq? @attr_name "src")
+              (string (string_fragment) @image)
+            )
+          ) @anchor
+        ]]
+      )
+    end,
+  },
+  javascript = {
+    setup = function()
+      return vim.treesitter.query.parse(
+        "javascript",
+        [[
+          (jsx_element
+            (jsx_opening_element
+              (identifier) @tag (#eq? @tag "img")
+              (jsx_attribute
+                (property_identifier) @attr_name (#eq? @attr_name "src")
+                (string (string_fragment) @image)
+              )
+            )
+          ) @anchor
+
+          (jsx_self_closing_element
+            (identifier) @tag (#eq? @tag "img")
+            (jsx_attribute
+              (property_identifier) @attr_name (#eq? @attr_name "src")
+              (string (string_fragment) @image)
             )
           ) @anchor
         ]]
@@ -71,7 +135,7 @@ M._queries = {
     end,
     ---@param anchor TSNode
     ---@param img TSNode
-    transform = function(buf, anchor, img)
+    transform = function(buf, _, anchor, img)
       local row, col = img:start()
       local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
       return line:sub(col + 1)
@@ -96,9 +160,17 @@ function M.queries()
   return ret
 end
 
+---@param str string
+function M.url_decode(str)
+  return str:gsub("+", " "):gsub("%%(%x%x)", function(hex)
+    return string.char(tonumber(hex, 16))
+  end)
+end
+
 ---@param buf number
 ---@param src string
 function M.resolve(buf, src)
+  src = M.url_decode(src)
   local file = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
   local s = Snacks.image.config.resolve and Snacks.image.config.resolve(file, src) or nil
   if s then
@@ -154,7 +226,7 @@ function M.find(buf, from, to)
         end
         if src and pos and nid then
           if query.transform then
-            src = query.transform(buf, anchor, image)
+            src = query.transform(buf, src, anchor, image)
           end
           src = M.resolve(buf, src)
           ret[#ret + 1] = { id = nid, pos = pos, src = src }
@@ -173,6 +245,16 @@ function M.hover_close()
   end
 end
 
+--- Get the image at the cursor (if any)
+---@return string? image_src, snacks.image.Pos? image_pos
+function M.at_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local img = M.find(vim.api.nvim_get_current_buf(), cursor[1], cursor[1] + 1)[1]
+  if img then
+    return img.src, img.pos
+  end
+end
+
 function M.hover()
   local current_win = vim.api.nvim_get_current_win()
   local current_buf = vim.api.nvim_get_current_buf()
@@ -185,13 +267,12 @@ function M.hover()
     M.hover_close()
   end
 
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  local img = M.find(current_buf, cursor[1], cursor[1] + 1)[1]
-  if not img then
+  local src = M.at_cursor()
+  if not src then
     return M.hover_close()
   end
 
-  if hover and hover.img.img.src ~= img.src then
+  if hover and hover.img.img.src ~= src then
     M.hover_close()
   elseif hover then
     hover.img:update()
@@ -219,7 +300,7 @@ function M.hover()
   hover = {
     win = win,
     buf = current_buf,
-    img = Snacks.image.placement.new(win.buf, img.src, o),
+    img = Snacks.image.placement.new(win.buf, src, o),
   }
   vim.api.nvim_create_autocmd({ "BufWritePost", "CursorMoved", "ModeChanged", "BufLeave" }, {
     buffer = current_buf,

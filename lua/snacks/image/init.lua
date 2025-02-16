@@ -51,7 +51,7 @@ local defaults = {
     -- a treesitter parser must be available for the enabled languages.
     -- supported language injections: markdown, html
     enabled = true,
-    lang = { "markdown", "html", "norg" },
+    lang = { "markdown", "html", "norg", "tsx", "javascript", "css", "vue", "angular" },
     -- render the image inline in the buffer
     -- if your env doesn't support unicode placeholders, this will be disabled
     -- takes precedence over `opts.float` on supported terminals
@@ -75,6 +75,7 @@ local defaults = {
     spell = false,
     statuscolumn = "",
   },
+  cache = vim.fn.stdpath("cache") .. "/snacks/image",
   debug = false,
   env = {},
 }
