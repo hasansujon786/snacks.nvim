@@ -40,7 +40,7 @@ function M.proc(opts, ctx)
     end
 
     if ctx.picker.opts.debug.proc then
-      M.debug(opts)
+      Snacks.debug.cmd(opts)
     end
 
     local sep = opts.sep or "\n"

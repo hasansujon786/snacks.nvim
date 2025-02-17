@@ -169,7 +169,7 @@ function M.request(opts)
   if env.transform then
     data = env.transform(data)
   end
-  if Snacks.image.config.debug and opts.m ~= 1 then
+  if Snacks.image.config.debug.request and opts.m ~= 1 then
     Snacks.debug.inspect(opts)
   end
   io.stdout:write(data)

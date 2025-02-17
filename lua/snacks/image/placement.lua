@@ -114,7 +114,7 @@ function M:render_grid(loc)
   vim.api.nvim_set_hl(0, hl, {
     fg = self.img.id,
     sp = self.id,
-    bg = Snacks.image.config.debug and "#FF007C" or nil,
+    bg = Snacks.image.config.debug.placement and "#FF007C" or nil,
   })
   local lines = {} ---@type string[]
   for r = 1, loc.height do
@@ -180,7 +180,7 @@ function M:render_fallback(state)
 end
 
 function M:debug(...)
-  if not Snacks.image.config.debug then
+  if true or not Snacks.image.config.debug then
     return
   end
   Snacks.debug.inspect({ ... }, self.img.src, self.img.id, self.id)
@@ -211,7 +211,7 @@ function M:state()
 
   width = minmax(self.opts.width or width, self.opts.min_width, self.opts.max_width)
   height = minmax(self.opts.height or height, self.opts.min_height, self.opts.max_height)
-  local size = Snacks.image.util.fit(self.img.file, { width = width, height = height })
+  local size = Snacks.image.util.fit(self.img.file, { width = width, height = height }, { full = not self.opts.inline })
 
   local pos = self.opts.pos or { 1, 0 }
   ---@class snacks.image.State

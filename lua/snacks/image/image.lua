@@ -5,7 +5,8 @@
 ---@field sent? boolean image data is sent
 ---@field placements table<number, snacks.image.Placement> image placements
 ---@field augroup number
----@field _convert uv.uv_process_t?
+---@field _ready fun(): boolean
+---@field closed? boolean
 local M = {}
 M.__index = M
 
@@ -16,7 +17,6 @@ local _pid = 0
 local nvim_id = 0
 local uv = vim.uv or vim.loop
 local images = {} ---@type table<string, snacks.Image>
-local have_magick ---@type boolean?
 local terminal = Snacks.image.terminal
 
 ---@param src string
@@ -25,6 +25,7 @@ function M.new(src)
   self.src = src
   self.file = self:convert()
   if images[self.file] then
+    self.closed = true
     return images[self.file]
   end
   images[self.file] = self
@@ -38,18 +39,15 @@ function M.new(src)
   -- interleave the nvim id and the image id
   self.id = bit.bor(bit.lshift(nvim_id, 24 - NVIM_ID_BITS), _id)
   self.placements = {}
-  if self:ready() then
-    vim.schedule(function()
-      self:on_ready()
-    end)
-  end
   self.augroup = vim.api.nvim_create_augroup("snacks.image." .. self.id, { clear = true })
 
   return self
 end
 
 function M:on_ready()
-  self:send()
+  if not self.sent and not self.closed then
+    self:send()
+  end
 end
 
 function M:on_send()
@@ -59,39 +57,23 @@ function M:on_send()
 end
 
 function M:ready()
-  return (not self._convert or self._convert:is_closing()) and self.file and vim.fn.filereadable(self.file) == 1
+  return self._ready() and self.file and vim.fn.filereadable(self.file) == 1
 end
 
 function M:convert()
-  local src = self.src
-  if src:find("^file://") then
-    src = vim.uri_to_fname(src)
-  end
-  -- convert urls and non-png files to png
-  if not src:find("^https?://") and src:lower():find("%.png$") then
-    return src
-  end
-  if not src:find("^%w%w+://") then
-    src = vim.fs.normalize(src)
-  end
-  local fin = src .. "[0]"
-  local root = Snacks.image.config.cache
-  vim.fn.mkdir(root, "p")
-  src = root .. "/" .. Snacks.util.file_encode(fin) .. ".png"
-  if vim.fn.filereadable(src) == 1 then
-    return src
-  end
-  local opts = { args = { fin, src } }
-  have_magick = have_magick == nil and vim.fn.executable("magick") == 1 or have_magick
-  self._convert = uv.spawn(have_magick and "magick" or "convert", opts, function(code)
-    self._convert:close()
-    if code == 0 then
-      vim.schedule(function()
-        self:on_ready()
-      end)
-    end
-  end)
-  return src
+  local png, ready = Snacks.image.convert.convert(self.src, {
+    on_done = function(code)
+      if code == 0 then
+        vim.schedule(function()
+          self:on_ready()
+        end)
+      else
+        Snacks.notify.error("Failed to convert image to " .. self.file)
+      end
+    end,
+  })
+  self._ready = ready
+  return png
 end
 
 -- create the image

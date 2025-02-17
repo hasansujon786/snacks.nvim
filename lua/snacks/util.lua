@@ -36,12 +36,18 @@ function M.set_hl(groups, opts)
   end
 end
 
----@param group string hl group to get color from
+---@param group string|string[] hl group to get color from
 ---@param prop? string property to get. Defaults to "fg"
 function M.color(group, prop)
   prop = prop or "fg"
-  local hl = vim.api.nvim_get_hl(0, { name = group, link = false })
-  return hl[prop] and string.format("#%06x", hl[prop]) or nil
+  group = type(group) == "table" and group or { group }
+  ---@cast group string[]
+  for _, g in ipairs(group) do
+    local hl = vim.api.nvim_get_hl(0, { name = g, link = false })
+    if hl[prop] then
+      return string.format("#%06x", hl[prop])
+    end
+  end
 end
 
 --- Set window-local options.

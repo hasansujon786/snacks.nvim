@@ -5,10 +5,11 @@
 ---@field util snacks.image.util
 ---@field buf snacks.image.buf
 ---@field doc snacks.image.doc
+---@field convert snacks.image.convert
 local M = setmetatable({}, {
   ---@param M snacks.image
   __index = function(M, k)
-    if vim.tbl_contains({ "terminal", "image", "placement", "util", "doc", "buf" }, k) then
+    if vim.tbl_contains({ "terminal", "image", "placement", "util", "doc", "buf", "convert" }, k) then
       M[k] = require("snacks.image." .. k)
     end
     return rawget(M, k)
@@ -44,7 +45,23 @@ M.meta = {
 --- When `nil`, the path is resolved relative to the file.
 ---@field resolve? fun(file: string, src: string): string?
 local defaults = {
-  formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff", "heic", "avif", "mp4", "mov", "avi", "mkv", "webm" },
+  formats = {
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "bmp",
+    "webp",
+    "tiff",
+    "heic",
+    "avif",
+    "mp4",
+    "mov",
+    "avi",
+    "mkv",
+    "webm",
+    "pdf",
+  },
   force = false, -- try displaying the image, even if the terminal does not support it
   doc = {
     -- enable image viewer for documents
@@ -61,6 +78,7 @@ local defaults = {
     max_width = 80,
     max_height = 40,
   },
+  img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments" },
   -- window options applied to windows displaying image buffers
   -- an image buffer is a buffer with `filetype=image`
   wo = {
@@ -75,7 +93,11 @@ local defaults = {
     statuscolumn = "",
   },
   cache = vim.fn.stdpath("cache") .. "/snacks/image",
-  debug = false,
+  debug = {
+    request = false,
+    convert = false,
+    placement = false,
+  },
   env = {},
 }
 M.config = Snacks.config.get("image", defaults)
@@ -171,7 +193,9 @@ function M.setup(ev)
         local lang = vim.treesitter.language.get_lang(ft)
         if vim.tbl_contains(langs, lang) then
           vim.schedule(function()
-            M.doc.attach(e.buf)
+            if vim.api.nvim_buf_is_valid(e.buf) then
+              M.doc.attach(e.buf)
+            end
           end)
         end
       end,
@@ -185,7 +209,8 @@ end
 ---@private
 function M.health()
   Snacks.health.have_tool({ "kitty", "wezterm", "ghostty" })
-  if not Snacks.health.have_tool("magick") then
+  local is_win = jit.os:find("Windows")
+  if not Snacks.health.have_tool({ "magick", not is_win and "convert" or nil }) then
     Snacks.health.error("`magick` is required to convert images. Only PNG files will be displayed.")
   end
   local env = M.terminal.env()
@@ -223,6 +248,12 @@ function M.health()
     else
       Snacks.health.error("Image rendering for `" .. lang .. "` is not available")
     end
+  end
+
+  if Snacks.health.have_tool({ "pdflatex" }) then
+    Snacks.health.ok("`pdflatex` is available to render math expressions in `latex` and `markdown` documents")
+  else
+    Snacks.health.warn("`pdflatex` is required to render LaTeX math equations")
   end
 
   if env.supported then

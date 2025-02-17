@@ -32,7 +32,7 @@ Snacks.util.bo(buf, bo)
 ### `Snacks.util.color()`
 
 ```lua
----@param group string hl group to get color from
+---@param group string|string[] hl group to get color from
 ---@param prop? string property to get. Defaults to "fg"
 Snacks.util.color(group, prop)
 ```

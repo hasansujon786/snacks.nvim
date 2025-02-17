@@ -1,4 +1,4 @@
-*snacks-util.txt*                                                  snacks.nvim
+*snacks-util*                                                  snacks_util
 
 ==============================================================================
 Table of Contents                              *snacks-util-table-of-contents*
@@ -63,7 +63,7 @@ Set buffer-local options.
 `Snacks.util.color()`                                    *Snacks.util.color()*
 
 >lua
-    ---@param group string hl group to get color from
+    ---@param group string|string[] hl group to get color from
     ---@param prop? string property to get. Defaults to "fg"
     Snacks.util.color(group, prop)
 <

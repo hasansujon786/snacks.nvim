@@ -2,7 +2,14 @@
 
 ![Image](https://github.com/user-attachments/assets/4e8a686c-bf41-4989-9d74-1641ecf2835f)
 
-Image viewer using the [Kitty Graphics Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/).
+## ✨ Features
+
+- Image viewer using the [Kitty Graphics Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/).
+- open images in a wide range of formats:
+  `png`, `jpg`, `jpeg`, `gif`, `bmp`, `webp`, `tiff`, `heic`, `avif`, `mp4`, `mov`, `avi`, `mkv`, `webm`
+- Supports inline image rendering in:
+  `markdown`, `html`, `norg`, `tsx`, `javascript`, `css`, `vue`, `scss`, `latex`, `typst`, `vue`
+- LaTex math expressions in `markdown` and `latex` documents
 
 Terminal support:
 
@@ -28,17 +35,6 @@ For example, to force detection of **ghostty** you can set `SNACKS_GHOSTTY=true`
 In order to automatically display the image when opening an image file,
 or to have imaged displayed in supported document formats like `markdown` or `html`,
 you need to enable the `image` plugin in your `snacks` config.
-
-Supported document formats are:
-
-- markdown
-- html
-- norg
-- tsx
-- javascript
-- css
-- vue
-- angular
 
 [ImageMagick](https://imagemagick.org/index.php) is required to convert images
 to the supported formats (all except PNG).
@@ -77,7 +73,23 @@ In case of issues, make sure to run `:checkhealth snacks`.
 --- When `nil`, the path is resolved relative to the file.
 ---@field resolve? fun(file: string, src: string): string?
 {
-  formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff", "heic", "avif", "mp4", "mov", "avi", "mkv", "webm" },
+  formats = {
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "bmp",
+    "webp",
+    "tiff",
+    "heic",
+    "avif",
+    "mp4",
+    "mov",
+    "avi",
+    "mkv",
+    "webm",
+    "pdf",
+  },
   force = false, -- try displaying the image, even if the terminal does not support it
   doc = {
     -- enable image viewer for documents
@@ -94,6 +106,7 @@ In case of issues, make sure to run `:checkhealth snacks`.
     max_width = 80,
     max_height = 40,
   },
+  img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments" },
   -- window options applied to windows displaying image buffers
   -- an image buffer is a buffer with `filetype=image`
   wo = {
@@ -108,6 +121,11 @@ In case of issues, make sure to run `:checkhealth snacks`.
     statuscolumn = "",
   },
   cache = vim.fn.stdpath("cache") .. "/snacks/image",
+  debug = {
+    request = false,
+    convert = false,
+    placement = false,
+  },
   env = {},
 }
 ```
@@ -175,6 +193,7 @@ docs for more information on how to customize these styles
 ---@field util snacks.image.util
 ---@field buf snacks.image.buf
 ---@field doc snacks.image.doc
+---@field convert snacks.image.convert
 Snacks.image = {}
 ```
 

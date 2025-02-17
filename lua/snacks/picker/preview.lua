@@ -182,7 +182,7 @@ function M.cmd(cmd, ctx, opts)
   if ctx.picker.opts.debug.proc then
     local args = vim.deepcopy(cmd)
     table.remove(args, 1)
-    require("snacks.picker.source.proc").debug({ cmd = cmd[1], args = args, cwd = ctx.item.cwd })
+    Snacks.debug.cmd({ cmd = cmd[1], args = args, cwd = ctx.item.cwd })
   end
 
   ---@param text string
