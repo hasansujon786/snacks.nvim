@@ -99,10 +99,23 @@ function M:error()
     return
   end
   local msg = "# Image Conversion Failed:\n\n"
-  local proc = self.img._proc
-  if proc then
-    msg = msg .. Snacks.debug.cmd({ cmd = proc.opts.cmd, args = proc.opts.args, cwd = proc.opts.cwd, notify = false })
-    msg = msg .. "\n\n# Output\n" .. proc:out() .. "\n\n# Error\n" .. proc:err()
+  local convert = self.img._convert
+  if convert then
+    for _, step in ipairs(convert.steps) do
+      if step.err then
+        msg = msg .. "## " .. step.name .. "\n\n" .. step.err .. "\n\n"
+        if step.proc then
+          msg = msg
+            .. Snacks.debug.cmd({
+              cmd = step.proc.opts.cmd,
+              args = step.proc.opts.args,
+              cwd = step.proc.opts.cwd,
+              notify = false,
+            })
+          msg = msg .. "\n\n# Output\n" .. vim.trim(step.proc:out() .. "\n" .. step.proc:err()) .. "\n"
+        end
+      end
+    end
   end
   local lines = vim.split(msg, "\n")
   vim.bo[self.buf].modifiable = true
@@ -127,14 +140,17 @@ function M:progress()
     vim.schedule_wrap(function()
       if self:ready() or self.img:failed() or not vim.api.nvim_buf_is_valid(self.buf) then
         timer:stop()
-        return timer:close()
+        if not timer:is_closing() then
+          timer:close()
+        end
+        return
       end
       vim.api.nvim_buf_clear_namespace(self.buf, self.ns, 0, -1)
       vim.api.nvim_buf_set_extmark(self.buf, self.ns, 0, 0, {
         virt_text = {
           { Snacks.util.spinner(), "SnacksImageSpinner" },
           { " " },
-          { self.img._proc.opts.cmd .. " loading …", "SnacksImageLoading" },
+          { self.img._convert:current().name .. " loading …", "SnacksImageLoading" },
         },
       })
     end)
@@ -215,6 +231,9 @@ end
 
 ---@param state snacks.image.State
 function M:render_fallback(state)
+  if not self.opts.inline then
+    vim.api.nvim_buf_clear_namespace(self.buf, self.ns, 0, -1)
+  end
   for _, win in ipairs(state.wins) do
     self:debug("render_fallback", win)
     local border = setmetatable({ opts = vim.api.nvim_win_get_config(win) }, { __index = Snacks.win }):border_size()
@@ -263,7 +282,7 @@ function M:state()
 
   width = minmax(self.opts.width or width, self.opts.min_width, self.opts.max_width)
   height = minmax(self.opts.height or height, self.opts.min_height, self.opts.max_height)
-  local size = Snacks.image.util.fit(self.img.file, { width = width, height = height }, { full = not self.opts.inline })
+  local size = Snacks.image.util.fit(self.img.file, { width = width, height = height }, { info = self.img.info })
 
   local pos = self.opts.pos or { 1, 0 }
   ---@class snacks.image.State

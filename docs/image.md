@@ -8,7 +8,7 @@
 - open images in a wide range of formats:
   `pdf`, `png`, `jpg`, `jpeg`, `gif`, `bmp`, `webp`, `tiff`, `heic`, `avif`, `mp4`, `mov`, `avi`, `mkv`, `webm`
 - Supports inline image rendering in:
-  `markdown`, `html`, `norg`, `tsx`, `javascript`, `css`, `vue`, `scss`, `latex`, `typst`, `vue`
+  `markdown`, `html`, `norg`, `tsx`, `javascript`, `css`, `vue`, `svelte`, `scss`, `latex`, `typst`
 - LaTex math expressions in `markdown` and `latex` documents
 
 Terminal support:
@@ -72,6 +72,7 @@ In case of issues, make sure to run `:checkhealth snacks`.
 --- Return the absolute path or url to the image.
 --- When `nil`, the path is resolved relative to the file.
 ---@field resolve? fun(file: string, src: string): string?
+---@field magick? table<string, (string|number)[]>
 {
   formats = {
     "png",
@@ -127,6 +128,11 @@ In case of issues, make sure to run `:checkhealth snacks`.
     placement = false,
   },
   env = {},
+  magick = {
+    default = { "{src}[0]", "-scale", "1920x1080>" },
+    math = { "-density", 600, "{src}[0]", "-trim" },
+    pdf = { "-density", 300, "{src}[0]", "-background", "white", "-alpha", "remove", "-trim" },
+  },
 }
 ```
 
