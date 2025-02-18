@@ -606,23 +606,6 @@ Snacks.picker.pick({source = "files", ...})
 ```
 
 ```lua
----@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
-```
-
-```lua
----@class snacks.picker.Last
----@field cursor number
----@field topline number
----@field opts? snacks.picker.Config
----@field selected snacks.picker.Item[]
----@field filter snacks.picker.Filter
-```
-
-```lua
----@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
-```
-
-```lua
 ---@alias snacks.picker.Extmark vim.api.keyset.set_extmark|{col:number, row?:number, field?:string}
 ---@alias snacks.picker.Text {[1]:string, [2]:string?, virtual?:boolean, field?:string}
 ---@alias snacks.picker.Highlight snacks.picker.Text|snacks.picker.Extmark
@@ -698,6 +681,23 @@ It's a previewer that shows a preview based on the item data.
 ---@field input? snacks.win.Config|{} input window config
 ---@field list? snacks.win.Config|{} result list window config
 ---@field preview? snacks.win.Config|{} preview window config
+```
+
+```lua
+---@alias snacks.Picker.ref (fun():snacks.Picker?)|{value?: snacks.Picker}
+```
+
+```lua
+---@class snacks.picker.Last
+---@field cursor number
+---@field topline number
+---@field opts? snacks.picker.Config
+---@field selected snacks.picker.Item[]
+---@field filter snacks.picker.Filter
+```
+
+```lua
+---@alias snacks.picker.history.Record {pattern: string, search: string, live?: boolean}
 ```
 
 ## 📦 Module
@@ -1156,6 +1156,7 @@ Git log
   format = "git_log",
   preview = "git_show",
   confirm = "git_checkout",
+  sort = { fields = { "score:desc", "idx" } },
 }
 ```
 
@@ -1174,6 +1175,7 @@ Git log
   current_file = true,
   follow = true,
   confirm = "git_checkout",
+  sort = { fields = { "score:desc", "idx" } },
 }
 ```
 
@@ -1192,6 +1194,7 @@ Git log
   current_line = true,
   follow = true,
   confirm = "git_checkout",
+  sort = { fields = { "score:desc", "idx" } },
 }
 ```
 
@@ -2693,6 +2696,8 @@ Snacks.picker.actions.toggle_preview(picker)
 Snacks.picker.actions.yank(picker, item, action)
 ```
 
+
+
 ## 📦 `snacks.picker.core.picker`
 
 ```lua
@@ -2947,5 +2952,3 @@ Get the word under the cursor or the current visual selection
 ```lua
 picker:word()
 ```
-
-

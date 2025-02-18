@@ -5,8 +5,7 @@
 ---@field sent? boolean image data is sent
 ---@field placements table<number, snacks.image.Placement> image placements
 ---@field augroup number
----@field _ready fun(): boolean
----@field closed? boolean
+---@field _proc? snacks.spawn.Proc
 local M = {}
 M.__index = M
 
@@ -25,7 +24,6 @@ function M.new(src)
   self.src = src
   self.file = self:convert()
   if images[self.file] then
-    self.closed = true
     return images[self.file]
   end
   images[self.file] = self
@@ -41,11 +39,18 @@ function M.new(src)
   self.placements = {}
   self.augroup = vim.api.nvim_create_augroup("snacks.image." .. self.id, { clear = true })
 
+  if self._proc then
+    self._proc:run()
+  end
+  if self:ready() then
+    self:on_ready()
+  end
+
   return self
 end
 
 function M:on_ready()
-  if not self.sent and not self.closed then
+  if not self.sent then
     self:send()
   end
 end
@@ -56,23 +61,41 @@ function M:on_send()
   end
 end
 
+function M:failed()
+  if self._proc and self._proc:running() then
+    return false
+  end
+  if self._proc and self._proc:failed() then
+    return true
+  end
+  return self.file and vim.fn.filereadable(self.file) == 0
+end
+
 function M:ready()
-  return self._ready() and self.file and vim.fn.filereadable(self.file) == 1
+  if self._proc and self._proc:running() then
+    return false
+  end
+  return self.file and vim.fn.filereadable(self.file) == 1
 end
 
 function M:convert()
-  local png, ready = Snacks.image.convert.convert(self.src, {
-    on_done = function(code)
-      if code == 0 then
+  local png, proc = Snacks.image.convert.convert(self.src, {
+    run = false,
+    on_exit = function(procs, err)
+      if err then
+        vim.schedule(function()
+          for _, p in pairs(self.placements) do
+            p:error()
+          end
+        end)
+      else
         vim.schedule(function()
           self:on_ready()
         end)
-      else
-        Snacks.notify.error("Failed to convert image to " .. self.file)
       end
     end,
   })
-  self._ready = ready
+  self._proc = proc
   return png
 end
 

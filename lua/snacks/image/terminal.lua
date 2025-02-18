@@ -32,7 +32,7 @@ local environments = {
     name = "tmux",
     env = { TERM = "tmux", TMUX = true },
     setup = function()
-      pcall(vim.fn.system, { "tmux", "set", "-p", "allow-passthrough", "on" })
+      pcall(vim.fn.system, { "tmux", "set", "-p", "allow-passthrough", "all" })
     end,
     transform = function(data)
       return ("\027Ptmux;" .. data:gsub("\027", "\027\027")) .. "\027\\"

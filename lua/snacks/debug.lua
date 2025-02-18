@@ -345,7 +345,7 @@ function M.metrics()
   Snacks.notify.warn(lines, { title = "Metrics" })
 end
 
----@param opts {cmd: string|string[], args?: string[], cwd?: string}
+---@param opts {cmd: string|string[], args?: string[], cwd?: string, group?: boolean, notify?: boolean}
 function M.cmd(opts)
   local cmd = opts.cmd
   local args = vim.deepcopy(opts.args or {})
@@ -355,31 +355,25 @@ function M.cmd(opts)
   end
   args = vim.tbl_map(tostring, args)
   ---@cast cmd string
-  vim.schedule(function()
-    local lines = { cmd } ---@type string[]
-    for _, arg in ipairs(args or {}) do
-      arg = arg:find("[%$%s%?]") and vim.fn.shellescape(arg) or arg
-      if #arg + #lines[#lines] > 40 then
-        lines[#lines] = lines[#lines] .. " \\"
-        table.insert(lines, "  " .. arg)
-      else
-        lines[#lines] = lines[#lines] .. " " .. arg
-      end
+  local lines = { cmd } ---@type string[]
+  for _, arg in ipairs(args or {}) do
+    arg = arg:find("[%$%s%?]") and vim.fn.shellescape(arg) or arg
+    if #arg + #lines[#lines] > 40 then
+      lines[#lines] = lines[#lines] .. " \\"
+      table.insert(lines, "  " .. arg)
+    else
+      lines[#lines] = lines[#lines] .. " " .. arg
     end
-    local id = cmd
-    for _, a in ipairs(args or {}) do
-      if a:find("^-") then
-        id = id .. " " .. a
-      end
-    end
-    Snacks.notify.info(
-      ("- **cwd**: `%s`\n```sh\n%s\n```"):format(
-        vim.fn.fnamemodify(vim.fs.normalize(opts.cwd or uv.cwd() or "."), ":~"),
-        table.concat(lines, "\n")
-      ),
-      { id = "snacks.debug.cmd." .. id, title = "Cmd Debug" }
-    )
-  end)
+  end
+  local id = cmd
+  local msg = ("- **cwd**: `%s`\n```sh\n%s\n```"):format(
+    vim.fn.fnamemodify(vim.fs.normalize(opts.cwd or uv.cwd() or "."), ":~"),
+    table.concat(lines, "\n")
+  )
+  if opts.notify ~= false then
+    Snacks.notify.info(msg, { id = opts.group and ("snacks.debug.cmd." .. id) or nil, title = "Cmd Debug" })
+  end
+  return msg
 end
 
 return M

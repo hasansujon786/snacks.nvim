@@ -112,6 +112,11 @@ Snacks.config.style("snacks_image", {
   -- width/height are automatically set by the image size unless specified below
 })
 
+Snacks.util.set_hl({
+  Spinner = "Special",
+  Loading = "NonText",
+}, { prefix = "SnacksImage", default = true })
+
 ---@class snacks.image.Opts
 ---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
 ---@field inline? boolean render the image inline in the buffer
@@ -246,14 +251,26 @@ function M.health()
     if ok and parser then
       Snacks.health.ok("Image rendering for `" .. lang .. "` is available")
     else
-      Snacks.health.error("Image rendering for `" .. lang .. "` is not available")
+      Snacks.health.warn("Image rendering for `" .. lang .. "` is not available")
     end
   end
 
-  if Snacks.health.have_tool({ "pdflatex" }) then
-    Snacks.health.ok("`pdflatex` is available to render math expressions in `latex` and `markdown` documents")
+  if Snacks.health.have_tool("gs") then
+    Snacks.health.ok("PDF files are supported")
   else
-    Snacks.health.warn("`pdflatex` is required to render LaTeX math equations")
+    Snacks.health.warn("`gs` is required to render PDF files")
+  end
+
+  if Snacks.health.have_tool({ "tectonic", "pdflatex" }) then
+    Snacks.health.ok("LaTeX math equations are supported")
+  else
+    Snacks.health.warn("`tectonic` or `pdflatex` is required to render LaTeX math equations")
+  end
+
+  if Snacks.health.have_tool("mmdc") then
+    Snacks.health.ok("Mermaid diagrams are supported")
+  else
+    Snacks.health.warn("`mmdc` is required to render Mermaid diagrams")
   end
 
   if env.supported then

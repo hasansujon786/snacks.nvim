@@ -167,6 +167,12 @@ Ensures the hl groups are always set, even after a colorscheme change.
 Snacks.util.set_hl(groups, opts)
 ```
 
+### `Snacks.util.spinner()`
+
+```lua
+Snacks.util.spinner()
+```
+
 ### `Snacks.util.throttle()`
 
 ```lua

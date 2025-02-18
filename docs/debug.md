@@ -56,7 +56,7 @@ Snacks.debug.backtrace(msg, opts)
 ### `Snacks.debug.cmd()`
 
 ```lua
----@param opts {cmd: string|string[], args?: string[], cwd?: string}
+---@param opts {cmd: string|string[], args?: string[], cwd?: string, group?: boolean, notify?: boolean}
 Snacks.debug.cmd(opts)
 ```
 

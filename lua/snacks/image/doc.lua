@@ -23,7 +23,7 @@ M.transforms = {
     img.ext = "tex"
     local content = vim.trim(img.content or "")
     content = content:gsub("^%$+`?", ""):gsub("`?%$+$", "")
-    content = content:gsub("^\\%[", ""):gsub("\\%]$", "")
+    content = content:gsub("^\\[%[%(]", ""):gsub("\\[%]%)]$", "")
     if not content:find("^\\begin") then
       content = ("\\[%s\\]"):format(content)
     end
