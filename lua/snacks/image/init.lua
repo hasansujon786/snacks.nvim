@@ -67,7 +67,6 @@ local defaults = {
   doc = {
     -- enable image viewer for documents
     -- a treesitter parser must be available for the enabled languages.
-    -- supported language injections: markdown, html
     enabled = true,
     -- render the image inline in the buffer
     -- if your env doesn't support unicode placeholders, this will be disabled
@@ -79,8 +78,7 @@ local defaults = {
     max_width = 80,
     max_height = 40,
     -- Set to `true`, to conceal the image text when rendering inline.
-    -- (experimental)
-    conceal = false,
+    conceal = false, -- (experimental)
   },
   img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments" },
   -- window options applied to windows displaying image buffers
@@ -106,12 +104,6 @@ local defaults = {
   ---@class snacks.image.convert.Config
   convert = {
     notify = true, -- show a notification on error
-    math = {
-      font_size = "Large", -- see https://www.sascha-frank.com/latex-font-size.html
-      -- for latex documents, the doc packages are included automatically,
-      -- but you can add more packages here. Useful for markdown documents.
-      packages = { "amsmath", "amssymb", "amsfonts", "amscd", "mathtools" },
-    },
     ---@type snacks.image.args
     mermaid = function()
       local theme = vim.o.background == "light" and "neutral" or "dark"
@@ -123,6 +115,36 @@ local defaults = {
       vector = { "-density", 192, "{src}[0]" }, -- used by vector images like svg
       math = { "-density", 192, "{src}[0]", "-trim" },
       pdf = { "-density", 192, "{src}[0]", "-background", "white", "-alpha", "remove", "-trim" },
+    },
+  },
+  math = {
+    enabled = true, -- enable math expression rendering
+    -- in the templates below, `${header}` comes from any section in your document,
+    -- between a start/end header comment. Comment syntax is language-specific.
+    -- * start comment: `// snacks: header start`
+    -- * end comment:   `// snacks: header end`
+    typst = {
+      tpl = [[
+        #set page(width: auto, height: auto, margin: (x: 2pt, y: 2pt))
+        #show math.equation.where(block: false): set text(top-edge: "bounds", bottom-edge: "bounds")
+        #set text(size: 12pt, fill: rgb("${color}"))
+        ${header}
+        ${content}]],
+    },
+    latex = {
+      font_size = "Large", -- see https://www.sascha-frank.com/latex-font-size.html
+      -- for latex documents, the doc packages are included automatically,
+      -- but you can add more packages here. Useful for markdown documents.
+      packages = { "amsmath", "amssymb", "amsfonts", "amscd", "mathtools" },
+      tpl = [[
+        \documentclass[preview,border=2pt,varwidth,12pt]{standalone}
+        \usepackage{${packages}}
+        \begin{document}
+        ${header}
+        { \${font_size} \selectfont
+          \color[HTML]{${color}}
+        ${content}}
+        \end{document}]],
     },
   },
 }

@@ -72,12 +72,21 @@ function State.new(picker)
   end)
 
   if opts.diagnostics then
-    picker.list.win:on("DiagnosticChanged", function(_, ev)
+    local dirty = false
+    local diag_update = Snacks.util.debounce(function()
+      dirty = false
       local p = ref()
       if p then
-        require("snacks.explorer.diagnostics").update(p:cwd())
-        p.list:set_target()
-        p:find()
+        if require("snacks.explorer.diagnostics").update(p:cwd()) then
+          p.list:set_target()
+          p:find()
+        end
+      end
+    end, { ms = 200 })
+    picker.list.win:on({ "InsertLeave", "DiagnosticChanged" }, function(_, ev)
+      dirty = dirty or ev.event == "DiagnosticChanged"
+      if vim.fn.mode() == "n" and dirty then
+        diag_update()
       end
     end)
   end
