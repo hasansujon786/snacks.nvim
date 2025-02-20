@@ -22,7 +22,7 @@ Table of Contents                             *snacks-image-table-of-contents*
 
 - Image viewer using the Kitty Graphics Protocol <https://sw.kovidgoyal.net/kitty/graphics-protocol/>.
 - open images in a wide range of formats:
-    `png`, `jpg`, `jpeg`, `gif`, `bmp`, `webp`, `tiff`, `heic`, `avif`, `mp4`, `mov`, `avi`, `mkv`, `webm`
+    `pdf`, `png`, `jpg`, `jpeg`, `gif`, `bmp`, `webp`, `tiff`, `heic`, `avif`, `mp4`, `mov`, `avi`, `mkv`, `webm`
 - Supports inline image rendering in:
     `markdown`, `html`, `norg`, `tsx`, `javascript`, `css`, `vue`, `svelte`, `scss`, `latex`, `typst`
 - LaTex math expressions in `markdown` and `latex` documents
@@ -92,8 +92,25 @@ In case of issues, make sure to run `:checkhealth snacks`.
     --- Return the absolute path or url to the image.
     --- When `nil`, the path is resolved relative to the file.
     ---@field resolve? fun(file: string, src: string): string?
+    ---@field convert? snacks.image.convert.Config
     {
-      formats = { "png", "jpg", "jpeg", "gif", "bmp", "webp", "tiff", "heic", "avif", "mp4", "mov", "avi", "mkv", "webm" },
+      formats = {
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "bmp",
+        "webp",
+        "tiff",
+        "heic",
+        "avif",
+        "mp4",
+        "mov",
+        "avi",
+        "mkv",
+        "webm",
+        "pdf",
+      },
       force = false, -- try displaying the image, even if the terminal does not support it
       doc = {
         -- enable image viewer for documents
@@ -109,6 +126,9 @@ In case of issues, make sure to run `:checkhealth snacks`.
         float = true,
         max_width = 80,
         max_height = 40,
+        -- Set to `true`, to conceal the image text when rendering inline.
+        -- (experimental)
+        conceal = false,
       },
       img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments" },
       -- window options applied to windows displaying image buffers
@@ -131,6 +151,28 @@ In case of issues, make sure to run `:checkhealth snacks`.
         placement = false,
       },
       env = {},
+      ---@class snacks.image.convert.Config
+      convert = {
+        notify = true, -- show a notification on error
+        math = {
+          font_size = "Large", -- see https://www.sascha-frank.com/latex-font-size.html
+          -- for latex documents, the doc packages are included automatically,
+          -- but you can add more packages here. Useful for markdown documents.
+          packages = { "amsmath", "amssymb", "amsfonts", "amscd", "mathtools" },
+        },
+        ---@type snacks.image.args
+        mermaid = function()
+          local theme = vim.o.background == "light" and "neutral" or "dark"
+          return { "-i", "{src}", "-o", "{file}", "-b", "transparent", "-t", theme, "-s", "{scale}" }
+        end,
+        ---@type table<string,snacks.image.args>
+        magick = {
+          default = { "{src}[0]", "-scale", "1920x1080>" }, -- default for raster images
+          vector = { "-density", 192, "{src}[0]" }, -- used by vector images like svg
+          math = { "-density", 192, "{src}[0]", "-trim" },
+          pdf = { "-density", 192, "{src}[0]", "-background", "white", "-alpha", "remove", "-trim" },
+        },
+      },
     }
 <
 
@@ -182,6 +224,7 @@ SNACKS_IMAGE                                *snacks-image-styles-snacks_image*
 >lua
     ---@class snacks.image.Opts
     ---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
+    ---@field range? Range4
     ---@field inline? boolean render the image inline in the buffer
     ---@field width? number
     ---@field min_width? number

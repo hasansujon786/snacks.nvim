@@ -24,7 +24,7 @@
 local uv = vim.uv or vim.loop
 
 local function norm(path)
-  return vim.fs.normalize(path)
+  return svim.fs.normalize(path)
 end
 
 local function assert_dir(path)

@@ -70,6 +70,32 @@ function Proc:failed()
   return self.code ~= 0 or self.signal ~= 0
 end
 
+---@param opts? snacks.debug.cmd|{}
+function Proc:debug(opts)
+  ---@type snacks.debug.cmd
+  opts = Snacks.config.merge({}, opts or {}, {
+    cmd = self.opts.cmd,
+    args = self.opts.args,
+    cwd = self.opts.cwd,
+  })
+  opts.props = opts.props or {}
+  if not self:running() then
+    opts.props.code = ("`%d`"):format(self.code)
+    opts.props.signal = ("`%d`"):format(self.signal)
+    if self.aborted then
+      opts.props.aborted = "`true`"
+    end
+  end
+  if self:failed() then
+    opts.level = "error"
+  end
+  local out = vim.trim(self:out() .. "\n" .. self:err())
+  if out ~= "" then
+    opts.footer = "# Output\n```\n" .. out .. "\n```"
+  end
+  return Snacks.debug.cmd(opts)
+end
+
 function Proc:run()
   assert(not self.handle, "already running")
   self.stdout = assert(uv.new_pipe())
@@ -77,7 +103,7 @@ function Proc:run()
   self.data = { [self.stdout] = {}, [self.stderr] = {} }
   if self.opts.debug then
     vim.schedule(function()
-      Snacks.debug.cmd({ cmd = self.opts.cmd, args = self.opts.args, cwd = self.opts.cwd })
+      self:debug()
     end)
   end
   local opts = vim.tbl_deep_extend("force", self.opts, {

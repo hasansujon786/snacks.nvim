@@ -10,7 +10,7 @@ local uv = vim.uv or vim.loop
 ---@field size snacks.image.Size
 ---@field dpi snacks.image.Size
 
----@class snacks.image.convert.Config
+---@class snacks.image.convert.Opts
 ---@field src string
 
 ---@class snacks.image.meta
@@ -18,11 +18,12 @@ local uv = vim.uv or vim.loop
 ---@field info? snacks.image.Info
 ---@field [string] string|number|boolean
 
+---@alias snacks.image.args (number|string)[] | fun(): ((number|string)[])
+
 ---@class snacks.image.Proc
 ---@field cmd string
 ---@field cwd? string
----@field available? boolean
----@field args (number|string)[]
+---@field args snacks.image.args
 
 ---@class snacks.image.step
 ---@field name string
@@ -38,9 +39,9 @@ local uv = vim.uv or vim.loop
 ---@field cmd (fun(step: snacks.image.step):(snacks.image.Proc|snacks.image.Proc[])?)|snacks.image.Proc|snacks.image.Proc[]
 ---@field ft? string
 ---@field file? fun(convert: snacks.image.Convert, meta: snacks.image.meta): string
----@field available? boolean
 ---@field depends? string[]
 ---@field on_done? fun(step: snacks.image.step)
+---@field on_error? fun(step: snacks.image.step):boolean? when return true, continue to next step
 ---@field pipe? boolean
 
 ---@type table<string, snacks.image.cmd>
@@ -69,13 +70,26 @@ local commands = {
       uv.fs_copyfile(step.meta.src, step.file)
     end,
   },
+  typ = {
+    ft = "pdf",
+    cmd = {
+      {
+        cmd = "typst",
+        args = { "compile", "--format", "pdf", "--pages", 1, "{src}", "{file}" },
+      },
+    },
+  },
   tex = {
     ft = "pdf",
+    file = function(convert, ctx)
+      ctx.pdf = Snacks.image.config.cache .. "/" .. vim.fs.basename(ctx.src):gsub("%.tex$", ".pdf")
+      return convert:tmpfile("pdf")
+    end,
     cmd = {
       {
         cwd = "{dirname}",
         cmd = "tectonic",
-        args = { "--outdir", "{cache}", "{src}" },
+        args = { "-Z", "continue-on-errors", "--outdir", "{cache}", "{src}" },
       },
       {
         cmd = "pdflatex",
@@ -84,18 +98,26 @@ local commands = {
       },
     },
     on_done = function(step)
-      local pdf = Snacks.image.config.cache .. "/" .. vim.fs.basename(step.meta.src):gsub("%.tex$", ".pdf")
+      local pdf = assert(step.meta.pdf, "No pdf file")
       if uv.fs_stat(pdf) then
         uv.fs_rename(pdf, step.file)
       end
     end,
+    on_error = function(step)
+      local pdf = assert(step.meta.pdf, "No pdf file")
+      if step.meta.pdf and vim.fn.getfsize(pdf) > 0 then
+        return true
+      end
+    end,
   },
   mmd = {
-    ft = "png",
     cmd = {
       cmd = "mmdc",
-      args = { "-i", "{src}", "-o", "{file}", "-b", "transparent", "-t", "{bg}", "-s", "{scale}" },
+      args = Snacks.image.config.convert.mermaid,
     },
+    file = function(convert, ctx)
+      return convert:tmpfile(vim.o.background .. ".png")
+    end,
   },
   identify = {
     pipe = false,
@@ -134,40 +156,42 @@ local commands = {
     end,
   },
   convert = {
-    depends = { "identify" },
     ft = "png",
     cmd = function(step)
-      local formats = vim.deepcopy(Snacks.image.config.magick or {})
+      local formats = vim.deepcopy(Snacks.image.config.convert.magick or {})
       local args = formats.default or { "{src}[0]" }
       local info = step.meta.info
-      local fts = { vim.fs.basename(step.file):match("%.([^%.]+)%.png") } ---@type string[]
-      if info then
-        local vector = vim.tbl_contains({ "pdf", "svg", "eps", "ai", "mvg" }, info.format)
-        if vector then
-          args = { "-density", 300, "{src}[0]" }
-        end
-        if info.format then
-          fts[#fts + 1] = info.format
-        end
+      local format = info and info.format or vim.fn.fnamemodify(step.meta.src, ":e")
+
+      local vector = vim.tbl_contains({ "pdf", "svg", "eps", "ai", "mvg" }, format)
+      if vector then
+        args = formats.vector or args
       end
+
+      local fts = { vim.fs.basename(step.file):match("%.([^%.]+)%.png") } ---@type string[]
+      fts[#fts + 1] = format
+
       for _, ft in ipairs(fts) do
         local fmt = formats[ft]
         if fmt then
-          args = fmt
+          args = type(fmt) == "function" and fmt() or fmt
           break
         end
       end
+
       args[#args + 1] = "{file}"
       return {
         { cmd = "magick", args = args },
-        { cmd = "convert", args = args },
+        not Snacks.util.is_win and { cmd = "convert", args = args } or nil,
       }
     end,
   },
 }
 
+local have = {} ---@type table<string, boolean>
+
 ---@class snacks.image.Convert
----@field opts snacks.image.convert.Config
+---@field opts snacks.image.convert.Opts
 ---@field src string
 ---@field file string
 ---@field prefix string
@@ -179,7 +203,7 @@ local commands = {
 local Convert = {}
 Convert.__index = Convert
 
----@param opts snacks.image.convert.Config
+---@param opts snacks.image.convert.Opts
 function Convert.new(opts)
   vim.fn.mkdir(Snacks.image.config.cache, "p")
   local self = setmetatable({}, Convert)
@@ -222,6 +246,7 @@ function Convert:error()
   return self._err
 end
 
+---@param ft string
 function Convert:tmpfile(ft)
   return Snacks.image.config.cache .. "/" .. self.prefix .. "." .. ft
 end
@@ -256,7 +281,10 @@ function Convert:ft(src)
 end
 
 function Convert:resolve()
-  self:_resolve("url")
+  if M.is_uri(self.src) then
+    self:_resolve("url")
+    self:_resolve("identify")
+  end
   while self:ft() ~= "png" do
     local ft = self:ft()
     local target = commands[ft] and ft or "convert"
@@ -278,18 +306,29 @@ function Convert:run(cb)
   local s = 0
   local next ---@type fun()
 
-  ---@param step snacks.image.step
+  ---@param step? snacks.image.step
   ---@param err? string
   local function done(step, err)
-    step.done = true
-    if err then
+    if step then
+      step.done = true
       step.err = err
-      Snacks.notify.error("Conversion of " .. step.name .. " failed:\n" .. err)
+    end
+    if step and err and step.cmd.on_error and step.cmd.on_error(step) then
+      -- keep going
+    elseif err then
+      if Snacks.image.config.convert.notify then
+        local title = step and ("Conversion failed at step `%s`"):format(step.name) or "Conversion failed"
+        if step and step.proc then
+          step.proc:debug({ title = title })
+        else
+          Snacks.notify.error("# " .. title .. "\n" .. err, { title = "Snacks Image" })
+        end
+      end
       self._err = err
       self._done = true
       return cb(self)
     end
-    if step.cmd.on_done then
+    if step and step.cmd.on_done then
       step.cmd.on_done(step)
     end
     if s == #self.steps then
@@ -297,6 +336,12 @@ function Convert:run(cb)
       return cb(self)
     end
     next()
+  end
+
+  if not M.is_uri(self.src) and vim.fn.filereadable(self.src) == 0 then
+    local f = M.is_uri(self.src) and self.src or vim.fn.fnamemodify(self.src, ":p:~")
+    done(nil, ("File not found\n- `%s`"):format(f))
+    return
   end
 
   next = function()
@@ -320,11 +365,13 @@ function Convert:run(cb)
     local cmds = cmd.cmd and { cmd } or cmd
     ---@cast cmds snacks.image.Proc[]
     for _, c in ipairs(cmds) do
-      if c.available == nil then
-        c.available = vim.fn.executable(c.cmd) == 1
+      if have[c.cmd] == nil then
+        have[c.cmd] = vim.fn.executable(c.cmd) == 1
       end
-      if c.available then
-        local args = vim.deepcopy(c.args)
+      if have[c.cmd] then
+        local args = type(c.args) == "function" and c.args() or c.args
+        ---@cast args (number|string)[]
+        args = vim.deepcopy(args)
         local data = vim.tbl_extend("keep", {
           file = step.file,
           basename = vim.fs.basename(step.file),
@@ -344,7 +391,9 @@ function Convert:run(cb)
           args = args,
           on_exit = function(proc, err)
             local out = vim.trim(proc:out() .. "\n" .. proc:err())
-            done(step, err and out or nil)
+            vim.schedule(function()
+              done(step, err and out or nil)
+            end)
           end,
         })
         return
@@ -371,12 +420,12 @@ function M.norm(src)
     src = vim.uri_to_fname(src)
   end
   if not M.is_uri(src) then
-    src = vim.fs.normalize(vim.fn.fnamemodify(src, ":p"))
+    src = svim.fs.normalize(vim.fn.fnamemodify(src, ":p"))
   end
   return src
 end
 
----@param opts snacks.image.convert.Config
+---@param opts snacks.image.convert.Opts
 function M.convert(opts)
   return Convert.new(opts)
 end

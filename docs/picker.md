@@ -167,8 +167,12 @@ Snacks.picker.pick({source = "files", ...})
   },
   ---@class snacks.picker.previewers.Config
   previewers = {
+    diff = {
+      builtin = true, -- use Neovim for previewing diffs (true) or use an external tool (false)
+      cmd = { "delta" }, -- example to show a diff with delta
+    },
     git = {
-      native = false, -- use native (terminal) or Neovim for previewing git diffs and commits
+      builtin = true, -- use Neovim for previewing git output (true) or use git (false)
       args = {}, -- additional arguments passed to the git command. Useful to set pager options usin `-c ...`
     },
     file = {
@@ -203,11 +207,11 @@ Snacks.picker.pick({source = "files", ...})
         ["/"] = "toggle_focus",
         ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
         ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
-        ["<C-c>"] = { "close", mode = "i" },
+        ["<C-c>"] = { "cancel", mode = "i" },
         ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
         ["<CR>"] = { "confirm", mode = { "n", "i" } },
         ["<Down>"] = { "list_down", mode = { "i", "n" } },
-        ["<Esc>"] = "close",
+        ["<Esc>"] = "cancel",
         ["<S-CR>"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "i", "n" } },
         ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },
@@ -255,7 +259,7 @@ Snacks.picker.pick({source = "files", ...})
         ["<2-LeftMouse>"] = "confirm",
         ["<CR>"] = "confirm",
         ["<Down>"] = "list_down",
-        ["<Esc>"] = "close",
+        ["<Esc>"] = "cancel",
         ["<S-CR>"] = { { "pick_win", "jump" } },
         ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },
         ["<Tab>"] = { "select_and_next", mode = { "n", "x" } },
@@ -303,7 +307,7 @@ Snacks.picker.pick({source = "files", ...})
     -- preview window
     preview = {
       keys = {
-        ["<Esc>"] = "close",
+        ["<Esc>"] = "cancel",
         ["q"] = "close",
         ["i"] = "focus_input",
         ["<ScrollWheelDown>"] = "list_scroll_wheel_down",
@@ -1052,6 +1056,7 @@ Neovim commands
 ```
 
 ```lua
+---@type snacks.picker.git.Config
 {
   finder = "git_branches",
   format = "git_branch",
@@ -1065,6 +1070,7 @@ Neovim commands
       },
     },
   },
+  ---@param picker snacks.Picker
   on_show = function(picker)
     for i, item in ipairs(picker:items()) do
       if item.current then
@@ -1084,10 +1090,11 @@ Neovim commands
 ```
 
 ```lua
+---@type snacks.picker.git.Config
 {
   finder = "git_diff",
   format = "file",
-  preview = "preview",
+  preview = "diff",
 }
 ```
 
@@ -1100,7 +1107,7 @@ Neovim commands
 Find git files
 
 ```lua
----@class snacks.picker.git.files.Config: snacks.picker.Config
+---@class snacks.picker.git.files.Config: snacks.picker.git.Config
 ---@field untracked? boolean show untracked files
 ---@field submodules? boolean show submodule files
 {
@@ -1121,8 +1128,7 @@ Find git files
 Grep in git files
 
 ```lua
----@class snacks.picker.git.grep.Config: snacks.picker.Config
----@field args? string[] additional arguments to pass to `git grep`
+---@class snacks.picker.git.grep.Config: snacks.picker.git.Config
 ---@field untracked? boolean search in untracked files
 ---@field submodules? boolean search in submodule files
 ---@field need_search? boolean require a search pattern
@@ -1147,10 +1153,11 @@ Grep in git files
 Git log
 
 ```lua
----@class snacks.picker.git.log.Config: snacks.picker.Config
+---@class snacks.picker.git.log.Config: snacks.picker.git.Config
 ---@field follow? boolean track file history across renames
 ---@field current_file? boolean show current file log
 ---@field current_line? boolean show current line log
+---@field author? string filter commits by author
 {
   finder = "git_log",
   format = "git_log",
@@ -1220,7 +1227,7 @@ Git log
 ```
 
 ```lua
----@class snacks.picker.git.status.Config: snacks.picker.Config
+---@class snacks.picker.git.status.Config: snacks.picker.git.Config
 ---@field ignored? boolean show ignored files
 {
   finder = "git_status",
@@ -1392,11 +1399,14 @@ Neovim help tags
   plugs = false,
   ["local"] = true,
   modes = { "n", "v", "x", "s", "o", "i", "c", "t" },
+  ---@param picker snacks.Picker
   confirm = function(picker, item)
-    picker:close()
-    if item then
-      vim.api.nvim_input(item.item.lhs)
-    end
+    picker:norm(function()
+      if item then
+        picker:close()
+        vim.api.nvim_input(item.item.lhs)
+      end
+    end)
   end,
   actions = {
     toggle_global = function(picker)
@@ -2053,7 +2063,7 @@ Not meant to be used directly.
 {
   finder = "vim_undo",
   format = "undo",
-  preview = "preview",
+  preview = "diff",
   confirm = "item_action",
   win = {
     preview = { wo = { number = false, relativenumber = false, signcolumn = "no" } },
@@ -2347,6 +2357,12 @@ local M = {}
 
 ```lua
 Snacks.picker.actions.bufdelete(picker)
+```
+
+### `Snacks.picker.actions.cancel()`
+
+```lua
+Snacks.picker.actions.cancel(picker)
 ```
 
 ### `Snacks.picker.actions.cd()`

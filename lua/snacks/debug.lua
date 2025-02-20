@@ -10,6 +10,18 @@ M.meta = {
   desc = "Pretty inspect & backtraces for debugging",
 }
 
+---@class snacks.debug.cmd
+---@field cmd string|string[]
+---@field level? snacks.notifier.level
+---@field title? string
+---@field args? string[]
+---@field cwd? string
+---@field group? boolean
+---@field notify? boolean
+---@field footer? string
+---@field header? string
+---@field props? table<string, string>
+
 local uv = vim.uv or vim.loop
 
 local MAX_INSPECT_LINES = 2000
@@ -345,7 +357,7 @@ function M.metrics()
   Snacks.notify.warn(lines, { title = "Metrics" })
 end
 
----@param opts {cmd: string|string[], args?: string[], cwd?: string, group?: boolean, notify?: boolean}
+---@param opts snacks.debug.cmd
 function M.cmd(opts)
   local cmd = opts.cmd
   local args = vim.deepcopy(opts.args or {})
@@ -365,13 +377,34 @@ function M.cmd(opts)
       lines[#lines] = lines[#lines] .. " " .. arg
     end
   end
+  local props = vim.deepcopy(opts.props or {})
+  props.cwd = props.cwd or vim.fn.fnamemodify(opts.cwd or uv.cwd() or ".", ":~")
+  local prop_keys = vim.tbl_keys(props) ---@type string[]
+  table.sort(prop_keys)
+  local prop_lines = {} ---@type string[]
+  for _, key in ipairs(prop_keys) do
+    table.insert(prop_lines, ("- **%s**: %s"):format(key, props[key]))
+  end
+
   local id = cmd
-  local msg = ("- **cwd**: `%s`\n```sh\n%s\n```"):format(
-    vim.fn.fnamemodify(vim.fs.normalize(opts.cwd or uv.cwd() or "."), ":~"),
-    table.concat(lines, "\n")
-  )
+  lines = {
+    opts.header or "",
+    table.concat(prop_lines, "\n"),
+    "```sh",
+    table.concat(lines, " \n"),
+    "```",
+    opts.footer or "",
+  }
+  if opts.title and not opts.notify then
+    table.insert(lines, 1, ("# %s\n"):format(opts.title))
+  end
+  local msg = vim.trim(table.concat(lines, "\n")):gsub("\n\n+", "\n\n")
   if opts.notify ~= false then
-    Snacks.notify.info(msg, { id = opts.group and ("snacks.debug.cmd." .. id) or nil, title = "Cmd Debug" })
+    Snacks.notify(msg, {
+      id = opts.group and ("snacks.debug.cmd." .. id) or nil,
+      level = opts.level or vim.log.levels.INFO,
+      title = opts.title or "Cmd Debug",
+    })
   end
   return msg
 end
