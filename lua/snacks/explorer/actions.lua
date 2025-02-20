@@ -12,6 +12,9 @@ local M = {}
 ---@param picker snacks.Picker
 ---@param path string
 function M.reveal(picker, path)
+  if picker.closed then
+    return
+  end
   for item, idx in picker:iter() do
     if item.file == path then
       picker.list:view(idx)

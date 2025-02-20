@@ -178,8 +178,10 @@ local commands = {
           break
         end
       end
+      args = type(args) == "function" and args() or args
+      ---@cast args (string|number)[]
 
-      args[#args + 1] = "{file}"
+      vim.list_extend(args, { "-write", "{file}", "-identify", "-format", "%m %[fx:w]x%[fx:h] %xx%y", "{file}.info" })
       return {
         { cmd = "magick", args = args },
         not Snacks.util.is_win and { cmd = "convert", args = args } or nil,
@@ -348,6 +350,7 @@ function Convert:run(cb)
     s = s + 1
     assert(s <= #self.steps, "No more steps")
     local step = self.steps[s]
+    step.done = step.done or (uv.fs_stat(step.file) ~= nil)
     if step.done then
       return done(step)
     end

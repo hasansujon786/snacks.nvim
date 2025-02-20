@@ -6,6 +6,8 @@ function M.update(cwd)
   local Tree = require("snacks.explorer.tree")
   local node = Tree:find(cwd)
 
+  local snapshot = Tree:snapshot(node, { "severity" })
+
   Tree:walk(node, function(n)
     n.severity = nil
   end, { all = true })
@@ -31,6 +33,8 @@ function M.update(cwd)
       end
     end
   end
+
+  return Tree:changed(node, snapshot)
 end
 
 return M
