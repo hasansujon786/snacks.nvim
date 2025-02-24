@@ -195,7 +195,7 @@ function M._get()
     else
       num = vim.v.lnum
     end
-    components[2] = "%=" .. num .. " "
+    components[2] = "%=" .. num .. "%#None#"
   end
 
   if show_signs then
@@ -220,7 +220,7 @@ function M._get()
 
       local left_c = type(config.left) == "function" and config.left(win, buf, vim.v.lnum) or config.left --[[@as snacks.statuscolumn.Component[] ]]
       local right_c = type(config.right) == "function" and config.right(win, buf, vim.v.lnum) or config.right --[[@as snacks.statuscolumn.Component[] ]]
-      local left, right, far_right = find(left_c), find(right_c), find({ "fold" })
+      local left, right = find(left_c), find(right_c)
 
       if config.folds.git_hl then
         local git = signs_by_type.git
@@ -233,11 +233,9 @@ function M._get()
       end
       components[1] = left and M.icon(left) or " " -- left
       components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
-      components[4] = is_file and (far_right and M.icon(far_right) or "%#None# ") or "" -- far_right
     else
       components[1] = " "
       components[3] = is_file and " " or ""
-      components[4] = is_file and " " or ""
     end
   end
 
