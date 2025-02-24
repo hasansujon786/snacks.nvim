@@ -13,12 +13,6 @@ M.meta = {
   needs_setup = true,
 }
 
--- Numbers in Neovim are weird
--- They show when either number or relativenumber is true
-local LINE_NR = "%=%{%(&number || &relativenumber) && v:virtnum == 0 ? ("
-  .. (vim.fn.has("nvim-0.11") == 1 and '"%l"' or 'v:relnum == 0 ? (&number ? "%l" : "%r") : (&relativenumber ? "%r" : "%l")')
-  .. ') : ""%}%#None#'
-
 ---@alias snacks.statuscolumn.Component "mark"|"sign"|"fold"|"git"
 ---@alias snacks.statuscolumn.Components snacks.statuscolumn.Component[]|fun(win:number,buf:number,lnum:number):snacks.statuscolumn.Component[]
 
@@ -184,10 +178,24 @@ function M._get()
     M.setup()
   end
   local win = vim.g.statusline_winid
+  local nu = vim.wo[win].number
+  local rnu = vim.wo[win].relativenumber
   local show_signs = vim.v.virtnum == 0 and vim.wo[win].signcolumn ~= "no"
-  local components = { "", LINE_NR, "" } -- left, middle, right
-  if not show_signs and not (vim.wo[win].number or vim.wo[win].relativenumber) then
+  local components = { "", "", "" } -- left, middle, right
+  if not (show_signs or nu or rnu) then
     return ""
+  end
+
+  if (nu or rnu) and vim.v.virtnum == 0 then
+    local num ---@type number
+    if rnu and nu and vim.v.relnum == 0 then
+      num = vim.v.lnum
+    elseif rnu then
+      num = vim.v.relnum
+    else
+      num = vim.v.lnum
+    end
+    components[2] = "%=" .. num .. "%#None#"
   end
 
   if show_signs then
@@ -212,7 +220,7 @@ function M._get()
 
       local left_c = type(config.left) == "function" and config.left(win, buf, vim.v.lnum) or config.left --[[@as snacks.statuscolumn.Component[] ]]
       local right_c = type(config.right) == "function" and config.right(win, buf, vim.v.lnum) or config.right --[[@as snacks.statuscolumn.Component[] ]]
-      local left, right, far_right = find(left_c), find(right_c), find({ "fold" })
+      local left, right = find(left_c), find(right_c)
 
       if config.folds.git_hl then
         local git = signs_by_type.git
@@ -225,11 +233,9 @@ function M._get()
       end
       components[1] = left and M.icon(left) or " " -- left
       components[3] = is_file and (right and M.icon(right) or " ") or "" -- right
-      components[4] = is_file and (far_right and M.icon(far_right) or "%#None# ") or "" -- far_right
     else
       components[1] = " "
       components[3] = is_file and " " or ""
-      components[4] = is_file and " " or ""
     end
   end
 
@@ -240,7 +246,7 @@ end
 function M.get()
   local win = vim.g.statusline_winid
   local buf = vim.api.nvim_win_get_buf(win)
-  local key = ("%d:%d:%d:%d"):format(win, buf, vim.v.lnum, vim.v.virtnum ~= 0 and 1 or 0)
+  local key = ("%d:%d:%d:%d:%d"):format(win, buf, vim.v.lnum, vim.v.virtnum ~= 0 and 1 or 0, vim.v.relnum)
   if cache[key] then
     return cache[key]
   end
