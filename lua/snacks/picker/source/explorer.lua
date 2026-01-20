@@ -124,7 +124,7 @@ function State.new(picker)
         if vim.api.nvim_win_get_config(win).relative ~= "" then
           return
         end
-        local file = vim.api.nvim_buf_get_name(ev.buf)
+        local file = vim.fs.normalize(vim.api.nvim_buf_get_name(ev.buf))
         local item = p:current()
         if item and item.file == norm(file) then
           return
